@@ -1,33 +1,22 @@
 # iOSFeel
 
+<p align="center">
+  <img src="https://img.shields.io/badge/Platform-Android-3DDC84?logo=android&logoColor=white" alt="Platform" />
+  <img src="https://img.shields.io/badge/Language-Kotlin-7F52FF?logo=kotlin&logoColor=white" alt="Kotlin" />
+  <img src="https://img.shields.io/badge/UI-Jetpack%20Compose-4285F4?logo=jetpackcompose&logoColor=white" alt="Jetpack Compose" />
+  <img src="https://img.shields.io/badge/Min%20SDK-26%20(Oreo)-orange" alt="Min SDK" />
+  <img src="https://img.shields.io/badge/License-Apache%202.0-blue.svg" alt="License" />
+</p>
+
 **iOS-inspired interaction and motion framework for native Android, built with Kotlin and Jetpack Compose.**
 
 iOSFeel is an experimental Android UI framework focused on recreating the **interaction quality** commonly associated with iOS — not simply copying how iOS components look.
 
-The project focuses on things that are difficult to reproduce with a normal UI theme:
-
-- spring-based motion
-- interruptible animations
-- gesture-driven navigation
-- velocity-aware transitions
-- elastic scrolling
-- semantic haptics
-- interactive bottom sheets
-- iOS-style frosted blur
-- subtle press interactions
-- reusable native Compose components
-
-> iOSFeel does **not** run iOS apps, emulate UIKit, use Apple private APIs, or attempt to reproduce Apple's proprietary implementation.
-
 ---
 
-## Why iOSFeel?
+## 📱 Why iOSFeel?
 
-Many Android libraries can make an app **look** similar to iOS.
-
-But visual similarity alone does not make an interface feel the same.
-
-For example:
+Many Android libraries can make an app **look** similar to iOS. But visual similarity alone does not make an interface feel the same.
 
 ```text
 Button shape        → visual
@@ -42,410 +31,120 @@ Gesture velocity    → interaction
 Sheet resistance    → interaction
 ```
 
-iOSFeel focuses primarily on the second category.
-
-The goal is to build Android interfaces where movement feels physically connected to the user's finger.
+iOSFeel focuses primarily on the second category: building native Android interfaces where movement feels physically connected to the user's finger.
 
 ---
 
-## Core Principles
+## 📦 Installation
 
-### Native Android First
+### Step 1: Add JitPack Repository
 
-iOSFeel is built directly on:
-
-- Kotlin
-- Jetpack Compose
-- Android input APIs
-- Android haptics
-- Android predictive back
-- Android graphics APIs
-
-It does not introduce another rendering engine.
-
-### Behavior Over Pixel-Perfect Cloning
-
-The framework prioritizes:
-
-- gesture behavior
-- motion
-- velocity
-- interruption
-- scroll physics
-- haptics
-- transition continuity
-
-over copying screenshots.
-
-### One Interaction → One Progress Value
-
-Instead of running unrelated animations:
-
-```text
-screen animation
-title animation
-shadow animation
-background animation
-```
-
-iOSFeel tries to derive them from one physical interaction:
-
-```text
-gesture progress
-       │
-       ├── screen position
-       ├── previous screen
-       ├── navigation bar
-       ├── material intensity
-       └── haptic thresholds
-```
-
-This keeps transitions visually and physically connected.
-
-### Interruptible by Default
-
-Animations should not lock the interface.
-
-Example:
-
-```text
-release sheet
-     ↓
-sheet starts springing
-     ↓
-touch it again
-     ↓
-spring stops immediately
-     ↓
-finger takes control
-```
-
-This principle is shared across:
-
-- navigation
-- sheets
-- scrolling
-- controls
-- motion primitives
-
----
-
-## Architecture
-
-```text
-iOSFeel
-│
-├── iosfeel-core
-│   ├── tokens
-│   ├── shared utilities
-│   └── foundational APIs
-│
-├── iosfeel-motion
-│   ├── spring motion
-│   ├── velocity
-│   ├── interruption
-│   └── reusable motion state
-│
-├── iosfeel-haptics
-│   ├── semantic feedback
-│   ├── impacts
-│   ├── thresholds
-│   └── device capability handling
-│
-├── iosfeel-gesture
-│   ├── gesture lifecycle
-│   ├── velocity tracking
-│   ├── direction locking
-│   └── edge gestures
-│
-├── iosfeel-navigation
-│   ├── navigation stack
-│   ├── interactive swipe-back
-│   ├── predictive back
-│   └── push/pop transitions
-│
-├── iosfeel-scroll
-│   ├── fling physics
-│   ├── elastic boundaries
-│   ├── overscroll
-│   └── nested scrolling
-│
-├── iosfeel-sheet
-│   ├── detents
-│   ├── interactive dragging
-│   ├── nested scrolling
-│   ├── IME handling
-│   └── dismissal
-│
-├── iosfeel-material
-│   ├── backdrop capture
-│   ├── frosted blur
-│   ├── translucency
-│   └── Android fallback rendering
-│
-└── iosfeel-components
-    ├── buttons
-    ├── toggles
-    ├── segmented controls
-    ├── sliders
-    ├── navigation bars
-    ├── tab bars
-    ├── search fields
-    ├── lists
-    └── menus
-```
-
----
-
-## Motion Engine
-
-Instead of describing animation only by duration:
+In your root **`settings.gradle.kts`** (or root `build.gradle.kts`):
 
 ```kotlin
-animate(duration = 300)
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    repositories {
+        google()
+        mavenCentral()
+        maven { url = uri("https://jitpack.io") }
+    }
+}
 ```
 
-iOSFeel models movement using physical state:
+---
 
-- position
-- velocity
-- target
-- stiffness
-- damping
-- phase
+### Step 2: Add Dependencies
 
-Conceptually:
+In your module's **`build.gradle.kts`** (e.g. `app/build.gradle.kts`):
+
+#### Option A: All-in-One Component Kit (Recommended)
+Includes all 8 underlying physics, motion, gesture, haptic, navigation, scroll, sheet, and blur engines + full component system:
 
 ```kotlin
-val motion = rememberIOSMotionState()
+dependencies {
+    val iosFeelVersion = "main-SNAPSHOT" // or release tag e.g. "v1.0.0"
 
-motion.springTo(
-    targetPosition = 0f,
-    initialVelocity = releaseVelocity,
-    spec = IOSMotionPreset.Smooth
-)
+    implementation("com.github.AnkitChoudhary-1.IOS-feel-Framework:iosfeel-components:$iosFeelVersion")
+}
 ```
 
-The current velocity is preserved when transitioning from finger-driven movement to spring-driven movement.
-
----
-
-## Gesture Engine
-
-Gestures expose reusable state:
-
-- `translationX`, `translationY`
-- `velocityX`, `velocityY`
-- `progress`
-- `phase`
-
-Example lifecycle:
-
-```text
-Possible → Began → Changed → Ended
-```
-or:
-```text
-Possible → Cancelled
-```
-
-The gesture engine also supports velocity-aware decisions:
-
-- **short + slow swipe** → cancel
-- **long swipe** → complete
-- **short + very fast flick** → complete
-
----
-
-## Interactive Navigation
-
-The navigation system supports a screen following the user's finger during a back gesture.
-
-```text
-Screen A
-   ↓
-Screen B
-   ↓
-left-edge swipe →
-
-Screen B follows finger
-Screen A reveals underneath
-```
-
-When released:
-
-```text
-progress + velocity
-        ↓
- COMPLETE or CANCEL
-```
-
-The transition then continues using spring physics. Android Predictive Back can also drive the same transition renderer.
-
----
-
-## Scroll Physics
-
-Scrolling is treated as an important part of interaction design.
-
-iOSFeel experiments with:
-
-- velocity-based fling
-- configurable deceleration
-- elastic boundaries
-- nonlinear resistance
-- spring-back
-- fling interruption
-- nested scrolling
-
-Architecture:
-
-```text
-finger
-  ↓
-Compose scroll
-  ↓
-content consumption
-  ↓
-nested scroll
-  ↓
-remaining movement
-  ↓
-elastic overscroll
-```
-
-iOSFeel does not replace `LazyColumn`. Instead it integrates with Compose's existing scrolling infrastructure.
-
----
-
-## Haptic Engine
-
-Components do not request raw vibration durations. Instead they request meaning:
+#### Option B: Standalone Modular Engines
+Import only the specific engines your application needs:
 
 ```kotlin
-haptics.selection()
+dependencies {
+    val iosFeelVersion = "main-SNAPSHOT"
 
-haptics.impact(IOSImpact.Light)
+    // Core tokens & shared primitives
+    implementation("com.github.AnkitChoudhary-1.IOS-feel-Framework:iosfeel-core:$iosFeelVersion")
 
-haptics.notification(IOSNotification.Success)
-```
+    // Spring physics, velocity tracking & interruptible motion
+    implementation("com.github.AnkitChoudhary-1.IOS-feel-Framework:iosfeel-motion:$iosFeelVersion")
 
-The engine selects the best available implementation for the device. Haptics are treated as interaction punctuation, not constant vibration:
+    // Semantic haptic feedback & impact patterns
+    implementation("com.github.AnkitChoudhary-1.IOS-feel-Framework:iosfeel-haptics:$iosFeelVersion")
 
-```text
-drag → drag → drag → cross snap threshold → *tick*
+    // Gesture lifecycle, directional locking & edge drag
+    implementation("com.github.AnkitChoudhary-1.IOS-feel-Framework:iosfeel-gesture:$iosFeelVersion")
+
+    // Interactive swipe-back & predictive navigation stack
+    implementation("com.github.AnkitChoudhary-1.IOS-feel-Framework:iosfeel-navigation:$iosFeelVersion")
+
+    // Elastic overscroll, non-linear resistance & decay flings
+    implementation("com.github.AnkitChoudhary-1.IOS-feel-Framework:iosfeel-scroll:$iosFeelVersion")
+
+    // Multi-detent interactive bottom sheets with nested scroll
+    implementation("com.github.AnkitChoudhary-1.IOS-feel-Framework:iosfeel-sheet:$iosFeelVersion")
+
+    // iOS 18-style frosted backdrop blur materials
+    implementation("com.github.AnkitChoudhary-1.IOS-feel-Framework:iosfeel-material:$iosFeelVersion")
+}
 ```
 
 ---
 
-## Sheets
+## ⚡ Quick Start Guide
 
-`IOSSheet` combines motion, gestures, haptics, and nested scrolling.
+### 1. Apply the Theme (`IOSFeelTheme`)
 
-Example detents:
+Wrap your root Composable or Activity with `IOSFeelTheme`:
 
 ```kotlin
-listOf(
-    IOSSheetDetent.Compact,
-    IOSSheetDetent.Medium,
-    IOSSheetDetent.Large
-)
-```
+import dev.iosfeel.components.theme.IOSFeelTheme
 
-Behavior:
-```text
-Compact ↔ Medium ↔ Large
-```
-
-A fast fling can move toward the next logical detent even when the closest position is somewhere else.
-
-Sheets are designed to support:
-- interruption & re-grabbing
-- detent haptics
-- nested `LazyColumn`
-- IME / keyboard handling
-- drag-to-dismiss & scrim dismissal
-- state restoration
-- accessibility actions
-
----
-
-## iOS-Style Blur Materials
-
-iOSFeel intentionally uses a clean frosted blur material system:
-
-```text
-background content
-       ↓
-localized backdrop blur
-       ↓
-translucent tint
-       ↓
-subtle separator
-       ↓
-sharp foreground content
-```
-
-No:
-- ❌ refraction
-- ❌ lens distortion
-- ❌ moving shine
-- ❌ glass wobble
-- ❌ Liquid Glass shaders
-
-On Android 12+ (API 31+), the framework uses native graphics blur (`RenderEffect`). Older versions fall back gracefully to translucent materials.
-
----
-
-## Components
-
-The component module builds reusable controls on top of the lower-level engines:
-
-- `IOSButton` & `IOSIconButton`
-- `IOSToggle`
-- `IOSSegmentedControl`
-- `IOSSlider`
-- `IOSSearchField`
-- `IOSListRow` & `IOSListSection`
-- `IOSNavigationBar`
-- `IOSTabBar`
-- `IOSMenu`
-- `IOSBadge`
-
-Components reuse shared motion/haptic/material behavior instead of implementing their own interaction systems.
-
----
-
-## Example
-
-```kotlin
 @Composable
-fun ExampleScreen() {
-    IOSFeelTheme {
-        var selected by remember {
-            mutableStateOf("Posts")
-        }
+fun App() {
+    IOSFeelTheme(darkTheme = isSystemInDarkTheme()) {
+        MainScreen()
+    }
+}
+```
 
-        Column {
-            IOSNavigationBar(
-                title = "Profile"
+---
+
+### 2. Interactive Navigation Stack with Swipe-Back
+
+```kotlin
+import androidx.compose.runtime.Composable
+import dev.iosfeel.navigation.IOSNavigationStack
+import dev.iosfeel.navigation.rememberIOSNavigationState
+
+@Composable
+fun AppNavigation() {
+    val navState = rememberIOSNavigationState(initialRoute = "home")
+
+    IOSNavigationStack(
+        state = navState,
+        swipeBackEnabled = true
+    ) { route ->
+        when (route) {
+            "home" -> HomeScreen(
+                onOpenProfile = { navState.push("profile") }
             )
-
-            IOSSegmentedControl(
-                items = listOf(
-                    IOSSegmentedItem("Posts", "Posts"),
-                    IOSSegmentedItem("Reels", "Reels"),
-                    IOSSegmentedItem("Tagged", "Tagged")
-                ),
-                selectedValue = selected,
-                onSelected = { selected = it }
+            "profile" -> ProfileScreen(
+                onBack = { navState.pop() }
             )
-
-            IOSButton(
-                onClick = { /* Follow */ }
-            ) {
-                Text("Follow")
-            }
         }
     }
 }
@@ -453,50 +152,284 @@ fun ExampleScreen() {
 
 ---
 
-## Design Philosophy
+### 3. Elastic 120Hz Overscroll (`IOSScrollableLazyColumn`)
 
-iOSFeel aims to remain:
-- **native**
-- **small & modular**
-- **interruptible**
-- **testable**
-- **accessible**
-- **performance-aware**
+```kotlin
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import dev.iosfeel.scroll.IOSScrollableLazyColumn
+import dev.iosfeel.scroll.rememberIOSScrollInteractionState
 
-It is not a second operating system or another Flutter-like rendering engine. Where Android provides excellent infrastructure, iOSFeel leverages it directly.
+@Composable
+fun FeedList() {
+    val interactionState = rememberIOSScrollInteractionState()
 
----
-
-## Performance
-
-Interaction quality means nothing if it introduces jank.
-
-The project is designed around:
-- GPU translations
-- normalized interaction state
-- small localized blur regions
-- minimal per-frame allocations
-- Compose native scrolling
-- interruptible animations
-
-Performance testing targets 60 Hz, 90 Hz, and 120 Hz displays across scrolling feeds, sheets, transitions, and blurred surfaces.
-
----
-
-## Accessibility
-
-Custom visuals should never remove native accessibility.
-
-Components expose proper semantics for:
-- buttons, switches, tabs, sliders, menus
-- editable text & selected state
-- dismiss actions
-- large font sizes & screen readers
-- keyboard navigation & reduced motion
+    IOSScrollableLazyColumn(
+        interactionState = interactionState,
+        modifier = Modifier.fillMaxSize()
+    ) {
+        items(40) { index ->
+            Text(
+                text = "Post #$index",
+                modifier = Modifier.padding(16.dp)
+            )
+        }
+    }
+}
+```
 
 ---
 
-## Project Roadmap
+### 4. Interactive Bottom Sheet (`IOSSheet`)
+
+```kotlin
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import dev.iosfeel.sheet.IOSSheet
+import dev.iosfeel.sheet.IOSSheetDetent
+import dev.iosfeel.sheet.rememberIOSSheetState
+
+@Composable
+fun CommentsSheet(onDismiss: () -> Unit) {
+    val sheetState = rememberIOSSheetState(
+        initialDetent = IOSSheetDetent.Medium,
+        supportedDetents = setOf(
+            IOSSheetDetent.Compact,
+            IOSSheetDetent.Medium,
+            IOSSheetDetent.Large
+        )
+    )
+
+    IOSSheet(
+        state = sheetState,
+        onDismissRequest = onDismiss
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text("Comments")
+            // Sheet content...
+        }
+    }
+}
+```
+
+---
+
+### 5. Frosted Blur Backdrop (`IOSMaterialSurface`)
+
+```kotlin
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import dev.iosfeel.material.IOSBackdropLayout
+import dev.iosfeel.material.IOSMaterialConfig
+import dev.iosfeel.material.IOSMaterialStyle
+import dev.iosfeel.material.IOSMaterialSurface
+import dev.iosfeel.material.rememberIOSBackdropState
+
+@Composable
+fun FrostedScene() {
+    val backdropState = rememberIOSBackdropState()
+
+    IOSBackdropLayout(
+        state = backdropState,
+        backdrop = {
+            // Your scrolling feed or vibrant background
+        },
+        overlay = {
+            // Floating frosted material surface
+            IOSMaterialSurface(
+                backdrop = backdropState,
+                config = IOSMaterialConfig(
+                    style = IOSMaterialStyle.Regular, // UltraThin, Thin, Regular, Thick
+                    cornerRadius = 24.dp
+                )
+            ) {
+                Row(
+                    modifier = Modifier.padding(16.dp),
+                    horizontalArrangement = Arrangement.SpaceEvenly
+                ) {
+                    Text("Home")
+                    Text("Explore")
+                    Text("Profile")
+                }
+            }
+        }
+    )
+}
+```
+
+---
+
+### 6. Semantic Haptics
+
+```kotlin
+import androidx.compose.material3.Button
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import dev.iosfeel.haptics.IOSImpact
+import dev.iosfeel.haptics.IOSNotification
+import dev.iosfeel.haptics.rememberIOSHaptics
+
+@Composable
+fun HapticButton() {
+    val haptics = rememberIOSHaptics()
+
+    Button(onClick = {
+        haptics.impact(IOSImpact.Light) // Light, Medium, Heavy, Soft, Rigid
+    }) {
+        Text("Tap with iOS Haptic")
+    }
+}
+```
+
+---
+
+### 7. UI Components Kit
+
+```kotlin
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.unit.dp
+import dev.iosfeel.components.button.IOSButton
+import dev.iosfeel.components.button.IOSButtonStyle
+import dev.iosfeel.components.iconbutton.IOSIconButton
+import dev.iosfeel.components.navigation.IOSNavigationBar
+import dev.iosfeel.components.segmented.IOSSegmentedControl
+import dev.iosfeel.components.segmented.IOSSegmentedItem
+import dev.iosfeel.components.slider.IOSSlider
+import dev.iosfeel.components.tab.IOSTabBar
+import dev.iosfeel.components.tab.IOSTabItem
+import dev.iosfeel.components.toggle.IOSToggle
+
+@Composable
+fun ComponentsExample() {
+    var toggleChecked by remember { mutableStateOf(true) }
+    var selectedSection by remember { mutableStateOf("Posts") }
+    var sliderValue by remember { mutableStateOf(0.5f) }
+
+    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        // Navigation Bar
+        IOSNavigationBar(
+            title = "Settings",
+            backButtonVisible = true,
+            onBack = { /* Pop */ }
+        )
+
+        // Buttons
+        IOSButton(
+            onClick = { /* Follow */ },
+            style = IOSButtonStyle.Filled // Filled, Tinted, Material, Plain
+        ) {
+            Text("Follow")
+        }
+
+        // Toggle Switch
+        IOSToggle(
+            checked = toggleChecked,
+            onCheckedChange = { toggleChecked = it }
+        )
+
+        // Segmented Control
+        IOSSegmentedControl(
+            items = listOf(
+                IOSSegmentedItem("Posts", "Posts"),
+                IOSSegmentedItem("Reels", "Reels"),
+                IOSSegmentedItem("Tagged", "Tagged")
+            ),
+            selectedValue = selectedSection,
+            onSelected = { selectedSection = it }
+        )
+
+        // Stepped / Continuous Slider
+        IOSSlider(
+            value = sliderValue,
+            onValueChange = { sliderValue = it },
+            steps = 4
+        )
+    }
+}
+```
+
+---
+
+## 🏗️ Architecture
+
+```text
+                                         app
+                                          │
+                                  iosfeel-components
+                                          │
+      ┌───────────────┬───────────────────┼───────────────┬───────────────┬───────────────┐
+      ↓               ↓                   ↓               ↓               ↓               ↓
+iosfeel-motion  iosfeel-haptics   iosfeel-gesture  iosfeel-scroll  iosfeel-sheet  iosfeel-material
+      │               │                   │               │               │               │
+      └───────────────┴───────────────────┼───────────────┴───────────────┴───────────────┘
+                                          ↓
+                                  iosfeel-navigation
+                                          ↓
+                                    iosfeel-core
+```
+
+| Module | Description | Key APIs |
+| :--- | :--- | :--- |
+| **`iosfeel-core`** | Central design tokens, interaction phases, shared math | `IOSSpacing`, `IOSShapes`, `IOSMotionTokens`, `IOSComponentTokens` |
+| **`iosfeel-motion`** | Physical spring engine with velocity continuity and interruption | `rememberIOSMotionState()`, `IOSSpringSpec`, `IOSMotionPreset` |
+| **`iosfeel-haptics`** | Semantic haptics with rich fallback mechanisms | `rememberIOSHaptics()`, `IOSImpact`, `IOSNotification` |
+| **`iosfeel-gesture`** | Full gesture lifecycle, directional locking, edge tracking | `IOSGestureConfig`, `IOSGesturePhase`, `iosEdgeDragModifier` |
+| **`iosfeel-navigation`** | Interactive swipe-to-pop navigation and Predictive Back | `IOSNavigationStack`, `rememberIOSNavigationState()` |
+| **`iosfeel-scroll`** | Elastic boundaries, non-linear overscroll resistance, decay flings | `IOSScrollableLazyColumn`, `rememberIOSScrollInteractionState()` |
+| **`iosfeel-sheet`** | Multi-detent bottom sheet with nested scroll & IME handling | `IOSSheet`, `rememberIOSSheetState()`, `IOSSheetDetent` |
+| **`iosfeel-material`** | Frosted blur backdrop system with Android 12+ hardware acceleration | `IOSMaterialSurface`, `IOSBackdropLayout`, `IOSMaterialStyle` |
+| **`iosfeel-components`** | Production iOS 18-styled Compose component kit | `IOSButton`, `IOSToggle`, `IOSSegmentedControl`, `IOSTabBar`, `IOSSlider`, `IOSMenu` |
+
+---
+
+## 🎯 Core Principles
+
+1. **Native Android First**: Built directly on Kotlin, Jetpack Compose, Android input APIs, Android Haptics, and `RenderEffect`. No web views or custom rendering engines.
+2. **Behavior Over Pixel-Cloning**: Prioritizes gesture dynamics, physical springs, interruption, deceleration, and continuity over static visual replication.
+3. **One Interaction → One Progress Value**: Coordinates screen position, navigation bar transition, shadow alpha, and haptic thresholds from a single continuous interaction state.
+4. **Interruptible by Default**: Animations never lock the interface; tapping or dragging an animating element immediately hands control back to the user's finger.
+
+---
+
+## ⚡ Performance & 120Hz Target
+
+- **Zero Allocation in Hot Paths**: Pre-calculated spring matrices and cached render layers.
+- **Localized Backdrop Rendering**: Blurs only targeted overlays rather than full-screen passes.
+- **Compose GraphicsLayer Integration**: Hardware-accelerated GPU offloading for translation and scale transforms.
+- Tested and tuned for **60Hz, 90Hz, and 120Hz** displays.
+
+---
+
+## 📋 System Requirements
+
+- **Min SDK**: API 26 (Android 8.0 Oreo)
+- **Compile / Target SDK**: API 34+
+- **Jetpack Compose**: Compose 1.6+ (BOM 2024.04.01+)
+- **Kotlin**: 2.0+
+
+---
+
+## 🛣️ Project Roadmap
 
 - **Phase 0** Foundation ✅
 - **Phase 1** Motion Engine ✅
@@ -506,45 +439,28 @@ Components expose proper semantics for:
 - **Phase 5** Scroll Physics ✅
 - **Phase 6** Sheets ✅
 - **Phase 7** Frosted Blur Materials ✅ *(Revised)*
-- **Phase 8** Components ✅ *(Revised)*
+- **Phase 8** Components Kit ✅ *(Revised)*
 - **Phase 9** Real Social-App Benchmark ⏳ *(Next)*
 
-Phase 9 focuses on validating the framework against a realistic social-media style interface rather than adding more low-level features.
-
 ---
 
-## What iOSFeel Is Not
+## 📄 License
 
-iOSFeel is not:
-- an iOS emulator
-- an XNU implementation
-- UIKit for Android
-- an IPA runtime
-- an Apple API compatibility layer
-- a pixel-perfect iOS clone
-- a replacement for Jetpack Compose
+```
+Copyright 2026 iOSFeel Framework Authors
 
-It is an experimental interaction framework for native Android.
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
 
----
+    http://www.apache.org/licenses/LICENSE-2.0
 
-## Status
-
-🚧 **Experimental / Early Development**
-
-APIs may change while interaction models and physics are being tuned.
-
----
-
-## Inspiration & Attribution
-
-iOSFeel is inspired by the interaction quality and motion principles found across modern mobile interfaces. The project is independently implemented using publicly available Android APIs and does not contain Apple proprietary code, private APIs, assets, or implementation details.
-
----
-
-## License
-
-Apache License 2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+```
 
 <p align="center">
   <b>iOSFeel</b><br>
