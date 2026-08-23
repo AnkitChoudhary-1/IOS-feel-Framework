@@ -23,7 +23,7 @@ import dev.iosfeel.motion.IOSCoupledBounceSpec
 data class IOSFloatingTabScrubConfig(
     val enabled: Boolean = true,
     val longPressDurationMillis: Long = 250L,
-    val selectorLift: Dp = 10.dp,
+    val selectorLift: Dp = 0.dp,
     val heldScale: Float = 1.08f,
     val pressedScale: Float = 0.94f,
     val barPressedScale: Float = 0.985f,
