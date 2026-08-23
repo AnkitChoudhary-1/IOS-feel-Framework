@@ -22,9 +22,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.unit.dp
+import dev.iosfeel.gesture.IOSGestureAxisDirection
 import dev.iosfeel.gesture.IOSGestureDecision
 import dev.iosfeel.gesture.IOSGesturePhase
 import dev.iosfeel.gesture.IOSGestureThresholds
+import dev.iosfeel.gesture.decideDirectionalGestureCompletion
 import dev.iosfeel.gesture.iosEdgeSwipe
 import dev.iosfeel.gesture.rememberIOSGestureState
 import dev.iosfeel.haptics.IOSHapticEvent
@@ -39,12 +41,14 @@ fun IOSNavigationStack(
     backTransition: IOSBackTransitionState = remember { IOSBackTransitionState() },
     pushTransition: IOSPushTransitionState = remember { IOSPushTransitionState() },
     edgeWidthPx: Float = 120f,
+    swipeBackEnabled: Boolean = true,
     content: @Composable (IOSNavigationEntry) -> Unit
 ) {
     val savedStateHolder = rememberSaveableStateHolder()
+    val scope = rememberCoroutineScope()
     var widthPx by remember { mutableFloatStateOf(0f) }
 
-    val backProgress = backTransition.progress.value
+    val backProgress = backTransition.currentProgress
     val pushProgress = pushTransition.progress.value
     val isPushing = pushTransition.isPushing
 
@@ -53,18 +57,17 @@ fun IOSNavigationStack(
 
     val gesture = rememberIOSGestureState()
     val haptics = rememberIOSHaptics()
-    val scope = rememberCoroutineScope()
 
     val controller = remember(backTransition) {
         IOSInteractiveBackController(backTransition)
     }
 
     val thresholds = IOSGestureThresholds(
-        progressThreshold = 0.42f,
-        velocityThresholdPxPerSecond = 1100f
+        progressThreshold = 0.38f,
+        velocityThresholdPxPerSecond = 800f
     )
 
-    val decision = controller.decide(
+    val liveDecision = controller.decide(
         velocityPxPerSecond = gesture.velocityX,
         distancePx = if (widthPx > 0f) widthPx else 1080f,
         thresholds = thresholds
@@ -73,16 +76,16 @@ fun IOSNavigationStack(
     var previousDecision by remember { mutableStateOf(IOSGestureDecision.Cancel) }
 
     // Haptic feedback on threshold crossing during interactive drag
-    LaunchedEffect(decision, gesture.phase) {
+    LaunchedEffect(liveDecision, gesture.phase) {
         if (gesture.phase == IOSGesturePhase.Changed || gesture.phase == IOSGesturePhase.Began) {
-            if (decision != previousDecision) {
-                when (decision) {
+            if (liveDecision != previousDecision) {
+                when (liveDecision) {
                     IOSGestureDecision.Complete ->
                         haptics.perform(IOSHapticEvent.ThresholdActivated)
                     IOSGestureDecision.Cancel ->
                         haptics.perform(IOSHapticEvent.ThresholdDeactivated)
                 }
-                previousDecision = decision
+                previousDecision = liveDecision
             }
         } else if (gesture.phase == IOSGesturePhase.Idle || gesture.phase == IOSGesturePhase.Ended || gesture.phase == IOSGesturePhase.Cancelled) {
             previousDecision = IOSGestureDecision.Cancel
@@ -91,7 +94,7 @@ fun IOSNavigationStack(
 
     // Android 14+ Predictive Back Handler support
     PredictiveBackHandler(
-        enabled = state.canGoBack
+        enabled = state.canGoBack && swipeBackEnabled
     ) { backEvents ->
         try {
             controller.begin()
@@ -109,65 +112,74 @@ fun IOSNavigationStack(
         }
     }
 
+    val edgeModifier = if (swipeBackEnabled) {
+        Modifier.iosEdgeSwipe(
+            state = gesture,
+            edgeWidthPx = edgeWidthPx,
+            progressDistancePx = if (widthPx > 0f) widthPx else 1080f,
+            onStarted = {
+                if (state.canGoBack) {
+                    controller.begin()
+                }
+            },
+            onChanged = { currentGesture ->
+                if (state.canGoBack) {
+                    controller.update(
+                        gestureProgress = currentGesture.progress,
+                        velocityPxPerSecond = currentGesture.velocityX,
+                        distancePx = if (widthPx > 0f) widthPx else 1080f
+                    )
+                }
+            },
+            onEnded = { currentGesture ->
+                if (state.canGoBack) {
+                    val dist = if (widthPx > 0f) widthPx else 1080f
+                    val finalVelocity = currentGesture.velocityX
+                    val currentProgress = backTransition.currentProgress
+
+                    val finalDecision = decideDirectionalGestureCompletion(
+                        progress = currentProgress,
+                        velocity = finalVelocity,
+                        direction = IOSGestureAxisDirection.Positive,
+                        thresholds = thresholds
+                    )
+
+                    val normalizedVelocity = normalizeGestureVelocity(
+                        velocityPxPerSecond = finalVelocity,
+                        distancePx = dist
+                    ).coerceIn(-8f, 8f)
+
+                    scope.launch {
+                        when (finalDecision) {
+                            IOSGestureDecision.Complete -> {
+                                backTransition.complete(initialVelocity = normalizedVelocity)
+                                state.pop()
+                                backTransition.reset()
+                            }
+                            IOSGestureDecision.Cancel -> {
+                                backTransition.cancel(initialVelocity = normalizedVelocity)
+                            }
+                        }
+                    }
+                }
+            },
+            onCancelled = {
+                if (state.canGoBack) {
+                    scope.launch {
+                        backTransition.cancel(initialVelocity = 0f)
+                    }
+                }
+            }
+        )
+    } else Modifier
+
     Box(
         modifier = modifier
             .fillMaxSize()
             .onSizeChanged {
                 widthPx = it.width.toFloat()
             }
-            .iosEdgeSwipe(
-                state = gesture,
-                edgeWidthPx = edgeWidthPx,
-                progressDistancePx = if (widthPx > 0f) widthPx else 1080f,
-                onStarted = {
-                    if (state.canGoBack) {
-                        scope.launch {
-                            controller.begin()
-                        }
-                    }
-                },
-                onChanged = {
-                    if (state.canGoBack) {
-                        scope.launch {
-                            controller.update(
-                                gestureProgress = gesture.progress,
-                                velocityPxPerSecond = gesture.velocityX,
-                                distancePx = if (widthPx > 0f) widthPx else 1080f
-                            )
-                        }
-                    }
-                },
-                onEnded = {
-                    if (state.canGoBack) {
-                        val normalizedVelocity = normalizeGestureVelocity(
-                            velocityPxPerSecond = gesture.velocityX,
-                            distancePx = if (widthPx > 0f) widthPx else 1080f
-                        )
-
-                        when (decision) {
-                            IOSGestureDecision.Complete -> {
-                                scope.launch {
-                                    backTransition.complete(initialVelocity = normalizedVelocity)
-                                    state.pop()
-                                    backTransition.reset()
-                                }
-                            }
-                            IOSGestureDecision.Cancel -> {
-                                scope.launch {
-                                    backTransition.cancel(initialVelocity = normalizedVelocity)
-                                }
-                            }
-                        }
-                    }
-                },
-                onCancelled = {
-                    if (state.canGoBack) {
-                        scope.launch {
-                            backTransition.cancel(initialVelocity = 0f)
-                        }
-                    }
-                }
-            )
+            .then(edgeModifier)
     ) {
         val previous = state.previous
 

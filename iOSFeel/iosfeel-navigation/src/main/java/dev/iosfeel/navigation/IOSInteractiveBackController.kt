@@ -12,12 +12,12 @@ class IOSInteractiveBackController(
 
     private var startProgress = 0f
 
-    suspend fun begin() {
-        transition.beginInteractive()
-        startProgress = transition.progress.value
+    fun begin() {
+        startProgress = transition.currentProgress
+        transition.beginInteractive(startProgress)
     }
 
-    suspend fun update(
+    fun update(
         gestureProgress: Float,
         velocityPxPerSecond: Float,
         distancePx: Float
@@ -44,7 +44,7 @@ class IOSInteractiveBackController(
         thresholds: IOSGestureThresholds
     ): IOSGestureDecision {
         return decideDirectionalGestureCompletion(
-            progress = transition.progress.value,
+            progress = transition.currentProgress,
             velocity = velocityPxPerSecond,
             direction = IOSGestureAxisDirection.Positive,
             thresholds = thresholds

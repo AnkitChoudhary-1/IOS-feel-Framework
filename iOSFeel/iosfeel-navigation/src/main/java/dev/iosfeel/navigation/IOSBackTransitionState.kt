@@ -7,7 +7,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import dev.iosfeel.motion.IOSMotionPreset
 import dev.iosfeel.motion.IOSSpringSpec
 import kotlinx.coroutines.CancellationException
 
@@ -23,6 +22,9 @@ class IOSBackTransitionState {
 
     val progress = Animatable(0f)
 
+    var interactiveProgress by mutableFloatStateOf(0f)
+        private set
+
     var phase by mutableStateOf(
         IOSBackTransitionPhase.Idle
     )
@@ -34,40 +36,48 @@ class IOSBackTransitionState {
     val isInteractive: Boolean
         get() = phase == IOSBackTransitionPhase.Interactive
 
-    suspend fun beginInteractive() {
-        /*
-         * Capture animation velocity BEFORE stopping.
-         */
-        velocity = progress.velocity
+    val currentProgress: Float
+        get() = if (isInteractive) interactiveProgress else progress.value
 
-        progress.stop()
+    companion object {
+        val DefaultCompleteSpec = IOSSpringSpec(
+            stiffness = 380f,
+            dampingRatio = 1.0f
+        )
 
+        val DefaultCancelSpec = IOSSpringSpec(
+            stiffness = 360f,
+            dampingRatio = 1.0f
+        )
+    }
+
+    fun beginInteractive(startValue: Float = progress.value) {
+        interactiveProgress = startValue
         phase = IOSBackTransitionPhase.Interactive
     }
 
-    suspend fun updateInteractive(
+    fun updateInteractive(
         progressValue: Float,
         progressVelocity: Float
     ) {
         phase = IOSBackTransitionPhase.Interactive
         velocity = progressVelocity
-        progress.snapTo(
-            progressValue.coerceIn(0f, 1f)
-        )
+        interactiveProgress = progressValue.coerceIn(0f, 1f)
     }
 
     suspend fun complete(
         initialVelocity: Float,
-        spec: IOSSpringSpec = IOSMotionPreset.Snappy
+        spec: IOSSpringSpec = DefaultCompleteSpec
     ) {
-        progress.stop()
+        val startVal = if (isInteractive) interactiveProgress else progress.value
+        progress.snapTo(startVal)
         phase = IOSBackTransitionPhase.Completing
         velocity = initialVelocity
 
         try {
             progress.animateTo(
                 targetValue = 1f,
-                initialVelocity = initialVelocity,
+                initialVelocity = initialVelocity.coerceIn(-8f, 8f),
                 animationSpec = spring(
                     stiffness = spec.stiffness,
                     dampingRatio = spec.dampingRatio
@@ -78,21 +88,24 @@ class IOSBackTransitionState {
         } catch (cancellation: CancellationException) {
             phase = IOSBackTransitionPhase.Idle
             throw cancellation
+        } finally {
+            phase = IOSBackTransitionPhase.Idle
         }
     }
 
     suspend fun cancel(
         initialVelocity: Float,
-        spec: IOSSpringSpec = IOSMotionPreset.Smooth
+        spec: IOSSpringSpec = DefaultCancelSpec
     ) {
-        progress.stop()
+        val startVal = if (isInteractive) interactiveProgress else progress.value
+        progress.snapTo(startVal)
         phase = IOSBackTransitionPhase.Cancelling
         velocity = initialVelocity
 
         try {
             progress.animateTo(
                 targetValue = 0f,
-                initialVelocity = initialVelocity,
+                initialVelocity = initialVelocity.coerceIn(-8f, 8f),
                 animationSpec = spring(
                     stiffness = spec.stiffness,
                     dampingRatio = spec.dampingRatio
@@ -100,17 +113,19 @@ class IOSBackTransitionState {
             ) {
                 this@IOSBackTransitionState.velocity = this.velocity
             }
-            phase = IOSBackTransitionPhase.Idle
-            velocity = 0f
         } catch (cancellation: CancellationException) {
             phase = IOSBackTransitionPhase.Idle
             throw cancellation
+        } finally {
+            phase = IOSBackTransitionPhase.Idle
+            velocity = 0f
         }
     }
 
     suspend fun reset() {
         progress.stop()
         progress.snapTo(0f)
+        interactiveProgress = 0f
         velocity = 0f
         phase = IOSBackTransitionPhase.Idle
     }
