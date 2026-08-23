@@ -55,7 +55,9 @@ import dev.iosfeel.sonora.feature.library.songs.SongList
 @Composable
 fun LibraryRoute(
     viewModel: LibraryViewModel,
-    onSongClick: (Song) -> Unit = {}
+    onSongClick: (Song) -> Unit = {},
+    onPlayAlbum: (List<Song>) -> Unit = {},
+    onShuffleAlbum: (List<Song>) -> Unit = {}
 ) {
     val state by viewModel.state.collectAsState()
     val context = LocalContext.current
@@ -98,7 +100,9 @@ fun LibraryRoute(
         onArtistSelected = viewModel::openArtist,
         onCloseArtist = viewModel::closeArtist,
         onRefresh = viewModel::refresh,
-        onSongClick = onSongClick
+        onSongClick = onSongClick,
+        onPlayAlbum = onPlayAlbum,
+        onShuffleAlbum = onShuffleAlbum
     )
 }
 
@@ -114,7 +118,9 @@ fun LibraryScreen(
     onArtistSelected: (Artist) -> Unit,
     onCloseArtist: () -> Unit,
     onRefresh: () -> Unit,
-    onSongClick: (Song) -> Unit
+    onSongClick: (Song) -> Unit,
+    onPlayAlbum: (List<Song>) -> Unit = {},
+    onShuffleAlbum: (List<Song>) -> Unit = {}
 ) {
     val colors = LocalSonoraColors.current
     val typography = LocalSonoraTypography.current
@@ -132,7 +138,9 @@ fun LibraryScreen(
         AlbumDetailScreen(
             album = state.selectedAlbum,
             onBackClick = onCloseAlbum,
-            onSongClick = onSongClick
+            onSongClick = onSongClick,
+            onPlayAlbum = onPlayAlbum,
+            onShuffleAlbum = onShuffleAlbum
         )
         return
     }

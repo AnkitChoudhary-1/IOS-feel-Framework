@@ -5,6 +5,9 @@ import dev.iosfeel.sonora.core.database.SonoraDatabase
 import dev.iosfeel.sonora.core.datastore.SonoraPreferences
 import dev.iosfeel.sonora.core.media.AndroidMediaStoreMusicLibrary
 import dev.iosfeel.sonora.core.media.MusicLibrarySource
+import dev.iosfeel.sonora.core.media.PlaybackController
+import dev.iosfeel.sonora.core.media.controller.MediaControllerConnection
+import dev.iosfeel.sonora.core.media.controller.SonoraPlaybackController
 import dev.iosfeel.sonora.core.repository.DefaultMusicLibraryRepository
 import dev.iosfeel.sonora.core.repository.MusicLibraryRepository
 
@@ -27,6 +30,17 @@ class SonoraContainer private constructor(
         DefaultMusicLibraryRepository(
             source = librarySource,
             contentResolver = context.contentResolver
+        )
+    }
+
+    val controllerConnection: MediaControllerConnection by lazy {
+        MediaControllerConnection(context)
+    }
+
+    val playbackController: PlaybackController by lazy {
+        SonoraPlaybackController(
+            connection = controllerConnection,
+            historyDao = database.historyDao()
         )
     }
 

@@ -2,6 +2,7 @@ package dev.iosfeel.sonora.feature.library.albums
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -27,6 +28,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import dev.iosfeel.components.button.IOSButton
+import dev.iosfeel.components.button.IOSButtonStyle
 import dev.iosfeel.scroll.rememberIOSFlingBehavior
 import dev.iosfeel.sonora.core.design.LocalSonoraColors
 import dev.iosfeel.sonora.core.design.LocalSonoraTypography
@@ -39,6 +42,8 @@ fun AlbumDetailScreen(
     album: Album,
     onBackClick: () -> Unit,
     onSongClick: (Song) -> Unit,
+    onPlayAlbum: (List<Song>) -> Unit = {},
+    onShuffleAlbum: (List<Song>) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val colors = LocalSonoraColors.current
@@ -51,7 +56,7 @@ fun AlbumDetailScreen(
     ) {
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(bottom = 100.dp),
+            contentPadding = PaddingValues(bottom = 120.dp),
             flingBehavior = rememberIOSFlingBehavior()
         ) {
             item(key = "header") {
@@ -80,7 +85,7 @@ fun AlbumDetailScreen(
                         album = album,
                         cornerRadius = 16.dp,
                         modifier = Modifier
-                            .size(220.dp)
+                            .size(200.dp)
                             .aspectRatio(1f)
                     )
 
@@ -117,7 +122,32 @@ fun AlbumDetailScreen(
                         color = colors.textTertiary
                     )
 
-                    Spacer(modifier = Modifier.height(20.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Box(modifier = Modifier.weight(1f)) {
+                            IOSButton(
+                                text = "Play",
+                                onClick = { onPlayAlbum(album.songs) },
+                                style = IOSButtonStyle.Filled,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
+
+                        Box(modifier = Modifier.weight(1f)) {
+                            IOSButton(
+                                text = "Shuffle",
+                                onClick = { onShuffleAlbum(album.songs) },
+                                style = IOSButtonStyle.Tinted,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
                 }
             }
 

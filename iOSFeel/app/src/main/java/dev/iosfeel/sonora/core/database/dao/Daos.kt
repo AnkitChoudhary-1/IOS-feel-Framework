@@ -59,14 +59,9 @@ interface HistoryDao {
     @Query("SELECT * FROM playback_history ORDER BY playedAt DESC LIMIT :limit")
     fun getRecentHistory(limit: Int = 50): Flow<List<PlaybackHistoryEntity>>
 
-    @Query("SELECT songId, COUNT(*) as playCount FROM playback_history GROUP BY songId ORDER BY playCount DESC LIMIT :limit")
-    fun getMostPlayedSongIds(limit: Int = 30): Flow<List<SongPlayCount>>
+    @Query("SELECT * FROM playback_history WHERE songId = :songId")
+    suspend fun getHistoryForSong(songId: Long): PlaybackHistoryEntity?
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun recordPlay(history: PlaybackHistoryEntity)
 }
-
-data class SongPlayCount(
-    val songId: Long,
-    val playCount: Int
-)

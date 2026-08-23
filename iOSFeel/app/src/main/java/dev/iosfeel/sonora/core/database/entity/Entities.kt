@@ -4,7 +4,6 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
-import java.time.Instant
 
 @Entity(tableName = "favorites")
 data class FavoriteEntity(
@@ -44,10 +43,8 @@ data class PlaylistSongCrossRef(
 
 @Entity(tableName = "playback_history")
 data class PlaybackHistoryEntity(
-    @PrimaryKey(autoGenerate = true)
-    val id: Long = 0,
+    @PrimaryKey
     val songId: Long,
-    val songTitle: String,
-    val artist: String,
-    val playedAt: Long = System.currentTimeMillis()
+    val playedAt: Long = System.currentTimeMillis(),
+    val playCount: Int = 1
 )
