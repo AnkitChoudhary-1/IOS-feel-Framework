@@ -6,11 +6,11 @@ plugins {
 }
 
 android {
-    namespace = "dev.iosfeel.dayline"
+    namespace = "dev.iosfeel.sonora"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "dev.iosfeel.dayline"
+        applicationId = "dev.iosfeel.sonora"
         minSdk = 26
         targetSdk = 35
         versionCode = 1
@@ -40,6 +40,10 @@ android {
 
     buildFeatures {
         compose = true
+    }
+
+    testOptions {
+        unitTests.isReturnDefaultValues = true
     }
 }
 
@@ -72,6 +76,15 @@ dependencies {
     implementation(libs.lifecycle.runtime.compose)
     implementation(libs.lifecycle.viewmodel.compose)
     implementation(libs.navigation.compose)
+
+    // Media3 (Audio Playback Engine)
+    implementation(libs.media3.exoplayer)
+    implementation(libs.media3.session)
+    implementation(libs.media3.common)
+    implementation(libs.media3.ui)
+
+    // Coil (Image & Artwork Loading)
+    implementation(libs.coil.compose)
 
     // Room Database
     implementation(libs.room.runtime)
