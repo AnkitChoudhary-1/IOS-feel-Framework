@@ -6,8 +6,8 @@ import android.content.pm.PackageManager
 import android.os.Build
 import androidx.core.content.ContextCompat
 
-object PermissionHelper {
-    val audioPermission: String
+object MediaPermission {
+    val requiredAudioPermission: String
         get() = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             Manifest.permission.READ_MEDIA_AUDIO
         } else {
@@ -17,7 +17,7 @@ object PermissionHelper {
     fun hasAudioPermission(context: Context): Boolean {
         return ContextCompat.checkSelfPermission(
             context,
-            audioPermission
+            requiredAudioPermission
         ) == PackageManager.PERMISSION_GRANTED
     }
 }

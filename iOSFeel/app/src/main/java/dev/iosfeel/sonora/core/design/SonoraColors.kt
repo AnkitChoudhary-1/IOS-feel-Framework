@@ -17,7 +17,10 @@ data class SonoraColorScheme(
     val separator: Color,
     val border: Color,
     val playerBackground: Color
-)
+) {
+    val surfaceElevated: Color
+        get() = surfaceSecondary
+}
 
 object SonoraColors {
     val Light = SonoraColorScheme(

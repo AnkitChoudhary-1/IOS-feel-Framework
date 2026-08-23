@@ -13,8 +13,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import dev.iosfeel.sonora.core.datastore.SonoraPreferences
 import dev.iosfeel.sonora.core.datastore.ThemeMode
+import dev.iosfeel.sonora.core.design.LocalSonoraColors
 import dev.iosfeel.sonora.core.design.SonoraTheme
 import dev.iosfeel.sonora.core.di.SonoraContainer
 import dev.iosfeel.sonora.navigation.SonoraNavigationShell
@@ -46,9 +46,9 @@ fun SonoraApp() {
     SonoraTheme(darkTheme = isDark) {
         Surface(
             modifier = Modifier.fillMaxSize(),
-            color = SonoraTheme.colors.background
+            color = LocalSonoraColors.current.background
         ) {
-            SonoraNavigationShell(preferences = preferences)
+            SonoraNavigationShell(container = container)
         }
     }
 }

@@ -3,7 +3,10 @@ package dev.iosfeel.sonora.core.di
 import android.content.Context
 import dev.iosfeel.sonora.core.database.SonoraDatabase
 import dev.iosfeel.sonora.core.datastore.SonoraPreferences
-import dev.iosfeel.sonora.core.media.MediaStoreScanner
+import dev.iosfeel.sonora.core.media.AndroidMediaStoreMusicLibrary
+import dev.iosfeel.sonora.core.media.MusicLibrarySource
+import dev.iosfeel.sonora.core.repository.DefaultMusicLibraryRepository
+import dev.iosfeel.sonora.core.repository.MusicLibraryRepository
 
 class SonoraContainer private constructor(
     private val context: Context
@@ -16,8 +19,15 @@ class SonoraContainer private constructor(
         SonoraPreferences(context)
     }
 
-    val scanner: MediaStoreScanner by lazy {
-        MediaStoreScanner(context)
+    val librarySource: MusicLibrarySource by lazy {
+        AndroidMediaStoreMusicLibrary(context)
+    }
+
+    val musicRepository: MusicLibraryRepository by lazy {
+        DefaultMusicLibraryRepository(
+            source = librarySource,
+            contentResolver = context.contentResolver
+        )
     }
 
     companion object {

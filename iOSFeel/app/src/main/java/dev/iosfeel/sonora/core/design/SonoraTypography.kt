@@ -19,7 +19,10 @@ data class SonoraTypographyScheme(
     val footnote: TextStyle,
     val caption1: TextStyle,
     val caption2: TextStyle
-)
+) {
+    val subheadline: TextStyle
+        get() = subhead
+}
 
 object SonoraTypography {
     val Default = SonoraTypographyScheme(
