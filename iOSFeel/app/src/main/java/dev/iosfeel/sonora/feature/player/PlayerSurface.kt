@@ -2,6 +2,7 @@ package dev.iosfeel.sonora.feature.player
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
@@ -10,6 +11,7 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
@@ -26,6 +28,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.lerp
 import dev.iosfeel.components.expandable.IOSExpandableSurfaceState
 import dev.iosfeel.haptics.rememberIOSHaptics
+import dev.iosfeel.material.IOSBackdropState
+import dev.iosfeel.material.IOSMaterialConfig
+import dev.iosfeel.material.IOSMaterialStyle
+import dev.iosfeel.material.IOSMaterialSurface
 import dev.iosfeel.sonora.core.design.LocalSonoraColors
 import dev.iosfeel.sonora.core.model.PlaybackState
 import dev.iosfeel.sonora.feature.player.mini.MiniPlayer
@@ -43,6 +49,7 @@ fun PlayerSurface(
     onSeek: (Long) -> Unit,
     onToggleShuffle: () -> Unit = {},
     onCycleRepeat: () -> Unit = {},
+    backdrop: IOSBackdropState? = null,
     modifier: Modifier = Modifier
 ) {
     if (!playbackState.hasActiveMedia) return
@@ -63,34 +70,36 @@ fun PlayerSurface(
 
     BoxWithConstraints(modifier = modifier.fillMaxSize()) {
         val maxHeightPx = constraints.maxHeight.toFloat()
-        val miniHeightPx = with(density) { 64.dp.toPx() }
+        val miniHeightPx = with(density) { 62.dp.toPx() }
         val expandableDistancePx = (maxHeightPx - miniHeightPx).coerceAtLeast(1f)
 
-        val cornerRadius = lerp(16.dp, 0.dp, progress)
-        val horizontalPadding = lerp(12.dp, 0.dp, progress)
-        val bottomPadding = lerp(6.dp, 0.dp, progress)
-        val currentHeight = lerp(64.dp, maxHeight, progress)
-
-        val surfaceColor = if (progress < 0.5f) {
-            colors.surfaceElevated
-        } else {
-            colors.background
-        }
+        val cornerRadius = lerp(31.dp, 0.dp, progress)
+        val horizontalPadding = lerp(16.dp, 0.dp, progress)
+        val bottomPadding = lerp(84.dp, 0.dp, progress)
+        val currentHeight = lerp(62.dp, maxHeight, progress)
+        val pillShape = RoundedCornerShape(cornerRadius)
 
         Box(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
+                .navigationBarsPadding()
                 .padding(horizontal = horizontalPadding)
                 .padding(bottom = bottomPadding)
                 .fillMaxWidth()
                 .height(currentHeight)
                 .shadow(
-                    elevation = if (progress < 0.95f) lerp(10.dp, 0.dp, progress) else 0.dp,
-                    shape = RoundedCornerShape(cornerRadius),
-                    spotColor = Color.Black.copy(alpha = 0.25f)
+                    elevation = if (progress < 0.95f) lerp(12.dp, 0.dp, progress) else 0.dp,
+                    shape = pillShape,
+                    spotColor = Color.Black.copy(alpha = 0.28f),
+                    ambientColor = Color.Black.copy(alpha = 0.12f)
                 )
-                .clip(RoundedCornerShape(cornerRadius))
-                .background(surfaceColor)
+                .clip(pillShape)
+                .border(
+                    width = 0.5.dp,
+                    color = if (progress < 0.2f) Color.White.copy(alpha = 0.18f) else Color.Transparent,
+                    shape = pillShape
+                )
+                .background(if (progress > 0.6f) colors.background else Color.Transparent)
                 .clickable(enabled = progress < 0.08f) {
                     scope.launch {
                         expansionState.expand()
@@ -141,6 +150,18 @@ fun PlayerSurface(
                     }
                 }
         ) {
+            // Frosted backdrop blur layer for mini player
+            if (progress < 0.85f) {
+                IOSMaterialSurface(
+                    backdrop = backdrop,
+                    config = IOSMaterialConfig(
+                        style = IOSMaterialStyle.Regular,
+                        cornerRadius = cornerRadius
+                    ),
+                    modifier = Modifier.fillMaxSize()
+                ) {}
+            }
+
             // Mini Player view
             if (progress < 0.45f) {
                 MiniPlayer(

@@ -3,7 +3,6 @@ package dev.iosfeel.sonora.navigation
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -17,9 +16,10 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import dev.iosfeel.components.expandable.rememberIOSExpandableSurfaceState
-import dev.iosfeel.components.tab.IOSTabBar
-import dev.iosfeel.components.tab.IOSTabItem
+import dev.iosfeel.components.floatingbar.IOSFloatingTabBar
+import dev.iosfeel.components.floatingbar.IOSFloatingTabItem
 import dev.iosfeel.material.IOSBackdropLayout
+import dev.iosfeel.material.IOSBackdropState
 import dev.iosfeel.material.rememberIOSBackdropState
 import dev.iosfeel.navigation.IOSNavigationEntry
 import dev.iosfeel.navigation.IOSNavigationStack
@@ -93,7 +93,7 @@ fun SonoraNavigationShell(
 
     val tabItems = remember {
         listOf(
-            IOSTabItem(
+            IOSFloatingTabItem(
                 value = SonoraTab.Home,
                 label = "Home",
                 icon = { selected ->
@@ -105,7 +105,7 @@ fun SonoraNavigationShell(
                     )
                 }
             ),
-            IOSTabItem(
+            IOSFloatingTabItem(
                 value = SonoraTab.Library,
                 label = "Library",
                 icon = { selected ->
@@ -117,7 +117,7 @@ fun SonoraNavigationShell(
                     )
                 }
             ),
-            IOSTabItem(
+            IOSFloatingTabItem(
                 value = SonoraTab.Search,
                 label = "Search",
                 icon = { selected ->
@@ -129,7 +129,7 @@ fun SonoraNavigationShell(
                     )
                 }
             ),
-            IOSTabItem(
+            IOSFloatingTabItem(
                 value = SonoraTab.Settings,
                 label = "Settings",
                 icon = { selected ->
@@ -168,6 +168,7 @@ fun SonoraNavigationShell(
                                     homeState = homeState,
                                     libraryState = libraryState,
                                     playbackState = playbackState,
+                                    backdrop = backdropState,
                                     onSongClick = { song, queue ->
                                         playbackController.playSong(song = song, queue = queue)
                                     },
@@ -198,6 +199,7 @@ fun SonoraNavigationShell(
                                     homeState = homeState,
                                     libraryState = libraryState,
                                     playbackState = playbackState,
+                                    backdrop = backdropState,
                                     onSongClick = { song, queue ->
                                         playbackController.playSong(song = song, queue = queue)
                                     },
@@ -228,6 +230,7 @@ fun SonoraNavigationShell(
                                     homeState = homeState,
                                     libraryState = libraryState,
                                     playbackState = playbackState,
+                                    backdrop = backdropState,
                                     onSongClick = { song, queue ->
                                         playbackController.playSong(song = song, queue = queue)
                                     },
@@ -258,6 +261,7 @@ fun SonoraNavigationShell(
                                     homeState = homeState,
                                     libraryState = libraryState,
                                     playbackState = playbackState,
+                                    backdrop = backdropState,
                                     onSongClick = { song, queue ->
                                         playbackController.playSong(song = song, queue = queue)
                                     },
@@ -295,7 +299,7 @@ fun SonoraNavigationShell(
                                 },
                             contentAlignment = Alignment.BottomCenter
                         ) {
-                            IOSTabBar(
+                            IOSFloatingTabBar(
                                 items = tabItems,
                                 selected = currentTab,
                                 onSelected = { tab ->
@@ -321,9 +325,8 @@ fun SonoraNavigationShell(
                         }
                     }
 
-                    // Global Player Surface
+                    // Global Floating Player Surface
                     if (playbackState.hasActiveMedia) {
-                        val bottomOffset = if (playerExpansionState.progress < 0.1f) 64.dp else 0.dp
                         PlayerSurface(
                             playbackState = playbackState,
                             expansionState = playerExpansionState,
@@ -342,9 +345,8 @@ fun SonoraNavigationShell(
                                 }
                                 playbackController.setRepeatMode(nextRepeat)
                             },
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .padding(bottom = bottomOffset)
+                            backdrop = backdropState,
+                            modifier = Modifier.fillMaxSize()
                         )
                     }
                 }
@@ -360,6 +362,7 @@ private fun RenderDestination(
     homeState: dev.iosfeel.sonora.feature.home.HomeUiState,
     libraryState: dev.iosfeel.sonora.feature.library.LibraryUiState,
     playbackState: dev.iosfeel.sonora.core.model.PlaybackState,
+    backdrop: IOSBackdropState?,
     onSongClick: (dev.iosfeel.sonora.core.model.Song, List<dev.iosfeel.sonora.core.model.Song>) -> Unit,
     onPlayAll: (List<dev.iosfeel.sonora.core.model.Song>) -> Unit,
     onShuffleAll: (List<dev.iosfeel.sonora.core.model.Song>) -> Unit,
@@ -444,7 +447,8 @@ private fun RenderDestination(
                 },
                 onSongClick = onSongClick,
                 onPlayAll = onPlayAll,
-                onShuffleAll = onShuffleAll
+                onShuffleAll = onShuffleAll,
+                backdrop = backdrop
             )
         }
 
@@ -466,7 +470,8 @@ private fun RenderDestination(
                 },
                 onSongClick = onSongClick,
                 onPlayAll = onPlayAll,
-                onShuffleAll = onShuffleAll
+                onShuffleAll = onShuffleAll,
+                backdrop = backdrop
             )
         }
 

@@ -5,15 +5,12 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
@@ -21,11 +18,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import dev.iosfeel.components.floatingbar.IOSFloatingIconButton
+import dev.iosfeel.components.floatingbar.IOSFloatingTopBar
+import dev.iosfeel.material.IOSBackdropState
 import dev.iosfeel.scroll.IOSScrollableLazyColumn
 import dev.iosfeel.sonora.core.design.LocalSonoraColors
 import dev.iosfeel.sonora.core.design.LocalSonoraTypography
@@ -42,6 +38,7 @@ fun AlbumScreen(
     onSongClick: (Song, List<Song>) -> Unit,
     onPlayAll: (List<Song>) -> Unit,
     onShuffleAll: (List<Song>) -> Unit,
+    backdrop: IOSBackdropState? = null,
     modifier: Modifier = Modifier
 ) {
     val colors = LocalSonoraColors.current
@@ -62,12 +59,16 @@ fun AlbumScreen(
                     style = typography.title2,
                     color = colors.textPrimary
                 )
-                Spacer(modifier = Modifier.height(12.dp))
-                IconButton(onClick = onBack) {
+                Spacer(modifier = Modifier.height(16.dp))
+                IOSFloatingIconButton(
+                    onClick = onBack,
+                    backdrop = backdrop
+                ) {
                     Icon(
                         imageVector = SonoraIcons.ChevronLeft,
                         contentDescription = "Back",
-                        tint = colors.accent
+                        tint = colors.accent,
+                        modifier = Modifier.size(24.dp)
                     )
                 }
             }
@@ -116,44 +117,29 @@ fun AlbumScreen(
             }
 
             item {
-                Spacer(modifier = Modifier.height(110.dp))
+                Spacer(modifier = Modifier.height(160.dp))
             }
         }
 
-        // Top Navigation Bar
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .statusBarsPadding()
-                .height(56.dp)
-                .background(colors.background.copy(alpha = if (navTitleAlpha > 0.05f) 0.94f else 0f))
-                .padding(horizontal = 8.dp),
-            contentAlignment = Alignment.CenterStart
-        ) {
-            IconButton(
-                onClick = onBack,
-                modifier = Modifier.size(44.dp)
-            ) {
-                Icon(
-                    imageVector = SonoraIcons.ChevronLeft,
-                    contentDescription = "Back",
-                    tint = colors.accent,
-                    modifier = Modifier.size(28.dp)
-                )
+        // Modern iOS-Inspired Floating Top Bar
+        IOSFloatingTopBar(
+            title = album.title,
+            titleAlpha = navTitleAlpha,
+            titleColor = colors.textPrimary,
+            backdrop = backdrop,
+            navigation = {
+                IOSFloatingIconButton(
+                    onClick = onBack,
+                    backdrop = backdrop
+                ) {
+                    Icon(
+                        imageVector = SonoraIcons.ChevronLeft,
+                        contentDescription = "Back",
+                        tint = colors.accent,
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
             }
-
-            Text(
-                text = album.title,
-                style = typography.headline.copy(fontWeight = FontWeight.SemiBold),
-                color = colors.textPrimary,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                textAlign = TextAlign.Center,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 56.dp)
-                    .graphicsLayer { alpha = navTitleAlpha }
-            )
-        }
+        )
     }
 }
