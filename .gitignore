@@ -11,3 +11,7 @@ captures/
 .cxx
 *.apk
 *.aab
+
+# Phase specifications & roadmap
+phase*.md
+roadmap.md
