@@ -32,14 +32,15 @@ fun Modifier.iosFadingEdge(
         }
         .drawWithContent {
             drawContent()
+            if (size.width <= 0f || size.height <= 0f) return@drawWithContent
 
-            val topPx = top.toPx().coerceAtMost(size.height / 2f)
-            val bottomPx = bottom.toPx().coerceAtMost(size.height / 2f)
-            val startPx = start.toPx().coerceAtMost(size.width / 2f)
-            val endPx = end.toPx().coerceAtMost(size.width / 2f)
+            val topPx = top.toPx().coerceIn(0f, size.height / 2f)
+            val bottomPx = bottom.toPx().coerceIn(0f, size.height / 2f)
+            val startPx = start.toPx().coerceIn(0f, size.width / 2f)
+            val endPx = end.toPx().coerceIn(0f, size.width / 2f)
 
             // Top Fade
-            if (topPx > 0f) {
+            if (topPx > 0.5f) {
                 drawRect(
                     brush = Brush.verticalGradient(
                         colors = listOf(Color.Transparent, Color.Black),
@@ -53,7 +54,7 @@ fun Modifier.iosFadingEdge(
             }
 
             // Bottom Fade
-            if (bottomPx > 0f) {
+            if (bottomPx > 0.5f) {
                 drawRect(
                     brush = Brush.verticalGradient(
                         colors = listOf(Color.Black, Color.Transparent),
@@ -67,7 +68,7 @@ fun Modifier.iosFadingEdge(
             }
 
             // Start Fade
-            if (startPx > 0f) {
+            if (startPx > 0.5f) {
                 drawRect(
                     brush = Brush.horizontalGradient(
                         colors = listOf(Color.Transparent, Color.Black),
@@ -81,7 +82,7 @@ fun Modifier.iosFadingEdge(
             }
 
             // End Fade
-            if (endPx > 0f) {
+            if (endPx > 0.5f) {
                 drawRect(
                     brush = Brush.horizontalGradient(
                         colors = listOf(Color.Black, Color.Transparent),

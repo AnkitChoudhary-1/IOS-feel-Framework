@@ -56,10 +56,10 @@ fun <T> IOSFloatingTabBar(
     hapticsEnabled: Boolean = true
 ) {
     val haptics = rememberIOSHaptics()
-    val progress = state.progress
+    val progress = state.progress.coerceIn(0f, 1f)
 
-    val currentHeight = lerp(IOSFloatingBarDefaults.Height, IOSFloatingBarDefaults.CompactHeight, progress)
-    val horizontalMargin = lerp(horizontalPadding, horizontalPadding + 16.dp, progress)
+    val currentHeight = lerp(IOSFloatingBarDefaults.Height, IOSFloatingBarDefaults.CompactHeight, progress).coerceAtLeast(0.dp)
+    val horizontalMargin = lerp(horizontalPadding, horizontalPadding + 16.dp, progress).coerceAtLeast(0.dp)
 
     Box(
         modifier = modifier

@@ -56,9 +56,11 @@ fun IOSMaterialSurface(
     }
 
     val resolved = remember(effectiveConfig.style) { resolveIOSMaterial(effectiveConfig.style) }
-    val shape = remember(effectiveConfig.cornerRadius) { RoundedCornerShape(effectiveConfig.cornerRadius) }
-    val effectiveBlurRadius = effectiveConfig.customBlurRadius ?: resolved.blurRadius
-    val effectiveTintAlpha = effectiveConfig.customTintAlpha ?: resolved.tintAlpha
+    val safeCornerRadius = effectiveConfig.cornerRadius.coerceAtLeast(0.dp)
+    val shape = remember(safeCornerRadius) { RoundedCornerShape(safeCornerRadius) }
+    val effectiveBlurRadius = (effectiveConfig.customBlurRadius ?: resolved.blurRadius).coerceAtLeast(0.dp)
+    val effectiveTintAlpha = (effectiveConfig.customTintAlpha ?: resolved.tintAlpha).coerceIn(0f, 1f)
+    val safeBorderStroke = effectiveConfig.borderStroke.coerceAtLeast(0.dp)
 
     val tintColor = effectiveConfig.tint ?: if (darkTheme) {
         IOSBlurDefaults.DarkTint.copy(alpha = if (Build.VERSION.SDK_INT >= 31) effectiveTintAlpha else 0.85f)
@@ -83,7 +85,7 @@ fun IOSMaterialSurface(
         }
         .clip(shape)
         .border(
-            width = effectiveConfig.borderStroke,
+            width = safeBorderStroke,
             color = borderColor,
             shape = shape
         )
@@ -93,10 +95,11 @@ fun IOSMaterialSurface(
     ) {
         // Layer 1: Frosted Background Layer (Isolated to prevent content blur/flicker)
         if (backdrop != null && Build.VERSION.SDK_INT >= 31) {
+            val blurMod = if (effectiveBlurRadius > 0.dp) Modifier.blur(effectiveBlurRadius) else Modifier
             Box(
                 modifier = Modifier
                     .matchParentSize()
-                    .blur(effectiveBlurRadius)
+                    .then(blurMod)
                     .drawWithContent {
                         drawContext.canvas.save()
                         drawContext.transform.translate(-positionInRoot.x, -positionInRoot.y)

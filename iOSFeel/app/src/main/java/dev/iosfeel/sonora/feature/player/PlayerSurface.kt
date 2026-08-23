@@ -61,6 +61,8 @@ fun PlayerSurface(
 
     val progress = expansionState.progress
 
+    val clampedProgress = progress.coerceIn(0f, 1f)
+
     // Back button handling: collapse player if expanded
     BackHandler(enabled = progress > 0.05f) {
         scope.launch {
@@ -73,10 +75,10 @@ fun PlayerSurface(
         val miniHeightPx = with(density) { 62.dp.toPx() }
         val expandableDistancePx = (maxHeightPx - miniHeightPx).coerceAtLeast(1f)
 
-        val cornerRadius = lerp(31.dp, 0.dp, progress)
-        val horizontalPadding = lerp(16.dp, 0.dp, progress)
-        val bottomPadding = lerp(84.dp, 0.dp, progress)
-        val currentHeight = lerp(62.dp, maxHeight, progress)
+        val cornerRadius = lerp(31.dp, 0.dp, clampedProgress).coerceAtLeast(0.dp)
+        val horizontalPadding = lerp(16.dp, 0.dp, clampedProgress).coerceAtLeast(0.dp)
+        val bottomPadding = lerp(84.dp, 0.dp, clampedProgress).coerceAtLeast(0.dp)
+        val currentHeight = lerp(62.dp, maxHeight, clampedProgress).coerceIn(62.dp, maxHeight)
         val pillShape = RoundedCornerShape(cornerRadius)
 
         Box(
@@ -88,7 +90,7 @@ fun PlayerSurface(
                 .fillMaxWidth()
                 .height(currentHeight)
                 .shadow(
-                    elevation = if (progress < 0.95f) lerp(12.dp, 0.dp, progress) else 0.dp,
+                    elevation = if (clampedProgress < 0.95f) lerp(12.dp, 0.dp, clampedProgress).coerceAtLeast(0.dp) else 0.dp,
                     shape = pillShape,
                     spotColor = Color.Black.copy(alpha = 0.28f),
                     ambientColor = Color.Black.copy(alpha = 0.12f)
@@ -96,10 +98,10 @@ fun PlayerSurface(
                 .clip(pillShape)
                 .border(
                     width = 0.5.dp,
-                    color = if (progress < 0.2f) Color.White.copy(alpha = 0.18f) else Color.Transparent,
+                    color = if (clampedProgress < 0.2f) Color.White.copy(alpha = 0.18f) else Color.Transparent,
                     shape = pillShape
                 )
-                .background(if (progress > 0.6f) colors.background else Color.Transparent)
+                .background(if (clampedProgress > 0.6f) colors.background else Color.Transparent)
                 .clickable(enabled = progress < 0.08f) {
                     scope.launch {
                         expansionState.expand()

@@ -39,6 +39,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -82,7 +83,7 @@ fun DeveloperSettingsScreen(
             }
         )
     }
-    var selectedTintColor by remember { mutableStateOf(Color(savedSettings.tintColorArgb.toULong())) }
+    var selectedTintColor by remember { mutableStateOf(Color(savedSettings.tintColorArgb.toInt())) }
     var backdropBlurEnabled by remember { mutableStateOf(savedSettings.backdropBlurEnabled) }
 
     // Motion Tuners
@@ -103,7 +104,7 @@ fun DeveloperSettingsScreen(
         } catch (_: Exception) {
             IOSMaterialStyle.Regular
         }
-        selectedTintColor = Color(savedSettings.tintColorArgb.toULong())
+        selectedTintColor = Color(savedSettings.tintColorArgb.toInt())
         backdropBlurEnabled = savedSettings.backdropBlurEnabled
         playerStiffness = savedSettings.playerStiffness
         playerDamping = savedSettings.playerDamping
@@ -115,18 +116,18 @@ fun DeveloperSettingsScreen(
         scope.launch {
             preferences.updateDeveloperSettings(
                 DeveloperSettings(
-                    blurRadius = blurRadius,
-                    tintAlpha = tintAlpha,
-                    cornerRadius = cornerRadius,
-                    borderStroke = borderStroke,
-                    borderAlpha = borderAlpha,
+                    blurRadius = blurRadius.coerceAtLeast(0f),
+                    tintAlpha = tintAlpha.coerceIn(0f, 1f),
+                    cornerRadius = cornerRadius.coerceAtLeast(0f),
+                    borderStroke = borderStroke.coerceAtLeast(0f),
+                    borderAlpha = borderAlpha.coerceIn(0f, 1f),
                     materialStyle = selectedStyle.name,
-                    tintColorArgb = selectedTintColor.value.toLong(),
+                    tintColorArgb = (selectedTintColor.toArgb().toLong() and 0xFFFFFFFFL),
                     backdropBlurEnabled = backdropBlurEnabled,
-                    playerStiffness = playerStiffness,
-                    playerDamping = playerDamping,
-                    completionThreshold = completionThreshold,
-                    velocityThreshold = velocityThreshold
+                    playerStiffness = playerStiffness.coerceAtLeast(10f),
+                    playerDamping = playerDamping.coerceAtLeast(0.1f),
+                    completionThreshold = completionThreshold.coerceIn(0.05f, 0.95f),
+                    velocityThreshold = velocityThreshold.coerceAtLeast(10f)
                 )
             )
         }

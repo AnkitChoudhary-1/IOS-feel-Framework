@@ -12,6 +12,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -38,17 +39,27 @@ fun IOSFloatingTopBar(
         contentAlignment = Alignment.Center
     ) {
         if (title != null && titleAlpha > 0.01f) {
+            val resolvedTitleColor = if (titleColor != Color.Unspecified) {
+                titleColor.copy(alpha = titleAlpha.coerceIn(0f, 1f))
+            } else {
+                Color.Unspecified
+            }
             Text(
                 text = title,
                 fontSize = 17.sp,
                 fontWeight = FontWeight.SemiBold,
-                color = titleColor.copy(alpha = titleAlpha),
+                color = resolvedTitleColor,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 textAlign = TextAlign.Center,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 56.dp)
+                    .graphicsLayer {
+                        if (titleColor == Color.Unspecified) {
+                            alpha = titleAlpha.coerceIn(0f, 1f)
+                        }
+                    }
             )
         }
 

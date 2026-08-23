@@ -70,11 +70,11 @@ fun SonoraNavigationShell(
             } catch (_: Exception) {
                 IOSMaterialStyle.Regular
             },
-            customBlurRadius = devSettings.blurRadius.dp,
-            customTintAlpha = devSettings.tintAlpha,
-            tint = androidx.compose.ui.graphics.Color(devSettings.tintColorArgb.toULong()).copy(alpha = devSettings.tintAlpha),
-            borderColor = androidx.compose.ui.graphics.Color.White.copy(alpha = devSettings.borderAlpha),
-            borderStroke = devSettings.borderStroke.dp,
+            customBlurRadius = devSettings.blurRadius.coerceAtLeast(0f).dp,
+            customTintAlpha = devSettings.tintAlpha.coerceIn(0f, 1f),
+            tint = androidx.compose.ui.graphics.Color(devSettings.tintColorArgb.toInt()).copy(alpha = devSettings.tintAlpha.coerceIn(0f, 1f)),
+            borderColor = androidx.compose.ui.graphics.Color.White.copy(alpha = devSettings.borderAlpha.coerceIn(0f, 1f)),
+            borderStroke = devSettings.borderStroke.coerceAtLeast(0f).dp,
             enabled = devSettings.backdropBlurEnabled
         )
     }
@@ -329,7 +329,7 @@ fun SonoraNavigationShell(
             },
             overlay = {
                 Box(modifier = Modifier.fillMaxSize()) {
-                    val tabBarProgress = playerExpansionState.progress
+                    val tabBarProgress = playerExpansionState.progress.coerceIn(0f, 1f)
                     val tabBarAlpha = (1f - tabBarProgress * 2f).coerceIn(0f, 1f)
                     val tabBarTranslationY = with(density) { (tabBarProgress * 80.dp.toPx()) }
 
