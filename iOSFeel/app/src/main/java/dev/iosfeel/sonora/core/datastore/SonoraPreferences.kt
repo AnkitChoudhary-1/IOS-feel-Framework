@@ -22,12 +22,12 @@ enum class ThemeMode {
 
 data class DeveloperSettings(
     val blurRadius: Float = 24f,
-    val tintAlpha: Float = 0.40f,
+    val tintAlpha: Float = 0.78f,
     val cornerRadius: Float = 24f,
     val borderStroke: Float = 0.5f,
     val borderAlpha: Float = 0.20f,
     val materialStyle: String = "Regular",
-    val tintColorArgb: Long = 0xFFFFFFFF,
+    val tintColorArgb: Long = 0L,
     val backdropBlurEnabled: Boolean = true,
     val playerStiffness: Float = 400f,
     val playerDamping: Float = 0.85f,
@@ -84,12 +84,12 @@ class SonoraPreferences(
     val developerSettings: Flow<DeveloperSettings> = context.sonoraDataStore.data.map { prefs ->
         DeveloperSettings(
             blurRadius = prefs[Keys.DEV_BLUR_RADIUS] ?: 24f,
-            tintAlpha = prefs[Keys.DEV_TINT_ALPHA] ?: 0.40f,
+            tintAlpha = prefs[Keys.DEV_TINT_ALPHA] ?: 0.78f,
             cornerRadius = prefs[Keys.DEV_CORNER_RADIUS] ?: 24f,
             borderStroke = prefs[Keys.DEV_BORDER_STROKE] ?: 0.5f,
             borderAlpha = prefs[Keys.DEV_BORDER_ALPHA] ?: 0.20f,
             materialStyle = prefs[Keys.DEV_MATERIAL_STYLE] ?: "Regular",
-            tintColorArgb = prefs[Keys.DEV_TINT_COLOR_ARGB] ?: 0xFFFFFFFF,
+            tintColorArgb = prefs[Keys.DEV_TINT_COLOR_ARGB] ?: 0L,
             backdropBlurEnabled = prefs[Keys.DEV_BACKDROP_BLUR_ENABLED] ?: true,
             playerStiffness = prefs[Keys.DEV_PLAYER_STIFFNESS] ?: 400f,
             playerDamping = prefs[Keys.DEV_PLAYER_DAMPING] ?: 0.85f,

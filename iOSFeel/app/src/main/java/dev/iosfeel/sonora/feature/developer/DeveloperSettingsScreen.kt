@@ -83,7 +83,7 @@ fun DeveloperSettingsScreen(
             }
         )
     }
-    var selectedTintColor by remember { mutableStateOf(Color(savedSettings.tintColorArgb.toInt())) }
+    var selectedTintColorArgb by remember { mutableStateOf(savedSettings.tintColorArgb) }
     var backdropBlurEnabled by remember { mutableStateOf(savedSettings.backdropBlurEnabled) }
 
     // Motion Tuners
@@ -104,7 +104,7 @@ fun DeveloperSettingsScreen(
         } catch (_: Exception) {
             IOSMaterialStyle.Regular
         }
-        selectedTintColor = Color(savedSettings.tintColorArgb.toInt())
+        selectedTintColorArgb = savedSettings.tintColorArgb
         backdropBlurEnabled = savedSettings.backdropBlurEnabled
         playerStiffness = savedSettings.playerStiffness
         playerDamping = savedSettings.playerDamping
@@ -122,7 +122,7 @@ fun DeveloperSettingsScreen(
                     borderStroke = borderStroke.coerceAtLeast(0f),
                     borderAlpha = borderAlpha.coerceIn(0f, 1f),
                     materialStyle = selectedStyle.name,
-                    tintColorArgb = (selectedTintColor.toArgb().toLong() and 0xFFFFFFFFL),
+                    tintColorArgb = selectedTintColorArgb,
                     backdropBlurEnabled = backdropBlurEnabled,
                     playerStiffness = playerStiffness.coerceAtLeast(10f),
                     playerDamping = playerDamping.coerceAtLeast(0.1f),
@@ -238,7 +238,11 @@ fun DeveloperSettingsScreen(
                         val effectiveConfig = IOSMaterialConfig(
                             style = selectedStyle,
                             cornerRadius = cornerRadius.dp,
-                            tint = selectedTintColor.copy(alpha = tintAlpha),
+                            tint = if (selectedTintColorArgb != 0L) {
+                                Color(selectedTintColorArgb.toInt()).copy(alpha = tintAlpha)
+                            } else {
+                                null
+                            },
                             borderColor = Color.White.copy(alpha = borderAlpha),
                             borderStroke = borderStroke.dp,
                             customBlurRadius = blurRadius.dp,
@@ -496,26 +500,28 @@ fun DeveloperSettingsScreen(
                                 horizontalArrangement = Arrangement.spacedBy(10.dp)
                             ) {
                                 val palette = listOf(
-                                    Color.White to "White",
-                                    Color.Black to "Dark",
-                                    Color(0xFF007AFF) to "Blue",
-                                    Color(0xFFAF52DE) to "Purple",
-                                    Color(0xFFFF2D55) to "Ruby"
+                                    0L to ("Adaptive" to colors.surfaceSecondary),
+                                    0xFF141416L to ("Dark" to Color(0xFF141416)),
+                                    0xFFF6F6F8L to ("Light" to Color(0xFFF6F6F8)),
+                                    0xFF007AFFL to ("Blue" to Color(0xFF007AFF)),
+                                    0xFFAF52DEL to ("Purple" to Color(0xFFAF52DE)),
+                                    0xFFFF2D55L to ("Ruby" to Color(0xFFFF2D55))
                                 )
-                                palette.forEach { (paletteColor, _) ->
-                                    val isSelected = selectedTintColor == paletteColor
+                                palette.forEach { (colorArgb, meta) ->
+                                    val (name, displayColor) = meta
+                                    val isSelected = selectedTintColorArgb == colorArgb
                                     Box(
                                         modifier = Modifier
                                             .size(36.dp)
                                             .clip(CircleShape)
-                                            .background(paletteColor)
+                                            .background(displayColor)
                                             .border(
                                                 width = if (isSelected) 3.dp else 1.dp,
                                                 color = if (isSelected) colors.accent else Color.Gray.copy(alpha = 0.3f),
                                                 shape = CircleShape
                                             )
                                             .clickable {
-                                                selectedTintColor = paletteColor
+                                                selectedTintColorArgb = colorArgb
                                                 persist()
                                             }
                                     )

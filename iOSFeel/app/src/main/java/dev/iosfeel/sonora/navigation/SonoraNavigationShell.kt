@@ -72,7 +72,11 @@ fun SonoraNavigationShell(
             },
             customBlurRadius = devSettings.blurRadius.coerceAtLeast(0f).dp,
             customTintAlpha = devSettings.tintAlpha.coerceIn(0f, 1f),
-            tint = androidx.compose.ui.graphics.Color(devSettings.tintColorArgb.toInt()).copy(alpha = devSettings.tintAlpha.coerceIn(0f, 1f)),
+            tint = if (devSettings.tintColorArgb != 0L) {
+                androidx.compose.ui.graphics.Color(devSettings.tintColorArgb.toInt()).copy(alpha = devSettings.tintAlpha.coerceIn(0f, 1f))
+            } else {
+                null
+            },
             borderColor = androidx.compose.ui.graphics.Color.White.copy(alpha = devSettings.borderAlpha.coerceIn(0f, 1f)),
             borderStroke = devSettings.borderStroke.coerceAtLeast(0f).dp,
             enabled = devSettings.backdropBlurEnabled

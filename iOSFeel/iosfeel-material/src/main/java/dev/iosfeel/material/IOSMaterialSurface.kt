@@ -96,6 +96,7 @@ fun IOSMaterialSurface(
         // Layer 1: Frosted Background Layer (Isolated to prevent content blur/flicker)
         if (backdrop != null && Build.VERSION.SDK_INT >= 31) {
             val blurMod = if (effectiveBlurRadius > 0.dp) Modifier.blur(effectiveBlurRadius) else Modifier
+            // 1a. Hardware Blurred Backdrop Layer
             Box(
                 modifier = Modifier
                     .matchParentSize()
@@ -106,6 +107,11 @@ fun IOSMaterialSurface(
                         drawLayer(backdrop.layer)
                         drawContext.canvas.restore()
                     }
+            )
+            // 1b. Crisp Scrim Tint Overlay (Maintains high-contrast text legibility without spreading/bleeding)
+            Box(
+                modifier = Modifier
+                    .matchParentSize()
                     .background(tintColor)
             )
         } else {
