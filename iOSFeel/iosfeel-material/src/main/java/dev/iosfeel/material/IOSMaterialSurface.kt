@@ -54,7 +54,10 @@ fun IOSMaterialSurface(
 
     val surfaceModifier = modifier
         .onGloballyPositioned { coordinates ->
-            positionInRoot = coordinates.positionInRoot()
+            val pos = coordinates.positionInRoot()
+            if (pos != positionInRoot) {
+                positionInRoot = pos
+            }
         }
         .clip(shape)
         .border(
@@ -63,26 +66,33 @@ fun IOSMaterialSurface(
             shape = shape
         )
 
-    if (backdrop != null && Build.VERSION.SDK_INT >= 31) {
-        Box(
-            modifier = surfaceModifier
-                .blur(resolved.blurRadius)
-                .drawWithContent {
-                    drawContext.canvas.save()
-                    drawContext.transform.translate(-positionInRoot.x, -positionInRoot.y)
-                    drawLayer(backdrop.layer)
-                    drawContext.canvas.restore()
-                }
-                .background(tintColor)
-        ) {
-            content()
+    Box(
+        modifier = surfaceModifier
+    ) {
+        // Layer 1: Frosted Background Layer (Isolated to prevent content blur/flicker)
+        if (backdrop != null && Build.VERSION.SDK_INT >= 31) {
+            Box(
+                modifier = Modifier
+                    .matchParentSize()
+                    .blur(resolved.blurRadius)
+                    .drawWithContent {
+                        drawContext.canvas.save()
+                        drawContext.transform.translate(-positionInRoot.x, -positionInRoot.y)
+                        drawLayer(backdrop.layer)
+                        drawContext.canvas.restore()
+                    }
+                    .background(tintColor)
+            )
+        } else {
+            Box(
+                modifier = Modifier
+                    .matchParentSize()
+                    .background(tintColor)
+            )
         }
-    } else {
-        Box(
-            modifier = surfaceModifier.background(tintColor)
-        ) {
-            content()
-        }
+
+        // Layer 2: Foreground Content (Always 100% sharp and unblurred)
+        content()
     }
 }
 

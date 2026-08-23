@@ -10,20 +10,20 @@ class IOSMaterialStyleTest {
     @Test
     fun resolveAllMaterialStyles() {
         val ultraThin = resolveIOSMaterial(IOSMaterialStyle.UltraThin)
-        assertEquals(14.dp, ultraThin.blurRadius)
-        assertEquals(0.08f, ultraThin.tintAlpha, 0.001f)
+        assertEquals(6.dp, ultraThin.blurRadius)
+        assertEquals(0.10f, ultraThin.tintAlpha, 0.001f)
 
         val thin = resolveIOSMaterial(IOSMaterialStyle.Thin)
-        assertEquals(20.dp, thin.blurRadius)
-        assertEquals(0.11f, thin.tintAlpha, 0.001f)
+        assertEquals(10.dp, thin.blurRadius)
+        assertEquals(0.14f, thin.tintAlpha, 0.001f)
 
         val regular = resolveIOSMaterial(IOSMaterialStyle.Regular)
-        assertEquals(28.dp, regular.blurRadius)
-        assertEquals(0.15f, regular.tintAlpha, 0.001f)
+        assertEquals(16.dp, regular.blurRadius)
+        assertEquals(0.20f, regular.tintAlpha, 0.001f)
 
         val thick = resolveIOSMaterial(IOSMaterialStyle.Thick)
-        assertEquals(38.dp, thick.blurRadius)
-        assertEquals(0.20f, thick.tintAlpha, 0.001f)
+        assertEquals(22.dp, thick.blurRadius)
+        assertEquals(0.26f, thick.tintAlpha, 0.001f)
     }
 
     @Test

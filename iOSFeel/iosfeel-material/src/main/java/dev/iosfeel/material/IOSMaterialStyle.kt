@@ -21,23 +21,23 @@ fun resolveIOSMaterial(
     return when (style) {
         IOSMaterialStyle.UltraThin ->
             IOSResolvedMaterial(
-                blurRadius = 14.dp,
-                tintAlpha = 0.08f
+                blurRadius = 6.dp,
+                tintAlpha = 0.10f
             )
         IOSMaterialStyle.Thin ->
             IOSResolvedMaterial(
-                blurRadius = 20.dp,
-                tintAlpha = 0.11f
+                blurRadius = 10.dp,
+                tintAlpha = 0.14f
             )
         IOSMaterialStyle.Regular ->
             IOSResolvedMaterial(
-                blurRadius = 28.dp,
-                tintAlpha = 0.15f
+                blurRadius = 16.dp,
+                tintAlpha = 0.20f
             )
         IOSMaterialStyle.Thick ->
             IOSResolvedMaterial(
-                blurRadius = 38.dp,
-                tintAlpha = 0.20f
+                blurRadius = 22.dp,
+                tintAlpha = 0.26f
             )
     }
 }
