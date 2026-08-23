@@ -8,8 +8,11 @@ import dev.iosfeel.sonora.core.media.MusicLibrarySource
 import dev.iosfeel.sonora.core.media.PlaybackController
 import dev.iosfeel.sonora.core.media.controller.MediaControllerConnection
 import dev.iosfeel.sonora.core.media.controller.SonoraPlaybackController
+import dev.iosfeel.sonora.core.media.history.PlaybackHistoryTracker
 import dev.iosfeel.sonora.core.repository.DefaultMusicLibraryRepository
+import dev.iosfeel.sonora.core.repository.DefaultPlaybackHistoryRepository
 import dev.iosfeel.sonora.core.repository.MusicLibraryRepository
+import dev.iosfeel.sonora.core.repository.PlaybackHistoryRepository
 
 class SonoraContainer private constructor(
     private val context: Context
@@ -33,6 +36,18 @@ class SonoraContainer private constructor(
         )
     }
 
+    val historyRepository: PlaybackHistoryRepository by lazy {
+        DefaultPlaybackHistoryRepository(
+            historyDao = database.historyDao()
+        )
+    }
+
+    val historyTracker: PlaybackHistoryTracker by lazy {
+        PlaybackHistoryTracker(
+            historyRepository = historyRepository
+        )
+    }
+
     val controllerConnection: MediaControllerConnection by lazy {
         MediaControllerConnection(context)
     }
@@ -40,7 +55,8 @@ class SonoraContainer private constructor(
     val playbackController: PlaybackController by lazy {
         SonoraPlaybackController(
             connection = controllerConnection,
-            historyDao = database.historyDao()
+            historyDao = database.historyDao(),
+            historyTracker = historyTracker
         )
     }
 

@@ -34,6 +34,23 @@ fun MusicLibrary.stats(): LibraryStats {
     )
 }
 
+val Album.dateAddedSeconds: Long
+    get() = songs.maxOfOrNull { it.dateAddedSeconds } ?: 0L
+
+fun MusicLibrary.findAlbum(id: Long): Album? {
+    return albums.firstOrNull { it.id == id }
+}
+
+fun MusicLibrary.findArtist(id: Long): Artist? {
+    return artists.firstOrNull { it.id == id }
+}
+
+fun MusicLibrary.resolveSongs(ids: List<Long>): List<Song> {
+    if (ids.isEmpty()) return emptyList()
+    val songMap = songs.associateBy { it.id }
+    return ids.mapNotNull { songMap[it] }
+}
+
 data class MusicSearchResult(
     val songs: List<Song>,
     val albums: List<Album>,

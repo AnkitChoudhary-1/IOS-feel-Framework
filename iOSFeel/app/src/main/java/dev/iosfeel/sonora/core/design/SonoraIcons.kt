@@ -520,4 +520,34 @@ object SonoraIcons {
             }
         }.build()
     }
+
+    val ChevronLeft: ImageVector by lazy {
+        ImageVector.Builder(
+            name = "ChevronLeft",
+            defaultWidth = 24.dp,
+            defaultHeight = 24.dp,
+            viewportWidth = 24f,
+            viewportHeight = 24f
+        ).apply {
+            path(
+                fill = SolidColor(Color.Black),
+                fillAlpha = 1.0f,
+                stroke = null,
+                strokeAlpha = 1.0f,
+                strokeLineWidth = 1.0f,
+                strokeLineCap = StrokeCap.Round,
+                strokeLineJoin = StrokeJoin.Round,
+                strokeLineMiter = 1.0f,
+                pathFillType = PathFillType.NonZero
+            ) {
+                moveTo(15.41f, 7.41f)
+                lineTo(14f, 6f)
+                lineToRelative(-6f, 6f)
+                lineToRelative(6f, 6f)
+                lineToRelative(1.41f, -1.41f)
+                lineTo(10.83f, 12f)
+                close()
+            }
+        }.build()
+    }
 }

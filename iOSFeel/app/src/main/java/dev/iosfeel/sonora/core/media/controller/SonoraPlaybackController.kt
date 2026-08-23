@@ -6,6 +6,7 @@ import androidx.media3.session.MediaController
 import dev.iosfeel.sonora.core.database.dao.HistoryDao
 import dev.iosfeel.sonora.core.database.entity.PlaybackHistoryEntity
 import dev.iosfeel.sonora.core.media.PlaybackController
+import dev.iosfeel.sonora.core.media.history.PlaybackHistoryTracker
 import dev.iosfeel.sonora.core.media.mapper.toMediaItem
 import dev.iosfeel.sonora.core.model.PlaybackState
 import dev.iosfeel.sonora.core.model.RepeatMode
@@ -27,7 +28,8 @@ import kotlinx.coroutines.launch
 
 class SonoraPlaybackController(
     private val connection: MediaControllerConnection,
-    private val historyDao: HistoryDao? = null
+    private val historyDao: HistoryDao? = null,
+    private val historyTracker: PlaybackHistoryTracker? = null
 ) : PlaybackController {
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
@@ -37,6 +39,7 @@ class SonoraPlaybackController(
     private var controller: MediaController? = null
     private var currentQueue: List<Song> = emptyList()
     private var positionJob: Job? = null
+    private var activeSongId: Long? = null
 
     private val playerListener = object : Player.Listener {
         override fun onEvents(player: Player, events: Player.Events) {
@@ -95,7 +98,11 @@ class SonoraPlaybackController(
         player.prepare()
         player.play()
 
+        activeSongId = song.id
         recordHistory(song.id)
+        scope.launch {
+            historyTracker?.onSongStarted(song)
+        }
     }
 
     override fun playQueue(songs: List<Song>, startIndex: Int) {
@@ -110,7 +117,14 @@ class SonoraPlaybackController(
         player.prepare()
         player.play()
 
-        songs.getOrNull(safeIndex)?.let { recordHistory(it.id) }
+        val startingSong = songs.getOrNull(safeIndex)
+        activeSongId = startingSong?.id
+        startingSong?.let { song ->
+            recordHistory(song.id)
+            scope.launch {
+                historyTracker?.onSongStarted(song)
+            }
+        }
     }
 
     override fun seekTo(positionMs: Long) {
@@ -125,37 +139,56 @@ class SonoraPlaybackController(
     }
 
     override fun seekToNext() {
-        controller?.seekToNextMediaItem()
+        controller?.let { player ->
+            if (player.hasNextMediaItem()) {
+                player.seekToNextMediaItem()
+            }
+        }
     }
 
     override fun seekToPrevious() {
-        val player = controller ?: return
-        if (player.currentPosition > 3000L) {
-            player.seekTo(0L)
-        } else {
-            player.seekToPreviousMediaItem()
+        controller?.let { player ->
+            // If more than 3 seconds in, restart current track
+            if (player.currentPosition > 3000L) {
+                player.seekTo(0L)
+            } else if (player.hasPreviousMediaItem()) {
+                player.seekToPreviousMediaItem()
+            } else {
+                player.seekTo(0L)
+            }
         }
     }
 
     override fun setShuffle(enabled: Boolean) {
         controller?.shuffleModeEnabled = enabled
+        _state.update { it.copy(shuffleEnabled = enabled) }
     }
 
     override fun setRepeatMode(mode: RepeatMode) {
         controller?.repeatMode = mode.toMedia3()
+        _state.update { it.copy(repeatMode = mode) }
     }
 
     override fun skipToQueueItem(index: Int) {
         val player = controller ?: return
-        if (index !in 0 until player.mediaItemCount) return
-        player.seekToDefaultPosition(index)
-        player.play()
+        if (index in 0 until player.mediaItemCount) {
+            player.seekTo(index, 0L)
+        }
     }
 
     private fun synchronizeState() {
         val player = controller ?: return
-        val queueIndex = player.currentMediaItemIndex
-        val currentSong = currentQueue.getOrNull(queueIndex)
+
+        val currentIndex = player.currentMediaItemIndex
+        val currentSong = currentQueue.getOrNull(currentIndex)
+
+        if (currentSong?.id != activeSongId && currentSong != null) {
+            activeSongId = currentSong.id
+            recordHistory(currentSong.id)
+            scope.launch {
+                historyTracker?.onSongStarted(currentSong)
+            }
+        }
 
         _state.update {
             it.copy(
@@ -163,18 +196,15 @@ class SonoraPlaybackController(
                 isPlaying = player.isPlaying,
                 isLoading = player.playbackState == Player.STATE_BUFFERING,
                 positionMs = player.currentPosition,
-                durationMs = player.duration.takeIf { d -> d > 0 } ?: currentSong?.durationMs ?: 0L,
+                durationMs = if (player.duration > 0) player.duration else (currentSong?.durationMs ?: 0L),
                 bufferedPositionMs = player.bufferedPosition,
                 queue = currentQueue,
-                currentQueueIndex = queueIndex,
+                currentQueueIndex = currentIndex,
                 shuffleEnabled = player.shuffleModeEnabled,
                 repeatMode = player.repeatMode.toDomainRepeatMode(),
-                playbackSpeed = player.playbackParameters.speed
+                playbackSpeed = player.playbackParameters.speed,
+                error = null
             )
-        }
-
-        if (currentSong != null) {
-            recordHistory(currentSong.id)
         }
     }
 
@@ -183,11 +213,16 @@ class SonoraPlaybackController(
         positionJob = scope.launch {
             while (isActive) {
                 controller?.let { player ->
+                    val pos = player.currentPosition
+                    val dur = player.duration
                     _state.update {
                         it.copy(
-                            positionMs = player.currentPosition,
+                            positionMs = pos,
                             bufferedPositionMs = player.bufferedPosition
                         )
+                    }
+                    activeSongId?.let { songId ->
+                        historyTracker?.onPositionUpdated(songId, pos, dur)
                     }
                 }
                 delay(250L)

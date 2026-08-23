@@ -56,6 +56,8 @@ import dev.iosfeel.sonora.feature.library.songs.SongList
 fun LibraryRoute(
     viewModel: LibraryViewModel,
     onSongClick: (Song) -> Unit = {},
+    onAlbumClick: (Album) -> Unit = {},
+    onArtistClick: (Artist) -> Unit = {},
     onPlayAlbum: (List<Song>) -> Unit = {},
     onShuffleAlbum: (List<Song>) -> Unit = {}
 ) {
@@ -95,9 +97,13 @@ fun LibraryRoute(
         },
         onSectionSelected = viewModel::selectSection,
         onSortSelected = viewModel::selectSort,
-        onAlbumSelected = viewModel::openAlbum,
+        onAlbumSelected = { album ->
+            onAlbumClick(album)
+        },
         onCloseAlbum = viewModel::closeAlbum,
-        onArtistSelected = viewModel::openArtist,
+        onArtistSelected = { artist ->
+            onArtistClick(artist)
+        },
         onCloseArtist = viewModel::closeArtist,
         onRefresh = viewModel::refresh,
         onSongClick = onSongClick,
@@ -131,27 +137,6 @@ fun LibraryScreen(
             IOSSegmentedItem(value = LibrarySection.Albums, label = "Albums"),
             IOSSegmentedItem(value = LibrarySection.Artists, label = "Artists")
         )
-    }
-
-    // Drilldown details
-    if (state.selectedAlbum != null) {
-        AlbumDetailScreen(
-            album = state.selectedAlbum,
-            onBackClick = onCloseAlbum,
-            onSongClick = onSongClick,
-            onPlayAlbum = onPlayAlbum,
-            onShuffleAlbum = onShuffleAlbum
-        )
-        return
-    }
-
-    if (state.selectedArtist != null) {
-        ArtistDetailScreen(
-            artist = state.selectedArtist,
-            onBackClick = onCloseArtist,
-            onAlbumClick = onAlbumSelected
-        )
-        return
     }
 
     Column(
@@ -226,21 +211,24 @@ fun LibraryScreen(
                             sort = state.songSort,
                             sortDirection = state.sortDirection,
                             onSortSelected = onSortSelected,
-                            onSongClick = onSongClick
+                            onSongClick = onSongClick,
+                            modifier = Modifier.fillMaxSize()
                         )
                     }
 
                     LibrarySection.Albums -> {
                         AlbumGrid(
                             albums = state.library.albums,
-                            onAlbumClick = onAlbumSelected
+                            onAlbumClick = onAlbumSelected,
+                            modifier = Modifier.fillMaxSize()
                         )
                     }
 
                     LibrarySection.Artists -> {
                         ArtistList(
                             artists = state.library.artists,
-                            onArtistClick = onArtistSelected
+                            onArtistClick = onArtistSelected,
+                            modifier = Modifier.fillMaxSize()
                         )
                     }
                 }
@@ -270,8 +258,8 @@ private fun PermissionRequestView(
             Box(
                 modifier = Modifier
                     .size(72.dp)
-                    .clip(RoundedCornerShape(36.dp))
-                    .background(colors.accent.copy(alpha = 0.12f)),
+                    .clip(RoundedCornerShape(20.dp))
+                    .background(colors.surfaceElevated),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
@@ -282,10 +270,10 @@ private fun PermissionRequestView(
                 )
             }
 
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
             Text(
-                text = "Access your music",
+                text = "Sonora Needs Access\nto Your Music",
                 style = typography.title2,
                 color = colors.textPrimary,
                 textAlign = TextAlign.Center
@@ -294,35 +282,35 @@ private fun PermissionRequestView(
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = "Sonora needs permission to read audio stored on this device.",
+                text = "Allow access to your device's audio files so Sonora can play your local tracks.",
                 style = typography.subheadline,
                 color = colors.textSecondary,
                 textAlign = TextAlign.Center
             )
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(32.dp))
 
             IOSButton(
-                text = "Allow Music Access",
+                text = "Allow Access",
                 onClick = onRequestPermission,
-                style = IOSButtonStyle.Filled
+                style = IOSButtonStyle.Filled,
+                modifier = Modifier.fillMaxWidth(0.75f)
             )
 
             Spacer(modifier = Modifier.height(12.dp))
 
             IOSButton(
-                text = "Open Settings",
+                text = "Open App Settings",
                 onClick = onOpenSettings,
-                style = IOSButtonStyle.Plain
+                style = IOSButtonStyle.Plain,
+                modifier = Modifier.fillMaxWidth(0.75f)
             )
         }
     }
 }
 
 @Composable
-private fun EmptyLibraryView(
-    onRefresh: () -> Unit
-) {
+private fun EmptyLibraryView(onRefresh: () -> Unit) {
     val colors = LocalSonoraColors.current
     val typography = LocalSonoraTypography.current
 
@@ -336,34 +324,25 @@ private fun EmptyLibraryView(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            Box(
-                modifier = Modifier
-                    .size(72.dp)
-                    .clip(RoundedCornerShape(36.dp))
-                    .background(colors.surfaceElevated),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = SonoraIcons.Folder,
-                    contentDescription = null,
-                    tint = colors.textTertiary,
-                    modifier = Modifier.size(36.dp)
-                )
-            }
+            Icon(
+                imageVector = SonoraIcons.Folder,
+                contentDescription = null,
+                tint = colors.textTertiary,
+                modifier = Modifier.size(48.dp)
+            )
 
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
             Text(
-                text = "No music found",
+                text = "No Music Found",
                 style = typography.title2,
-                color = colors.textPrimary,
-                textAlign = TextAlign.Center
+                color = colors.textPrimary
             )
 
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = "Audio files added to your device will automatically appear here.",
+                text = "Add audio files to your device storage to listen to them in Sonora.",
                 style = typography.subheadline,
                 color = colors.textSecondary,
                 textAlign = TextAlign.Center
@@ -372,7 +351,7 @@ private fun EmptyLibraryView(
             Spacer(modifier = Modifier.height(24.dp))
 
             IOSButton(
-                text = "Refresh Library",
+                text = "Scan Again",
                 onClick = onRefresh,
                 style = IOSButtonStyle.Tinted
             )
