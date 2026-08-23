@@ -29,8 +29,8 @@ fun ArtistList(
 
     IOSScrollableLazyColumn(
         modifier = modifier.fillMaxSize(),
-        topFadeHeight = 16.dp,
-        bottomFadeHeight = 84.dp
+        topFadeHeight = 20.dp,
+        bottomFadeHeight = 88.dp
     ) {
         item(key = "header") {
             Row(

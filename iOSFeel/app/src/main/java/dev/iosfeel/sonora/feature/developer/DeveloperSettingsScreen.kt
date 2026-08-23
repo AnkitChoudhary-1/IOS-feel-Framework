@@ -25,10 +25,13 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -45,33 +48,89 @@ import dev.iosfeel.material.IOSMaterialStyle
 import dev.iosfeel.material.IOSMaterialSurface
 import dev.iosfeel.material.rememberIOSBackdropState
 import dev.iosfeel.scroll.IOSScrollableLazyColumn
+import dev.iosfeel.sonora.core.datastore.DeveloperSettings
+import dev.iosfeel.sonora.core.datastore.SonoraPreferences
 import dev.iosfeel.sonora.core.design.LocalSonoraColors
 import dev.iosfeel.sonora.core.design.LocalSonoraTypography
 import dev.iosfeel.sonora.core.design.SonoraIcons
+import kotlinx.coroutines.launch
 
 @Composable
 fun DeveloperSettingsScreen(
+    preferences: SonoraPreferences,
     onBack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val colors = LocalSonoraColors.current
     val typography = LocalSonoraTypography.current
+    val scope = rememberCoroutineScope()
+
+    val savedSettings by preferences.developerSettings.collectAsState(initial = DeveloperSettings())
 
     // Live Blur Tuners
-    var blurRadius by remember { mutableFloatStateOf(24f) }
-    var tintAlpha by remember { mutableFloatStateOf(0.40f) }
-    var cornerRadius by remember { mutableFloatStateOf(24f) }
-    var borderStroke by remember { mutableFloatStateOf(0.5f) }
-    var borderAlpha by remember { mutableFloatStateOf(0.20f) }
-    var selectedStyle by remember { mutableStateOf(IOSMaterialStyle.Regular) }
-    var selectedTintColor by remember { mutableStateOf(Color.White) }
-    var backdropBlurEnabled by remember { mutableStateOf(true) }
+    var blurRadius by remember { mutableFloatStateOf(savedSettings.blurRadius) }
+    var tintAlpha by remember { mutableFloatStateOf(savedSettings.tintAlpha) }
+    var cornerRadius by remember { mutableFloatStateOf(savedSettings.cornerRadius) }
+    var borderStroke by remember { mutableFloatStateOf(savedSettings.borderStroke) }
+    var borderAlpha by remember { mutableFloatStateOf(savedSettings.borderAlpha) }
+    var selectedStyle by remember {
+        mutableStateOf(
+            try {
+                IOSMaterialStyle.valueOf(savedSettings.materialStyle)
+            } catch (_: Exception) {
+                IOSMaterialStyle.Regular
+            }
+        )
+    }
+    var selectedTintColor by remember { mutableStateOf(Color(savedSettings.tintColorArgb.toULong())) }
+    var backdropBlurEnabled by remember { mutableStateOf(savedSettings.backdropBlurEnabled) }
 
     // Motion Tuners
-    var playerStiffness by remember { mutableFloatStateOf(400f) }
-    var playerDamping by remember { mutableFloatStateOf(0.85f) }
-    var completionThreshold by remember { mutableFloatStateOf(0.38f) }
-    var velocityThreshold by remember { mutableFloatStateOf(900f) }
+    var playerStiffness by remember { mutableFloatStateOf(savedSettings.playerStiffness) }
+    var playerDamping by remember { mutableFloatStateOf(savedSettings.playerDamping) }
+    var completionThreshold by remember { mutableFloatStateOf(savedSettings.completionThreshold) }
+    var velocityThreshold by remember { mutableFloatStateOf(savedSettings.velocityThreshold) }
+
+    // Sync with saved settings when external changes/resets occur
+    LaunchedEffect(savedSettings) {
+        blurRadius = savedSettings.blurRadius
+        tintAlpha = savedSettings.tintAlpha
+        cornerRadius = savedSettings.cornerRadius
+        borderStroke = savedSettings.borderStroke
+        borderAlpha = savedSettings.borderAlpha
+        selectedStyle = try {
+            IOSMaterialStyle.valueOf(savedSettings.materialStyle)
+        } catch (_: Exception) {
+            IOSMaterialStyle.Regular
+        }
+        selectedTintColor = Color(savedSettings.tintColorArgb.toULong())
+        backdropBlurEnabled = savedSettings.backdropBlurEnabled
+        playerStiffness = savedSettings.playerStiffness
+        playerDamping = savedSettings.playerDamping
+        completionThreshold = savedSettings.completionThreshold
+        velocityThreshold = savedSettings.velocityThreshold
+    }
+
+    fun persist() {
+        scope.launch {
+            preferences.updateDeveloperSettings(
+                DeveloperSettings(
+                    blurRadius = blurRadius,
+                    tintAlpha = tintAlpha,
+                    cornerRadius = cornerRadius,
+                    borderStroke = borderStroke,
+                    borderAlpha = borderAlpha,
+                    materialStyle = selectedStyle.name,
+                    tintColorArgb = selectedTintColor.value.toLong(),
+                    backdropBlurEnabled = backdropBlurEnabled,
+                    playerStiffness = playerStiffness,
+                    playerDamping = playerDamping,
+                    completionThreshold = completionThreshold,
+                    velocityThreshold = velocityThreshold
+                )
+            )
+        }
+    }
 
     val backdropState = rememberIOSBackdropState()
 
@@ -91,8 +150,8 @@ fun DeveloperSettingsScreen(
                     .fillMaxSize()
                     .statusBarsPadding()
                     .padding(horizontal = 20.dp),
-                topFadeHeight = 16.dp,
-                bottomFadeHeight = 32.dp
+                topFadeHeight = 20.dp,
+                bottomFadeHeight = 36.dp
             ) {
                 item {
                     Spacer(modifier = Modifier.height(12.dp))
@@ -128,17 +187,17 @@ fun DeveloperSettingsScreen(
                     Spacer(modifier = Modifier.height(6.dp))
 
                     Text(
-                        text = "Real-time blur calibration playground and motion physics tuning.",
-                        style = typography.subhead.copy(color = colors.textSecondary)
+                        text = "Interactive playground for iOS glass material shaders, springs, and gesture mechanics.",
+                        style = typography.subheadline.copy(color = colors.textSecondary)
                     )
 
                     Spacer(modifier = Modifier.height(20.dp))
                 }
 
-                // 1. LIVE BLUR PREVIEW PLAYGROUND
+                // 1. LIVE BLUR & GLASS INTERACTIVE PREVIEW
                 item {
                     Text(
-                        text = "LIVE BLUR PLAYGROUND",
+                        text = "LIVE MATERIAL PREVIEW",
                         style = typography.caption1.copy(
                             color = colors.textTertiary,
                             fontWeight = FontWeight.SemiBold,
@@ -148,116 +207,87 @@ fun DeveloperSettingsScreen(
 
                     Spacer(modifier = Modifier.height(10.dp))
 
-                    // Colorful Graphic Canvas for live blur verification
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(200.dp)
-                            .clip(RoundedCornerShape(20.dp))
-                            .background(
-                                Brush.linearGradient(
-                                    listOf(
-                                        Color(0xFF1B1B3A),
-                                        Color(0xFF0F0C29),
-                                        Color(0xFF24243E)
-                                    )
-                                )
-                            ),
+                            .height(220.dp)
+                            .clip(RoundedCornerShape(24.dp))
+                            .background(Color(0xFF0F141C)),
                         contentAlignment = Alignment.Center
                     ) {
-                        // Vibrant geometric decorative objects in background
+                        // Vibrant colorful geometric background to prove backdrop blur
                         Box(
                             modifier = Modifier
-                                .align(Alignment.TopStart)
-                                .padding(top = 16.dp, start = 20.dp)
-                                .size(90.dp)
-                                .clip(CircleShape)
+                                .fillMaxSize()
                                 .background(
                                     Brush.radialGradient(
-                                        listOf(Color(0xFFFF007F), Color(0xFFFF5252))
+                                        colors = listOf(
+                                            Color(0xFFFF2D55),
+                                            Color(0xFFAF52DE),
+                                            Color(0xFF007AFF),
+                                            Color(0xFF5856D6),
+                                            Color.Transparent
+                                        ),
+                                        radius = 450f
                                     )
                                 )
                         )
 
-                        Box(
-                            modifier = Modifier
-                                .align(Alignment.BottomEnd)
-                                .padding(bottom = 16.dp, end = 24.dp)
-                                .size(110.dp)
-                                .clip(CircleShape)
-                                .background(
-                                    Brush.radialGradient(
-                                        listOf(Color(0xFF00E5FF), Color(0xFF007AFF))
-                                    )
-                                )
-                        )
-
-                        Box(
-                            modifier = Modifier
-                                .align(Alignment.Center)
-                                .size(80.dp)
-                                .clip(RoundedCornerShape(16.dp))
-                                .background(
-                                    Brush.linearGradient(
-                                        listOf(Color(0xFFFFD600), Color(0xFFFF9100))
-                                    )
-                                )
-                        )
-
-                        Text(
-                            text = "iOSFeel Sonora Engine",
-                            fontSize = 20.sp,
-                            fontWeight = FontWeight.Black,
-                            color = Color.White.copy(alpha = 0.25f),
-                            modifier = Modifier.align(Alignment.BottomStart).padding(16.dp)
-                        )
-
-                        // Floating Frosted Glass Card under Test
-                        val previewConfig = IOSMaterialConfig(
+                        // Floating dynamic glass sample card
+                        val effectiveConfig = IOSMaterialConfig(
                             style = selectedStyle,
+                            cornerRadius = cornerRadius.dp,
+                            tint = selectedTintColor.copy(alpha = tintAlpha),
+                            borderColor = Color.White.copy(alpha = borderAlpha),
+                            borderStroke = borderStroke.dp,
                             customBlurRadius = blurRadius.dp,
                             customTintAlpha = tintAlpha,
-                            tint = selectedTintColor.copy(alpha = tintAlpha),
-                            cornerRadius = cornerRadius.dp,
-                            borderStroke = borderStroke.dp,
-                            borderColor = Color.White.copy(alpha = borderAlpha),
                             enabled = backdropBlurEnabled
                         )
 
-                        Box(
+                        IOSMaterialSurface(
+                            config = effectiveConfig,
+                            backdrop = if (backdropBlurEnabled) backdropState else null,
                             modifier = Modifier
                                 .fillMaxWidth(0.88f)
+                                .height(115.dp)
                                 .shadow(
                                     elevation = 16.dp,
                                     shape = RoundedCornerShape(cornerRadius.dp),
-                                    spotColor = Color.Black.copy(alpha = 0.4f)
+                                    spotColor = Color.Black.copy(alpha = 0.35f)
                                 )
                         ) {
-                            IOSMaterialSurface(
-                                backdrop = if (backdropBlurEnabled) backdropState else null,
-                                config = previewConfig,
-                                modifier = Modifier.fillMaxWidth()
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(16.dp),
+                                contentAlignment = Alignment.Center
                             ) {
                                 Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(horizontal = 16.dp, vertical = 14.dp),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
+                                    modifier = Modifier.fillMaxWidth(),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.SpaceBetween
                                 ) {
                                     Row(verticalAlignment = Alignment.CenterVertically) {
                                         Box(
                                             modifier = Modifier
-                                                .size(40.dp)
-                                                .clip(RoundedCornerShape(10.dp))
-                                                .background(Color(0xFFFF2D55)),
+                                                .size(46.dp)
+                                                .clip(RoundedCornerShape(12.dp))
+                                                .background(
+                                                    Brush.linearGradient(
+                                                        listOf(
+                                                            Color(0xFFFF375F),
+                                                            Color(0xFFFF9F0A)
+                                                        )
+                                                    )
+                                                ),
                                             contentAlignment = Alignment.Center
                                         ) {
                                             Icon(
-                                                imageVector = SonoraIcons.Play,
+                                                imageVector = SonoraIcons.MusicNote,
                                                 contentDescription = null,
                                                 tint = Color.White,
-                                                modifier = Modifier.size(20.dp)
+                                                modifier = Modifier.size(24.dp)
                                             )
                                         }
 
@@ -266,7 +296,7 @@ fun DeveloperSettingsScreen(
                                         Column {
                                             Text(
                                                 text = "Blinding Lights",
-                                                fontWeight = FontWeight.SemiBold,
+                                                fontWeight = FontWeight.Bold,
                                                 fontSize = 14.sp,
                                                 color = colors.textPrimary
                                             )
@@ -295,7 +325,7 @@ fun DeveloperSettingsScreen(
                 // 2. ADVANCED BLUR CONTROLLER CONTROLS
                 item {
                     Text(
-                        text = "ADVANCED BLUR CONTROLS",
+                        text = "ADVANCED BLUR CONTROLLER",
                         style = typography.caption1.copy(
                             color = colors.textTertiary,
                             fontWeight = FontWeight.SemiBold,
@@ -308,7 +338,7 @@ fun DeveloperSettingsScreen(
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clip(RoundedCornerShape(14.dp))
+                            .clip(RoundedCornerShape(16.dp))
                             .background(colors.surface)
                             .padding(16.dp)
                     ) {
@@ -319,68 +349,137 @@ fun DeveloperSettingsScreen(
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Text(
-                                    text = "Live Backdrop Blur",
-                                    style = typography.body.copy(color = colors.textPrimary)
-                                )
+                                Column {
+                                    Text(
+                                        text = "Backdrop Frosted Blur",
+                                        style = typography.body.copy(color = colors.textPrimary)
+                                    )
+                                    Text(
+                                        text = "Hardware RenderEffect real-time sampler",
+                                        style = typography.footnote.copy(color = colors.textSecondary)
+                                    )
+                                }
+
                                 Switch(
                                     checked = backdropBlurEnabled,
-                                    onCheckedChange = { backdropBlurEnabled = it },
-                                    colors = SwitchDefaults.colors(
-                                        checkedThumbColor = Color.White,
-                                        checkedTrackColor = colors.accent
-                                    )
+                                    onCheckedChange = {
+                                        backdropBlurEnabled = it
+                                        persist()
+                                    },
+                                    colors = SwitchDefaults.colors(checkedThumbColor = Color.White)
                                 )
                             }
 
                             Spacer(modifier = Modifier.height(16.dp))
 
+                            // Material Style Selector
+                            Text(
+                                text = "Material Style Preset",
+                                style = typography.body.copy(color = colors.textPrimary)
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                val styles = listOf(
+                                    IOSMaterialStyle.UltraThin,
+                                    IOSMaterialStyle.Thin,
+                                    IOSMaterialStyle.Regular,
+                                    IOSMaterialStyle.Thick
+                                )
+                                styles.forEach { style ->
+                                    val isSelected = selectedStyle == style
+                                    Box(
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .clip(RoundedCornerShape(8.dp))
+                                            .background(if (isSelected) colors.accent else colors.surfaceSecondary)
+                                            .clickable {
+                                                selectedStyle = style
+                                                persist()
+                                            }
+                                            .padding(vertical = 8.dp),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Text(
+                                            text = style.name.take(4),
+                                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                                            fontSize = 11.sp,
+                                            color = if (isSelected) Color.White else colors.textPrimary
+                                        )
+                                    }
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.height(16.dp))
+
+                            // Blur Radius Slider
                             TuningSlider(
                                 title = "Blur Radius",
                                 value = blurRadius,
-                                valueRange = 0f..60f,
+                                valueRange = 0f..80f,
                                 valueLabel = "${blurRadius.toInt()} dp",
-                                onValueChange = { blurRadius = it }
+                                onValueChange = {
+                                    blurRadius = it
+                                    persist()
+                                }
                             )
 
                             Spacer(modifier = Modifier.height(16.dp))
 
+                            // Tint Opacity Slider
                             TuningSlider(
                                 title = "Tint Opacity",
                                 value = tintAlpha,
                                 valueRange = 0f..1f,
                                 valueLabel = "${(tintAlpha * 100).toInt()}%",
-                                onValueChange = { tintAlpha = it }
+                                onValueChange = {
+                                    tintAlpha = it
+                                    persist()
+                                }
                             )
 
                             Spacer(modifier = Modifier.height(16.dp))
 
+                            // Corner Radius Slider
                             TuningSlider(
                                 title = "Corner Radius",
                                 value = cornerRadius,
                                 valueRange = 0f..40f,
                                 valueLabel = "${cornerRadius.toInt()} dp",
-                                onValueChange = { cornerRadius = it }
+                                onValueChange = {
+                                    cornerRadius = it
+                                    persist()
+                                }
                             )
 
                             Spacer(modifier = Modifier.height(16.dp))
 
+                            // Border Stroke Slider
                             TuningSlider(
-                                title = "Border Separator Stroke",
+                                title = "Border Width",
                                 value = borderStroke,
                                 valueRange = 0f..3f,
                                 valueLabel = "%.1f dp".format(borderStroke),
-                                onValueChange = { borderStroke = it }
+                                onValueChange = {
+                                    borderStroke = it
+                                    persist()
+                                }
                             )
 
                             Spacer(modifier = Modifier.height(16.dp))
 
+                            // Border Alpha Slider
                             TuningSlider(
-                                title = "Border Separator Alpha",
+                                title = "Border Opacity",
                                 value = borderAlpha,
                                 valueRange = 0f..1f,
                                 valueLabel = "${(borderAlpha * 100).toInt()}%",
-                                onValueChange = { borderAlpha = it }
+                                onValueChange = {
+                                    borderAlpha = it
+                                    persist()
+                                }
                             )
 
                             Spacer(modifier = Modifier.height(16.dp))
@@ -414,7 +513,10 @@ fun DeveloperSettingsScreen(
                                                 color = if (isSelected) colors.accent else Color.Gray.copy(alpha = 0.3f),
                                                 shape = CircleShape
                                             )
-                                            .clickable { selectedTintColor = paletteColor }
+                                            .clickable {
+                                                selectedTintColor = paletteColor
+                                                persist()
+                                            }
                                     )
                                 }
                             }
@@ -428,14 +530,9 @@ fun DeveloperSettingsScreen(
                                     .clip(RoundedCornerShape(10.dp))
                                     .background(colors.surfaceSecondary)
                                     .clickable {
-                                        blurRadius = 24f
-                                        tintAlpha = 0.40f
-                                        cornerRadius = 24f
-                                        borderStroke = 0.5f
-                                        borderAlpha = 0.20f
-                                        selectedTintColor = Color.White
-                                        selectedStyle = IOSMaterialStyle.Regular
-                                        backdropBlurEnabled = true
+                                        scope.launch {
+                                            preferences.resetDeveloperSettings()
+                                        }
                                     }
                                     .padding(vertical = 10.dp),
                                 contentAlignment = Alignment.Center
@@ -469,7 +566,7 @@ fun DeveloperSettingsScreen(
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clip(RoundedCornerShape(14.dp))
+                            .clip(RoundedCornerShape(16.dp))
                             .background(colors.surface)
                             .padding(16.dp)
                     ) {
@@ -478,18 +575,24 @@ fun DeveloperSettingsScreen(
                                 title = "Spring Stiffness",
                                 value = playerStiffness,
                                 valueRange = 100f..1000f,
-                                valueLabel = "${playerStiffness.toInt()}",
-                                onValueChange = { playerStiffness = it }
+                                valueLabel = "${playerStiffness.toInt()} f",
+                                onValueChange = {
+                                    playerStiffness = it
+                                    persist()
+                                }
                             )
 
                             Spacer(modifier = Modifier.height(16.dp))
 
                             TuningSlider(
-                                title = "Spring Damping Ratio",
+                                title = "Damping Ratio",
                                 value = playerDamping,
                                 valueRange = 0.3f..1.2f,
                                 valueLabel = "%.2f".format(playerDamping),
-                                onValueChange = { playerDamping = it }
+                                onValueChange = {
+                                    playerDamping = it
+                                    persist()
+                                }
                             )
 
                             Spacer(modifier = Modifier.height(16.dp))
@@ -499,7 +602,10 @@ fun DeveloperSettingsScreen(
                                 value = completionThreshold,
                                 valueRange = 0.1f..0.8f,
                                 valueLabel = "${(completionThreshold * 100).toInt()}%",
-                                onValueChange = { completionThreshold = it }
+                                onValueChange = {
+                                    completionThreshold = it
+                                    persist()
+                                }
                             )
 
                             Spacer(modifier = Modifier.height(16.dp))
@@ -509,7 +615,10 @@ fun DeveloperSettingsScreen(
                                 value = velocityThreshold,
                                 valueRange = 300f..2500f,
                                 valueLabel = "${velocityThreshold.toInt()} px/s",
-                                onValueChange = { velocityThreshold = it }
+                                onValueChange = {
+                                    velocityThreshold = it
+                                    persist()
+                                }
                             )
                         }
                     }
@@ -544,7 +653,7 @@ private fun TuningSlider(
             )
             Text(
                 text = valueLabel,
-                style = typography.subhead.copy(
+                style = typography.subheadline.copy(
                     color = colors.accent,
                     fontWeight = FontWeight.SemiBold,
                     fontSize = 13.sp

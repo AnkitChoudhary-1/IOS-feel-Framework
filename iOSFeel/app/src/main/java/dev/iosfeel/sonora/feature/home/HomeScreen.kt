@@ -65,8 +65,8 @@ fun HomeScreen(
 
     IOSScrollableLazyColumn(
         state = listState,
-        topFadeHeight = 16.dp,
-        bottomFadeHeight = 84.dp,
+        topFadeHeight = 20.dp,
+        bottomFadeHeight = 88.dp,
         modifier = modifier
             .fillMaxSize()
             .background(colors.background)

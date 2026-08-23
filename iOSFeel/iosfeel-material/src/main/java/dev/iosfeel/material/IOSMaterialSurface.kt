@@ -7,6 +7,7 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -22,6 +23,8 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.unit.dp
 
+val LocalIOSMaterialOverride = compositionLocalOf<IOSMaterialConfig?> { null }
+
 @Composable
 fun IOSMaterialSurface(
     modifier: Modifier = Modifier,
@@ -30,23 +33,40 @@ fun IOSMaterialSurface(
     darkTheme: Boolean = isSystemInDarkTheme(),
     content: @Composable () -> Unit
 ) {
-    if (!config.enabled) {
+    val override = LocalIOSMaterialOverride.current
+    val effectiveConfig = remember(config, override) {
+        if (override != null) {
+            config.copy(
+                style = override.style,
+                customBlurRadius = override.customBlurRadius ?: config.customBlurRadius,
+                customTintAlpha = override.customTintAlpha ?: config.customTintAlpha,
+                tint = override.tint ?: config.tint,
+                borderColor = override.borderColor ?: config.borderColor,
+                borderStroke = if (override.borderStroke != 0.5.dp) override.borderStroke else config.borderStroke,
+                enabled = override.enabled && config.enabled
+            )
+        } else {
+            config
+        }
+    }
+
+    if (!effectiveConfig.enabled) {
         Box(modifier = modifier) { content() }
         return
     }
 
-    val resolved = remember(config.style) { resolveIOSMaterial(config.style) }
-    val shape = remember(config.cornerRadius) { RoundedCornerShape(config.cornerRadius) }
-    val effectiveBlurRadius = config.customBlurRadius ?: resolved.blurRadius
-    val effectiveTintAlpha = config.customTintAlpha ?: resolved.tintAlpha
+    val resolved = remember(effectiveConfig.style) { resolveIOSMaterial(effectiveConfig.style) }
+    val shape = remember(effectiveConfig.cornerRadius) { RoundedCornerShape(effectiveConfig.cornerRadius) }
+    val effectiveBlurRadius = effectiveConfig.customBlurRadius ?: resolved.blurRadius
+    val effectiveTintAlpha = effectiveConfig.customTintAlpha ?: resolved.tintAlpha
 
-    val tintColor = config.tint ?: if (darkTheme) {
+    val tintColor = effectiveConfig.tint ?: if (darkTheme) {
         IOSBlurDefaults.DarkTint.copy(alpha = if (Build.VERSION.SDK_INT >= 31) effectiveTintAlpha else 0.85f)
     } else {
         IOSBlurDefaults.LightTint.copy(alpha = if (Build.VERSION.SDK_INT >= 31) effectiveTintAlpha else 0.85f)
     }
 
-    val borderColor = config.borderColor ?: if (darkTheme) {
+    val borderColor = effectiveConfig.borderColor ?: if (darkTheme) {
         IOSBlurDefaults.DarkBorder
     } else {
         IOSBlurDefaults.LightBorder
@@ -63,7 +83,7 @@ fun IOSMaterialSurface(
         }
         .clip(shape)
         .border(
-            width = config.borderStroke,
+            width = effectiveConfig.borderStroke,
             color = borderColor,
             shape = shape
         )

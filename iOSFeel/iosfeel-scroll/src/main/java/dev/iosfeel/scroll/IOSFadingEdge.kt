@@ -97,11 +97,11 @@ fun Modifier.iosFadingEdge(
 }
 
 fun Modifier.iosVerticalFade(
-    top: Dp = 20.dp,
-    bottom: Dp = 32.dp
+    top: Dp = 24.dp,
+    bottom: Dp = 36.dp
 ): Modifier = iosFadingEdge(top = top, bottom = bottom)
 
 fun Modifier.iosHorizontalFade(
-    start: Dp = 16.dp,
-    end: Dp = 16.dp
+    start: Dp = 20.dp,
+    end: Dp = 20.dp
 ): Modifier = iosFadingEdge(start = start, end = end)

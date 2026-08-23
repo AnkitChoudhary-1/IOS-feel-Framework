@@ -15,16 +15,24 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
+import androidx.compose.runtime.CompositionLocalProvider
+import dev.iosfeel.components.expandable.IOSExpandableSurfaceConfig
 import dev.iosfeel.components.expandable.rememberIOSExpandableSurfaceState
 import dev.iosfeel.components.floatingbar.IOSFloatingTabBar
 import dev.iosfeel.components.floatingbar.IOSFloatingTabItem
 import dev.iosfeel.material.IOSBackdropLayout
 import dev.iosfeel.material.IOSBackdropState
+import dev.iosfeel.material.IOSMaterialConfig
+import dev.iosfeel.material.IOSMaterialStyle
+import dev.iosfeel.material.LocalIOSMaterialOverride
 import dev.iosfeel.material.rememberIOSBackdropState
+import dev.iosfeel.motion.IOSSpringSpec
 import dev.iosfeel.navigation.IOSNavigationEntry
 import dev.iosfeel.navigation.IOSNavigationStack
 import dev.iosfeel.navigation.IOSNavigationState
 import dev.iosfeel.navigation.rememberIOSNavigationState
+import dev.iosfeel.sonora.core.datastore.DeveloperSettings
+import dev.iosfeel.sonora.core.datastore.LocalDeveloperSettings
 import dev.iosfeel.sonora.core.design.LocalSonoraColors
 import dev.iosfeel.sonora.core.di.SonoraContainer
 import dev.iosfeel.sonora.core.media.controller.SonoraPlaybackController
@@ -53,6 +61,24 @@ fun SonoraNavigationShell(
     var currentTab by remember { mutableStateOf(SonoraTab.Home) }
     var inDeveloperLab by remember { mutableStateOf(false) }
 
+    val devSettings by container.preferences.developerSettings.collectAsState(initial = DeveloperSettings())
+
+    val materialOverride = remember(devSettings) {
+        IOSMaterialConfig(
+            style = try {
+                IOSMaterialStyle.valueOf(devSettings.materialStyle)
+            } catch (_: Exception) {
+                IOSMaterialStyle.Regular
+            },
+            customBlurRadius = devSettings.blurRadius.dp,
+            customTintAlpha = devSettings.tintAlpha,
+            tint = androidx.compose.ui.graphics.Color(devSettings.tintColorArgb.toULong()).copy(alpha = devSettings.tintAlpha),
+            borderColor = androidx.compose.ui.graphics.Color.White.copy(alpha = devSettings.borderAlpha),
+            borderStroke = devSettings.borderStroke.dp,
+            enabled = devSettings.backdropBlurEnabled
+        )
+    }
+
     val homeViewModel = remember {
         HomeViewModel(
             musicRepository = container.musicRepository,
@@ -69,7 +95,18 @@ fun SonoraNavigationShell(
     val playbackController = container.playbackController
     val playbackState by playbackController.state.collectAsState()
 
-    val playerExpansionState = rememberIOSExpandableSurfaceState()
+    val playerExpansionConfig = remember(devSettings) {
+        IOSExpandableSurfaceConfig(
+            expansionThreshold = devSettings.completionThreshold,
+            velocityThreshold = devSettings.velocityThreshold / 1000f,
+            springSpec = IOSSpringSpec(
+                stiffness = devSettings.playerStiffness,
+                dampingRatio = devSettings.playerDamping
+            )
+        )
+    }
+
+    val playerExpansionState = rememberIOSExpandableSurfaceState(config = playerExpansionConfig)
 
     LaunchedEffect(Unit) {
         (playbackController as? SonoraPlaybackController)?.connect()
@@ -144,9 +181,16 @@ fun SonoraNavigationShell(
         )
     }
 
-    if (inDeveloperLab) {
-        DeveloperSettingsScreen(onBack = { inDeveloperLab = false })
-    } else {
+    CompositionLocalProvider(
+        LocalIOSMaterialOverride provides materialOverride,
+        LocalDeveloperSettings provides devSettings
+    ) {
+        if (inDeveloperLab) {
+            DeveloperSettingsScreen(
+                preferences = container.preferences,
+                onBack = { inDeveloperLab = false }
+            )
+        } else {
         IOSBackdropLayout(
             state = backdropState,
             modifier = modifier.fillMaxSize(),
@@ -353,6 +397,7 @@ fun SonoraNavigationShell(
             }
         )
     }
+}
 }
 
 @Composable

@@ -55,8 +55,8 @@ fun HomeArtistsSection(
         IOSScrollableLazyRow(
             contentPadding = PaddingValues(horizontal = 16.dp),
             horizontalArrangement = Arrangement.spacedBy(16.dp),
-            startFadeWidth = 12.dp,
-            endFadeWidth = 12.dp
+            startFadeWidth = 16.dp,
+            endFadeWidth = 16.dp
         ) {
             items(artists, key = { it.id }) { artist ->
                 val representativeAlbum = artist.albums.firstOrNull()

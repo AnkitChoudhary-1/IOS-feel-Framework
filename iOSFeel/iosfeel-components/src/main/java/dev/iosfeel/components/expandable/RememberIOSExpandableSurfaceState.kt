@@ -8,7 +8,7 @@ fun rememberIOSExpandableSurfaceState(
     initialProgress: Float = 0f,
     config: IOSExpandableSurfaceConfig = IOSExpandableSurfaceConfig()
 ): IOSExpandableSurfaceState {
-    return remember {
+    return remember(config) {
         IOSExpandableSurfaceState(
             initialProgress = initialProgress,
             config = config

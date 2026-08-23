@@ -96,8 +96,8 @@ fun ArtistScreen(
     ) {
         IOSScrollableLazyColumn(
             state = listState,
-            topFadeHeight = 16.dp,
-            bottomFadeHeight = 64.dp,
+            topFadeHeight = 20.dp,
+            bottomFadeHeight = 68.dp,
             modifier = Modifier.fillMaxSize()
         ) {
             item {

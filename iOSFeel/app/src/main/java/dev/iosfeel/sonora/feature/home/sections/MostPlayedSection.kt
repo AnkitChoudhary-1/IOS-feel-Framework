@@ -47,8 +47,8 @@ fun MostPlayedSection(
         IOSScrollableLazyRow(
             contentPadding = PaddingValues(horizontal = 16.dp),
             horizontalArrangement = Arrangement.spacedBy(14.dp),
-            startFadeWidth = 12.dp,
-            endFadeWidth = 12.dp
+            startFadeWidth = 16.dp,
+            endFadeWidth = 16.dp
         ) {
             items(songs, key = { it.id }) { song ->
                 MostPlayedItem(
