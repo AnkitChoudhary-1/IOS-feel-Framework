@@ -181,7 +181,8 @@ fun SonoraNavigationShell(
                                     },
                                     libraryViewModel = libraryViewModel,
                                     container = container,
-                                    onOpenDeveloperSettings = { inDeveloperLab = true }
+                                    onOpenDeveloperSettings = { inDeveloperLab = true },
+                                    onNavigateToLibrary = { currentTab = SonoraTab.Library }
                                 )
                             }
                         }
@@ -210,7 +211,8 @@ fun SonoraNavigationShell(
                                     },
                                     libraryViewModel = libraryViewModel,
                                     container = container,
-                                    onOpenDeveloperSettings = { inDeveloperLab = true }
+                                    onOpenDeveloperSettings = { inDeveloperLab = true },
+                                    onNavigateToLibrary = { currentTab = SonoraTab.Library }
                                 )
                             }
                         }
@@ -239,7 +241,8 @@ fun SonoraNavigationShell(
                                     },
                                     libraryViewModel = libraryViewModel,
                                     container = container,
-                                    onOpenDeveloperSettings = { inDeveloperLab = true }
+                                    onOpenDeveloperSettings = { inDeveloperLab = true },
+                                    onNavigateToLibrary = { currentTab = SonoraTab.Library }
                                 )
                             }
                         }
@@ -268,7 +271,8 @@ fun SonoraNavigationShell(
                                     },
                                     libraryViewModel = libraryViewModel,
                                     container = container,
-                                    onOpenDeveloperSettings = { inDeveloperLab = true }
+                                    onOpenDeveloperSettings = { inDeveloperLab = true },
+                                    onNavigateToLibrary = { currentTab = SonoraTab.Library }
                                 )
                             }
                         }
@@ -361,7 +365,8 @@ private fun RenderDestination(
     onShuffleAll: (List<dev.iosfeel.sonora.core.model.Song>) -> Unit,
     libraryViewModel: LibraryViewModel,
     container: SonoraContainer,
-    onOpenDeveloperSettings: () -> Unit
+    onOpenDeveloperSettings: () -> Unit,
+    onNavigateToLibrary: () -> Unit
 ) {
     val route = entry.route
 
@@ -377,7 +382,16 @@ private fun RenderDestination(
                         )
                     )
                 },
-                onSongClick = onSongClick
+                onArtistClick = { artist ->
+                    navState.push(
+                        IOSNavigationEntry(
+                            key = "artist_${artist.id}_${System.currentTimeMillis()}",
+                            route = "artist/${artist.id}"
+                        )
+                    )
+                },
+                onSongClick = onSongClick,
+                onNavigateToLibrary = onNavigateToLibrary
             )
         }
 

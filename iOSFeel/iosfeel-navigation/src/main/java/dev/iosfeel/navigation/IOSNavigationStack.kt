@@ -55,6 +55,18 @@ fun IOSNavigationStack(
     val backTransforms = calculateIOSBackTransform(backProgress)
     val pushTransforms = calculateIOSPushTransform(pushProgress)
 
+    var previousEntriesSize by remember { mutableStateOf(state.size) }
+    var previousCurrentKey by remember { mutableStateOf(state.current.key) }
+
+    LaunchedEffect(state.current.key, state.size) {
+        if (state.size > previousEntriesSize && state.current.key != previousCurrentKey) {
+            pushTransition.prepare()
+            pushTransition.animate()
+        }
+        previousEntriesSize = state.size
+        previousCurrentKey = state.current.key
+    }
+
     val gesture = rememberIOSGestureState()
     val haptics = rememberIOSHaptics()
 

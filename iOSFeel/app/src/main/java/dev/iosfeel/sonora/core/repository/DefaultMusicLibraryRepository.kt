@@ -29,13 +29,14 @@ class DefaultMusicLibraryRepository(
         )
     }
 
-    override fun observeLibrary(): Flow<MusicLibrary> {
-        return if (contentResolver != null) {
+    override fun observeLibrary(): Flow<MusicLibrary> = flow {
+        emit(loadLibrary())
+        if (contentResolver != null) {
             contentResolver.observeMusicChanges()
                 .debounce(750)
-                .map { loadLibrary() }
-        } else {
-            flow { emit(loadLibrary()) }
+                .collect {
+                    emit(loadLibrary())
+                }
         }
     }
 

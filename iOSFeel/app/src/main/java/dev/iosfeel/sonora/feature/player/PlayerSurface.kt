@@ -3,7 +3,8 @@ package dev.iosfeel.sonora.feature.player
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectVerticalDragGestures
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxSize
@@ -18,8 +19,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.util.VelocityTracker
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.lerp
@@ -30,6 +31,7 @@ import dev.iosfeel.sonora.core.model.PlaybackState
 import dev.iosfeel.sonora.feature.player.mini.MiniPlayer
 import dev.iosfeel.sonora.feature.player.nowplaying.NowPlayingContent
 import kotlinx.coroutines.launch
+import kotlin.math.abs
 
 @Composable
 fun PlayerSurface(
@@ -89,41 +91,54 @@ fun PlayerSurface(
                 )
                 .clip(RoundedCornerShape(cornerRadius))
                 .background(surfaceColor)
-                .clickable(enabled = progress < 0.1f) {
+                .clickable(enabled = progress < 0.08f) {
                     scope.launch {
                         expansionState.expand()
                     }
                 }
                 .pointerInput(expandableDistancePx) {
-                    detectVerticalDragGestures(
-                        onDragStart = {
-                            scope.launch {
-                                expansionState.beginDrag()
+                    val velocityTracker = VelocityTracker()
+                    awaitEachGesture {
+                        val down = awaitFirstDown(requireUnconsumed = false)
+                        velocityTracker.resetTracking()
+                        velocityTracker.addPosition(down.uptimeMillis, down.position)
+
+                        scope.launch {
+                            expansionState.beginDrag()
+                        }
+
+                        val pointerId = down.id
+                        var lastY = down.position.y
+
+                        while (true) {
+                            val event = awaitPointerEvent()
+                            val change = event.changes.firstOrNull { it.id == pointerId } ?: break
+
+                            if (!change.pressed) {
+                                val velocityY = velocityTracker.calculateVelocity().y
+                                val normalizedVelocity = -velocityY / expandableDistancePx
+                                scope.launch {
+                                    expansionState.settle(velocity = normalizedVelocity)
+                                }
+                                break
                             }
-                        },
-                        onDragEnd = {
-                            scope.launch {
-                                val currentVelocity = expansionState.velocity
-                                val normalizedVelocity = currentVelocity / expandableDistancePx
-                                expansionState.settle(velocity = normalizedVelocity)
-                            }
-                        },
-                        onDragCancel = {
-                            scope.launch {
-                                expansionState.settle(velocity = 0f)
-                            }
-                        },
-                        onVerticalDrag = { change, dragAmount ->
-                            change.consume()
-                            val deltaProgress = -dragAmount / expandableDistancePx
-                            scope.launch {
-                                expansionState.dragBy(
-                                    deltaProgress = deltaProgress,
-                                    velocity = -dragAmount
-                                )
+
+                            val currentY = change.position.y
+                            val dragDeltaY = currentY - lastY
+
+                            if (abs(dragDeltaY) > 0.3f) {
+                                velocityTracker.addPosition(change.uptimeMillis, change.position)
+                                val deltaProgress = -dragDeltaY / expandableDistancePx
+                                scope.launch {
+                                    expansionState.dragBy(
+                                        deltaProgress = deltaProgress,
+                                        velocity = -dragDeltaY
+                                    )
+                                }
+                                lastY = currentY
                             }
                         }
-                    )
+                    }
                 }
         ) {
             // Mini Player view

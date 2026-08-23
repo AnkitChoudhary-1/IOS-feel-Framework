@@ -19,7 +19,7 @@ class HomeViewModel(
     private val historyRepository: PlaybackHistoryRepository
 ) : ViewModel() {
 
-    private val _state = MutableStateFlow(HomeUiState())
+    private val _state = MutableStateFlow(HomeUiState(loading = true))
     val state: StateFlow<HomeUiState> = _state.asStateFlow()
 
     init {
@@ -35,12 +35,18 @@ class HomeViewModel(
                     .sortedByDescending { it.dateAddedSeconds }
                     .take(12)
 
+                // Quick picks from library (first 10 songs or shuffled representation)
+                val quickPicks = library.songs.take(10)
+                val featuredAlbums = library.albums.take(10)
+
                 HomeUiState(
                     loading = false,
                     recentlyPlayed = recentlyPlayedSongs,
                     recentlyAdded = recentlyAddedAlbums,
                     mostPlayed = mostPlayedSongs,
-                    recentArtists = library.artists.take(8),
+                    quickPicks = quickPicks,
+                    featuredAlbums = featuredAlbums,
+                    recentArtists = library.artists.take(10),
                     libraryStats = library.stats()
                 )
             }.collect { uiState ->

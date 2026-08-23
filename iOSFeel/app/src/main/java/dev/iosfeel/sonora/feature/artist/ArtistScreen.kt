@@ -9,7 +9,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -25,6 +25,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import dev.iosfeel.scroll.IOSScrollableLazyColumn
 import dev.iosfeel.sonora.core.design.LocalSonoraColors
 import dev.iosfeel.sonora.core.design.LocalSonoraTypography
 import dev.iosfeel.sonora.core.design.SonoraIcons
@@ -51,7 +52,8 @@ fun ArtistScreen(
         Box(
             modifier = modifier
                 .fillMaxSize()
-                .background(colors.background),
+                .background(colors.background)
+                .statusBarsPadding(),
             contentAlignment = Alignment.Center
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -91,11 +93,12 @@ fun ArtistScreen(
             .fillMaxSize()
             .background(colors.background)
     ) {
-        LazyColumn(
+        IOSScrollableLazyColumn(
             state = listState,
             modifier = Modifier.fillMaxSize()
         ) {
             item {
+                Spacer(modifier = Modifier.statusBarsPadding())
                 Spacer(modifier = Modifier.height(56.dp))
                 ArtistHeader(
                     artist = artist,
@@ -125,7 +128,7 @@ fun ArtistScreen(
             }
 
             item {
-                Spacer(modifier = Modifier.height(100.dp))
+                Spacer(modifier = Modifier.height(110.dp))
             }
         }
 
@@ -133,8 +136,9 @@ fun ArtistScreen(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
+                .statusBarsPadding()
                 .height(56.dp)
-                .background(colors.background.copy(alpha = if (navTitleAlpha > 0.1f) 0.92f else 0f))
+                .background(colors.background.copy(alpha = if (navTitleAlpha > 0.05f) 0.94f else 0f))
                 .padding(horizontal = 8.dp),
             contentAlignment = Alignment.CenterStart
         ) {
