@@ -13,6 +13,7 @@ data class DaylineColorScheme(
     val textTertiary: Color,
     val accent: Color,
     val success: Color,
+    val warning: Color,
     val destructive: Color,
     val separator: Color,
     val border: Color
@@ -28,6 +29,7 @@ object DaylineColors {
         textTertiary = Color(0xFF8E8E93),
         accent = Color(0xFF007AFF),
         success = Color(0xFF34C759),
+        warning = Color(0xFFFF9500),
         destructive = Color(0xFFFF3B30),
         separator = Color(0x1F000000),
         border = Color(0x12000000)
@@ -42,6 +44,7 @@ object DaylineColors {
         textTertiary = Color(0xFF636366),
         accent = Color(0xFF0A84FF),
         success = Color(0xFF30D158),
+        warning = Color(0xFFFF9F0A),
         destructive = Color(0xFFFF453A),
         separator = Color(0x2EFFFFFF),
         border = Color(0x20FFFFFF)

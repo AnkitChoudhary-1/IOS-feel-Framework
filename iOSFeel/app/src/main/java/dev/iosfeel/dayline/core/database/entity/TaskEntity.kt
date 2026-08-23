@@ -18,7 +18,7 @@ data class TaskEntity(
     val scheduledTime: LocalTime? = null,
     val dueDate: LocalDate? = null,
     val estimatedMinutes: Int? = null,
-    val priority: TaskPriority = TaskPriority.Medium,
+    val priority: TaskPriority = TaskPriority.None,
     val completed: Boolean = false,
     val completedAt: Instant? = null,
     val reminderEnabled: Boolean = false,

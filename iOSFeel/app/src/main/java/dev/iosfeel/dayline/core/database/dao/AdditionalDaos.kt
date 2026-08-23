@@ -18,6 +18,9 @@ interface EventDao {
     @Query("SELECT * FROM events ORDER BY startDateTime ASC")
     fun getAllEvents(): Flow<List<EventEntity>>
 
+    @Query("SELECT * FROM events WHERE startDateTime LIKE :datePrefix || '%' ORDER BY startDateTime ASC")
+    fun getEventsForDate(datePrefix: String): Flow<List<EventEntity>>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertEvent(event: EventEntity): Long
 
@@ -32,6 +35,9 @@ interface EventDao {
 interface ExpenseDao {
     @Query("SELECT * FROM expenses ORDER BY dateTime DESC")
     fun getAllExpenses(): Flow<List<ExpenseEntity>>
+
+    @Query("SELECT * FROM expenses WHERE dateTime LIKE :datePrefix || '%' ORDER BY dateTime ASC")
+    fun getExpensesForDate(datePrefix: String): Flow<List<ExpenseEntity>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertExpense(expense: ExpenseEntity): Long

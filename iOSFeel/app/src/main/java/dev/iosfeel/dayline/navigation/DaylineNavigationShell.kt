@@ -2,13 +2,7 @@ package dev.iosfeel.dayline.navigation
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -17,18 +11,20 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
-import dev.iosfeel.components.button.IOSButton
-import dev.iosfeel.components.button.IOSButtonStyle
+import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.viewmodel.compose.viewModel
 import dev.iosfeel.components.tab.IOSTabBar
 import dev.iosfeel.components.tab.IOSTabItem
 import dev.iosfeel.dayline.core.datastore.DaylinePreferences
 import dev.iosfeel.dayline.core.design.DaylineTheme
+import dev.iosfeel.dayline.core.di.DaylineContainer
+import dev.iosfeel.dayline.feature.capture.CaptureViewModel
+import dev.iosfeel.dayline.feature.capture.QuickCaptureSheet
 import dev.iosfeel.dayline.feature.insights.InsightsScreen
 import dev.iosfeel.dayline.feature.plan.PlanScreen
 import dev.iosfeel.dayline.feature.settings.SettingsScreen
 import dev.iosfeel.dayline.feature.today.TodayScreen
+import dev.iosfeel.dayline.feature.today.TodayViewModel
 import dev.iosfeel.material.IOSBackdropLayout
 import dev.iosfeel.material.rememberIOSBackdropState
 import dev.iosfeel.sheet.IOSSheet
@@ -41,6 +37,22 @@ fun DaylineNavigationShell(
     preferences: DaylinePreferences,
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
+    val container = remember(context) { DaylineContainer.getInstance(context) }
+
+    val todayViewModel: TodayViewModel = viewModel(
+        factory = TodayViewModel.Factory(
+            taskRepository = container.taskRepository,
+            timelineRepository = container.timelineRepository
+        )
+    )
+
+    val captureViewModel: CaptureViewModel = viewModel(
+        factory = CaptureViewModel.Factory(
+            taskRepository = container.taskRepository
+        )
+    )
+
     val colors = DaylineTheme.colors
     var currentTab by remember { mutableStateOf(DaylineTab.Today) }
 
@@ -133,11 +145,21 @@ fun DaylineNavigationShell(
                 backdrop = {
                     Box(modifier = Modifier.fillMaxSize().background(colors.background)) {
                         when (currentTab) {
-                            DaylineTab.Today -> TodayScreen(onOpenCapture = { openCapture() })
-                            DaylineTab.Plan -> PlanScreen(onOpenCapture = { openCapture() })
-                            DaylineTab.Capture -> TodayScreen(onOpenCapture = { openCapture() })
+                            DaylineTab.Today -> TodayScreen(
+                                viewModel = todayViewModel,
+                                onOpenCapture = { openCapture() }
+                            )
+                            DaylineTab.Plan -> PlanScreen(
+                                onOpenCapture = { openCapture() }
+                            )
+                            DaylineTab.Capture -> TodayScreen(
+                                viewModel = todayViewModel,
+                                onOpenCapture = { openCapture() }
+                            )
                             DaylineTab.Insights -> InsightsScreen()
-                            DaylineTab.You -> SettingsScreen(preferences = preferences)
+                            DaylineTab.You -> SettingsScreen(
+                                preferences = preferences
+                            )
                         }
                     }
                 },
@@ -165,70 +187,13 @@ fun DaylineNavigationShell(
             )
         }
     ) {
-        CaptureSheetContent(
+        QuickCaptureSheet(
+            viewModel = captureViewModel,
             onDismiss = {
                 scope.launch {
                     sheetState.hide()
                 }
             }
-        )
-    }
-}
-
-@Composable
-private fun CaptureSheetContent(
-    onDismiss: () -> Unit
-) {
-    val colors = DaylineTheme.colors
-    val typography = DaylineTheme.typography
-
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 24.dp, vertical = 16.dp)
-    ) {
-        Text(
-            text = "Quick Capture",
-            style = typography.title1.copy(
-                color = colors.textPrimary,
-                fontWeight = FontWeight.Bold
-            )
-        )
-
-        Spacer(modifier = Modifier.height(6.dp))
-
-        Text(
-            text = "What would you like to add?",
-            style = typography.body.copy(
-                color = colors.textSecondary
-            )
-        )
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        IOSButton(
-            text = "Task",
-            onClick = onDismiss,
-            style = IOSButtonStyle.Filled,
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        Spacer(modifier = Modifier.height(10.dp))
-
-        IOSButton(
-            text = "Habit",
-            onClick = onDismiss,
-            style = IOSButtonStyle.Tinted,
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        Spacer(modifier = Modifier.height(10.dp))
-
-        IOSButton(
-            text = "Event",
-            onClick = onDismiss,
-            style = IOSButtonStyle.Plain,
-            modifier = Modifier.fillMaxWidth()
         )
     }
 }

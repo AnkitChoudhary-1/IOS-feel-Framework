@@ -21,6 +21,8 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -31,21 +33,23 @@ import androidx.compose.ui.unit.sp
 import dev.iosfeel.components.button.IOSButton
 import dev.iosfeel.components.button.IOSButtonStyle
 import dev.iosfeel.dayline.core.design.DaylineTheme
-import java.time.LocalDate
+import dev.iosfeel.dayline.feature.today.components.NowCard
+import dev.iosfeel.dayline.feature.today.components.TimelineRow
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 
 @Composable
 fun TodayScreen(
+    viewModel: TodayViewModel,
     onOpenCapture: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val colors = DaylineTheme.colors
     val typography = DaylineTheme.typography
+    val uiState by viewModel.uiState.collectAsState()
 
-    val today = remember { LocalDate.now() }
-    val formattedDate = remember(today) {
-        today.format(DateTimeFormatter.ofPattern("EEEE, d MMMM"))
+    val formattedDate = remember(uiState.selectedDate) {
+        uiState.selectedDate.format(DateTimeFormatter.ofPattern("EEEE, d MMMM"))
     }
 
     val greeting = remember {
@@ -93,15 +97,16 @@ fun TodayScreen(
 
         // 2. NOW Section Card
         NowCard(
-            activeTitle = "Plan your day",
-            subtitle = "Set 3 priorities to get started",
-            progressFraction = 0.0f,
-            onAction = onOpenCapture
+            state = uiState.nowState,
+            onCompleteClicked = {
+                uiState.nowState.item?.let { viewModel.toggleTask(it) }
+            },
+            onActionClicked = onOpenCapture
         )
 
         Spacer(modifier = Modifier.height(32.dp))
 
-        // 3. Timeline Header
+        // 3. Timeline Section Header
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -117,7 +122,7 @@ fun TodayScreen(
             )
 
             Text(
-                text = "0 items",
+                text = "${uiState.completedCount}/${uiState.totalCount} completed",
                 style = typography.caption.copy(
                     color = colors.textTertiary
                 )
@@ -126,108 +131,30 @@ fun TodayScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // 4. Intentional Empty State
-        TodayEmptyState(
-            onAddClicked = onOpenCapture
-        )
-
-        Spacer(modifier = Modifier.height(100.dp)) // Space for bottom tab bar
-    }
-}
-
-@Composable
-private fun NowCard(
-    activeTitle: String,
-    subtitle: String,
-    progressFraction: Float,
-    onAction: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val colors = DaylineTheme.colors
-    val typography = DaylineTheme.typography
-
-    Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(18.dp))
-            .background(colors.surface)
-            .padding(18.dp)
-    ) {
-        Column {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+        // 4. Timeline Rows or Empty State
+        if (uiState.items.isEmpty()) {
+            TodayEmptyState(onAddClicked = onOpenCapture)
+        } else {
+            Column(
+                modifier = Modifier.fillMaxWidth()
             ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(8.dp)
-                            .clip(CircleShape)
-                            .background(colors.accent)
-                    )
-
-                    Text(
-                        text = "NOW",
-                        style = typography.caption.copy(
-                            color = colors.accent,
-                            fontWeight = FontWeight.Bold,
-                            letterSpacing = 0.8.sp
-                        )
-                    )
-                }
-
-                Text(
-                    text = "Today",
-                    style = typography.caption.copy(
-                        color = colors.textTertiary
-                    )
-                )
-            }
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            Text(
-                text = activeTitle,
-                style = typography.headline.copy(
-                    color = colors.textPrimary,
-                    fontWeight = FontWeight.SemiBold
-                )
-            )
-
-            Spacer(modifier = Modifier.height(4.dp))
-
-            Text(
-                text = subtitle,
-                style = typography.subheadline.copy(
-                    color = colors.textSecondary
-                )
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Progress bar
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(4.dp)
-                    .clip(CircleShape)
-                    .background(colors.surfaceSecondary)
-            ) {
-                if (progressFraction > 0f) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth(progressFraction.coerceIn(0f, 1f))
-                            .height(4.dp)
-                            .clip(CircleShape)
-                            .background(colors.accent)
+                uiState.items.forEachIndexed { index, item ->
+                    TimelineRow(
+                        item = item,
+                        isFirst = index == 0,
+                        isLast = index == uiState.items.lastIndex,
+                        onToggleCompleted = {
+                            viewModel.toggleTask(item)
+                        },
+                        onClick = {
+                            // Item details navigation in subsequent phase
+                        }
                     )
                 }
             }
         }
+
+        Spacer(modifier = Modifier.height(110.dp)) // Space for bottom tab bar
     }
 }
 
