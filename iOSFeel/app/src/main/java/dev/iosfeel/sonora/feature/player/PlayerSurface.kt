@@ -1,0 +1,161 @@
+package dev.iosfeel.sonora.feature.player
+
+import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectVerticalDragGestures
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.lerp
+import dev.iosfeel.components.expandable.IOSExpandableSurfaceState
+import dev.iosfeel.haptics.rememberIOSHaptics
+import dev.iosfeel.sonora.core.design.LocalSonoraColors
+import dev.iosfeel.sonora.core.model.PlaybackState
+import dev.iosfeel.sonora.feature.player.mini.MiniPlayer
+import dev.iosfeel.sonora.feature.player.nowplaying.NowPlayingContent
+import kotlinx.coroutines.launch
+
+@Composable
+fun PlayerSurface(
+    playbackState: PlaybackState,
+    expansionState: IOSExpandableSurfaceState,
+    onPlayPause: () -> Unit,
+    onNext: () -> Unit,
+    onPrevious: () -> Unit,
+    onSeek: (Long) -> Unit,
+    onToggleShuffle: () -> Unit = {},
+    onCycleRepeat: () -> Unit = {},
+    modifier: Modifier = Modifier
+) {
+    if (!playbackState.hasActiveMedia) return
+
+    val colors = LocalSonoraColors.current
+    val scope = rememberCoroutineScope()
+    val density = LocalDensity.current
+    val haptics = rememberIOSHaptics()
+
+    val progress = expansionState.progress
+
+    // Back button handling: collapse player if expanded
+    BackHandler(enabled = progress > 0.05f) {
+        scope.launch {
+            expansionState.collapse()
+        }
+    }
+
+    BoxWithConstraints(modifier = modifier.fillMaxSize()) {
+        val maxHeightPx = constraints.maxHeight.toFloat()
+        val miniHeightPx = with(density) { 64.dp.toPx() }
+        val expandableDistancePx = (maxHeightPx - miniHeightPx).coerceAtLeast(1f)
+
+        val cornerRadius = lerp(16.dp, 0.dp, progress)
+        val horizontalPadding = lerp(12.dp, 0.dp, progress)
+        val bottomPadding = lerp(6.dp, 0.dp, progress)
+        val currentHeight = lerp(64.dp, maxHeight, progress)
+
+        val surfaceColor = if (progress < 0.5f) {
+            colors.surfaceElevated
+        } else {
+            colors.background
+        }
+
+        Box(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(horizontal = horizontalPadding)
+                .padding(bottom = bottomPadding)
+                .fillMaxWidth()
+                .height(currentHeight)
+                .shadow(
+                    elevation = if (progress < 0.95f) lerp(10.dp, 0.dp, progress) else 0.dp,
+                    shape = RoundedCornerShape(cornerRadius),
+                    spotColor = Color.Black.copy(alpha = 0.25f)
+                )
+                .clip(RoundedCornerShape(cornerRadius))
+                .background(surfaceColor)
+                .clickable(enabled = progress < 0.1f) {
+                    scope.launch {
+                        expansionState.expand()
+                    }
+                }
+                .pointerInput(expandableDistancePx) {
+                    detectVerticalDragGestures(
+                        onDragStart = {
+                            scope.launch {
+                                expansionState.beginDrag()
+                            }
+                        },
+                        onDragEnd = {
+                            scope.launch {
+                                val currentVelocity = expansionState.velocity
+                                val normalizedVelocity = currentVelocity / expandableDistancePx
+                                expansionState.settle(velocity = normalizedVelocity)
+                            }
+                        },
+                        onDragCancel = {
+                            scope.launch {
+                                expansionState.settle(velocity = 0f)
+                            }
+                        },
+                        onVerticalDrag = { change, dragAmount ->
+                            change.consume()
+                            val deltaProgress = -dragAmount / expandableDistancePx
+                            scope.launch {
+                                expansionState.dragBy(
+                                    deltaProgress = deltaProgress,
+                                    velocity = -dragAmount
+                                )
+                            }
+                        }
+                    )
+                }
+        ) {
+            // Mini Player view
+            if (progress < 0.45f) {
+                MiniPlayer(
+                    state = playbackState,
+                    progress = progress,
+                    onPlayPause = onPlayPause,
+                    onNext = onNext,
+                    modifier = Modifier.align(Alignment.TopCenter)
+                )
+            }
+
+            // Expanded Now Playing view
+            if (progress > 0.15f) {
+                NowPlayingContent(
+                    state = playbackState,
+                    progress = progress,
+                    onCollapse = {
+                        scope.launch {
+                            expansionState.collapse()
+                        }
+                    },
+                    onPlayPause = onPlayPause,
+                    onPrevious = onPrevious,
+                    onNext = onNext,
+                    onSeek = onSeek,
+                    onToggleShuffle = onToggleShuffle,
+                    onCycleRepeat = onCycleRepeat,
+                    modifier = Modifier.fillMaxSize()
+                )
+            }
+        }
+    }
+}

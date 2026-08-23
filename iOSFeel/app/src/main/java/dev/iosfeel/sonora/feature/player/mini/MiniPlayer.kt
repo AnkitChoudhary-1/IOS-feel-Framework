@@ -1,0 +1,116 @@
+package dev.iosfeel.sonora.feature.player.mini
+
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
+import dev.iosfeel.sonora.core.design.LocalSonoraColors
+import dev.iosfeel.sonora.core.design.LocalSonoraTypography
+import dev.iosfeel.sonora.core.design.SonoraIcons
+import dev.iosfeel.sonora.core.design.artwork.SongArtwork
+import dev.iosfeel.sonora.core.model.PlaybackState
+
+@Composable
+fun MiniPlayer(
+    state: PlaybackState,
+    progress: Float,
+    onPlayPause: () -> Unit,
+    onNext: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val song = state.currentSong ?: return
+    val colors = LocalSonoraColors.current
+    val typography = LocalSonoraTypography.current
+
+    val miniAlpha = (1f - (progress / 0.35f)).coerceIn(0f, 1f)
+    if (miniAlpha <= 0.01f) return
+
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .graphicsLayer { alpha = miniAlpha }
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(64.dp)
+                .padding(horizontal = 12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            SongArtwork(
+                song = song,
+                cornerRadius = 8.dp,
+                modifier = Modifier.size(48.dp)
+            )
+
+            Spacer(modifier = Modifier.width(12.dp))
+
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = song.title,
+                    style = typography.headline,
+                    color = colors.textPrimary,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+
+                Text(
+                    text = song.artist,
+                    style = typography.subheadline,
+                    color = colors.textSecondary,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+
+            IconButton(
+                onClick = onPlayPause,
+                modifier = Modifier.size(44.dp)
+            ) {
+                Icon(
+                    imageVector = if (state.isPlaying) SonoraIcons.Pause else SonoraIcons.Play,
+                    contentDescription = if (state.isPlaying) "Pause" else "Play",
+                    tint = colors.textPrimary,
+                    modifier = Modifier.size(26.dp)
+                )
+            }
+
+            IconButton(
+                onClick = onNext,
+                modifier = Modifier.size(44.dp)
+            ) {
+                Icon(
+                    imageVector = SonoraIcons.SkipNext,
+                    contentDescription = "Next",
+                    tint = colors.textPrimary,
+                    modifier = Modifier.size(24.dp)
+                )
+            }
+        }
+
+        LinearProgressIndicator(
+            progress = { state.progress },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(2.dp),
+            color = colors.accent,
+            trackColor = colors.separator.copy(alpha = 0.15f),
+            strokeCap = StrokeCap.Round
+        )
+    }
+}

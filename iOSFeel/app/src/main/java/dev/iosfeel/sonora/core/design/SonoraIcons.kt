@@ -386,4 +386,138 @@ object SonoraIcons {
             }
         }.build()
     }
+
+    val Repeat: ImageVector by lazy {
+        ImageVector.Builder(
+            name = "Repeat",
+            defaultWidth = 24.dp,
+            defaultHeight = 24.dp,
+            viewportWidth = 24f,
+            viewportHeight = 24f
+        ).apply {
+            path(
+                fill = SolidColor(Color.Black),
+                fillAlpha = 1.0f,
+                stroke = null,
+                strokeAlpha = 1.0f,
+                strokeLineWidth = 1.0f,
+                strokeLineCap = StrokeCap.Round,
+                strokeLineJoin = StrokeJoin.Round,
+                strokeLineMiter = 1.0f,
+                pathFillType = PathFillType.NonZero
+            ) {
+                moveTo(7f, 7f)
+                horizontalLineToRelative(10f)
+                verticalLineToRelative(3f)
+                lineToRelative(4f, -4f)
+                lineToRelative(-4f, -4f)
+                verticalLineToRelative(3f)
+                horizontalLineTo(5f)
+                curveToRelative(-1.1f, 0f, -2f, 0.9f, -2f, 2f)
+                verticalLineToRelative(6f)
+                horizontalLineToRelative(2f)
+                verticalLineTo(7f)
+                close()
+                moveTo(17f, 17f)
+                horizontalLineTo(7f)
+                verticalLineToRelative(-3f)
+                lineToRelative(-4f, 4f)
+                lineToRelative(4f, 4f)
+                verticalLineToRelative(-3f)
+                horizontalLineToRelative(12f)
+                curveToRelative(1.1f, 0f, 2f, -0.9f, 2f, -2f)
+                verticalLineToRelative(-6f)
+                horizontalLineToRelative(-2f)
+                verticalLineToRelative(6f)
+                close()
+            }
+        }.build()
+    }
+
+    val RepeatOne: ImageVector by lazy {
+        ImageVector.Builder(
+            name = "RepeatOne",
+            defaultWidth = 24.dp,
+            defaultHeight = 24.dp,
+            viewportWidth = 24f,
+            viewportHeight = 24f
+        ).apply {
+            path(
+                fill = SolidColor(Color.Black),
+                fillAlpha = 1.0f,
+                stroke = null,
+                strokeAlpha = 1.0f,
+                strokeLineWidth = 1.0f,
+                strokeLineCap = StrokeCap.Round,
+                strokeLineJoin = StrokeJoin.Round,
+                strokeLineMiter = 1.0f,
+                pathFillType = PathFillType.NonZero
+            ) {
+                moveTo(7f, 7f)
+                horizontalLineToRelative(10f)
+                verticalLineToRelative(3f)
+                lineToRelative(4f, -4f)
+                lineToRelative(-4f, -4f)
+                verticalLineToRelative(3f)
+                horizontalLineTo(5f)
+                curveToRelative(-1.1f, 0f, -2f, 0.9f, -2f, 2f)
+                verticalLineToRelative(6f)
+                horizontalLineToRelative(2f)
+                verticalLineTo(7f)
+                close()
+                moveTo(17f, 17f)
+                horizontalLineTo(7f)
+                verticalLineToRelative(-3f)
+                lineToRelative(-4f, 4f)
+                lineToRelative(4f, 4f)
+                verticalLineToRelative(-3f)
+                horizontalLineToRelative(12f)
+                curveToRelative(1.1f, 0f, 2f, -0.9f, 2f, -2f)
+                verticalLineToRelative(-6f)
+                horizontalLineToRelative(-2f)
+                verticalLineToRelative(6f)
+                close()
+                moveTo(13f, 15f)
+                verticalLineTo(9f)
+                horizontalLineToRelative(-1.5f)
+                lineTo(10f, 10.5f)
+                verticalLineToRelative(1f)
+                lineToRelative(1.5f, -1f)
+                verticalLineTo(15f)
+                horizontalLineTo(13f)
+                close()
+            }
+        }.build()
+    }
+
+    val ChevronDown: ImageVector by lazy {
+        ImageVector.Builder(
+            name = "ChevronDown",
+            defaultWidth = 24.dp,
+            defaultHeight = 24.dp,
+            viewportWidth = 24f,
+            viewportHeight = 24f
+        ).apply {
+            path(
+                fill = SolidColor(Color.Black),
+                fillAlpha = 1.0f,
+                stroke = null,
+                strokeAlpha = 1.0f,
+                strokeLineWidth = 1.0f,
+                strokeLineCap = StrokeCap.Round,
+                strokeLineJoin = StrokeJoin.Round,
+                strokeLineMiter = 1.0f,
+                pathFillType = PathFillType.NonZero
+            ) {
+                moveTo(7.41f, 8.59f)
+                lineTo(12f, 13.17f)
+                lineToRelative(4.59f, -4.58f)
+                lineTo(18f, 10f)
+                lineToRelative(-6f, 6f)
+                lineToRelative(-6f, -6f)
+                lineToRelative(1.41f, -1.41f)
+                close()
+            }
+        }.build()
+    }
 }

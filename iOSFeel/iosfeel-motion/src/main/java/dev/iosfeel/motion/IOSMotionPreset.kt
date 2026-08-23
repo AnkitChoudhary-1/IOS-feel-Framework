@@ -16,4 +16,9 @@ object IOSMotionPreset {
         stiffness = 180f,
         dampingRatio = 0.88f
     )
+
+    val PlayerExpansion = IOSSpringSpec(
+        stiffness = 330f,
+        dampingRatio = 0.86f
+    )
 }
