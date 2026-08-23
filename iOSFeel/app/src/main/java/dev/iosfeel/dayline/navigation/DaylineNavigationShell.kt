@@ -45,14 +45,15 @@ fun DaylineNavigationShell(
     var currentTab by remember { mutableStateOf(DaylineTab.Today) }
 
     val backdropState = rememberIOSBackdropState()
-    val sheetState = rememberIOSSheetState()
+    val sheetState = rememberIOSSheetState(
+        initialDetent = IOSSheetDetent.Medium,
+        initialVisible = false
+    )
     val scope = rememberCoroutineScope()
-    var isCaptureSheetVisible by remember { mutableStateOf(false) }
 
     val openCapture = {
-        isCaptureSheetVisible = true
         scope.launch {
-            sheetState.expand()
+            sheetState.show(IOSSheetDetent.Medium)
         }
     }
 
@@ -124,7 +125,7 @@ fun DaylineNavigationShell(
     IOSSheet(
         state = sheetState,
         detents = listOf(IOSSheetDetent.Medium, IOSSheetDetent.Large),
-        onDismissRequest = { isCaptureSheetVisible = false },
+        onDismissRequest = {},
         backgroundContent = {
             IOSBackdropLayout(
                 state = backdropState,
@@ -167,8 +168,7 @@ fun DaylineNavigationShell(
         CaptureSheetContent(
             onDismiss = {
                 scope.launch {
-                    sheetState.collapse()
-                    isCaptureSheetVisible = false
+                    sheetState.hide()
                 }
             }
         )
@@ -185,7 +185,7 @@ private fun CaptureSheetContent(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(24.dp)
+            .padding(horizontal = 24.dp, vertical = 16.dp)
     ) {
         Text(
             text = "Quick Capture",
@@ -195,7 +195,7 @@ private fun CaptureSheetContent(
             )
         )
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(6.dp))
 
         Text(
             text = "What would you like to add?",

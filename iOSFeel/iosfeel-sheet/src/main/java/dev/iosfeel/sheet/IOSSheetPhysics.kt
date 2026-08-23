@@ -12,7 +12,6 @@ fun nearestDetent(
     detents: List<IOSResolvedDetent>
 ): IOSResolvedDetent {
     require(detents.isNotEmpty()) { "detents list must not be empty" }
-
     return detents.minBy { abs(it.offsetPx - currentOffset) }
 }
 
@@ -20,34 +19,45 @@ fun chooseSheetTarget(
     currentOffset: Float,
     velocityY: Float,
     detents: List<IOSResolvedDetent>,
-    velocityThreshold: Float = 900f,
-    dismissible: Boolean = false,
-    dismissVelocityThreshold: Float = 1800f
+    containerHeightPx: Float,
+    velocityThreshold: Float = 600f,
+    dismissible: Boolean = true,
+    dismissVelocityThreshold: Float = 900f
 ): IOSSheetTarget {
     require(detents.isNotEmpty()) { "detents list must not be empty" }
 
-    val nearestIndex = detents.indices.minBy { index ->
-        abs(detents[index].offsetPx - currentOffset)
+    val lowestDetent = detents.last()
+    val dismissThreshold = lowestDetent.offsetPx + (containerHeightPx - lowestDetent.offsetPx) * 0.35f
+
+    // 1. Strong downward flick or dragged past dismiss threshold
+    if (dismissible) {
+        if (currentOffset >= dismissThreshold) {
+            return IOSSheetTarget.Dismiss
+        }
+        if (currentOffset >= lowestDetent.offsetPx && velocityY >= dismissVelocityThreshold) {
+            return IOSSheetTarget.Dismiss
+        }
     }
 
-    // Dismiss condition: At lowest detent (highest offsetPx) with strong downward velocity
-    if (dismissible && nearestIndex == detents.lastIndex && velocityY >= dismissVelocityThreshold) {
-        return IOSSheetTarget.Dismiss
+    // 2. Velocity-based target selection
+    if (abs(velocityY) >= velocityThreshold) {
+        val nearestIndex = detents.indices.minBy { abs(detents[it].offsetPx - currentOffset) }
+        return if (velocityY > 0f) {
+            if (dismissible && nearestIndex == detents.lastIndex) {
+                IOSSheetTarget.Dismiss
+            } else {
+                val nextIndex = (nearestIndex + 1).coerceAtMost(detents.lastIndex)
+                IOSSheetTarget.Detent(detents[nextIndex])
+            }
+        } else {
+            val nextIndex = (nearestIndex - 1).coerceAtLeast(0)
+            IOSSheetTarget.Detent(detents[nextIndex])
+        }
     }
 
-    if (abs(velocityY) < velocityThreshold) {
-        return IOSSheetTarget.Detent(detents[nearestIndex])
-    }
-
-    return if (velocityY > 0f) {
-        // Downward throw -> move to next lower (larger offsetPx) detent
-        val nextIndex = (nearestIndex + 1).coerceAtMost(detents.lastIndex)
-        IOSSheetTarget.Detent(detents[nextIndex])
-    } else {
-        // Upward throw -> move to next higher (smaller offsetPx) detent
-        val nextIndex = (nearestIndex - 1).coerceAtLeast(0)
-        IOSSheetTarget.Detent(detents[nextIndex])
-    }
+    // 3. Positional nearest detent
+    val nearest = detents.minBy { abs(it.offsetPx - currentOffset) }
+    return IOSSheetTarget.Detent(nearest)
 }
 
 fun calculateSheetExpansionProgress(
@@ -58,6 +68,5 @@ fun calculateSheetExpansionProgress(
     if (maxOffset <= minOffset) {
         return 1f
     }
-
     return (1f - (offset - minOffset) / (maxOffset - minOffset)).coerceIn(0f, 1f)
 }

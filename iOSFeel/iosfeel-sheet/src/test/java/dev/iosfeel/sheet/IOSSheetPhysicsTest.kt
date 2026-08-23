@@ -17,7 +17,8 @@ class IOSSheetPhysicsTest {
         val nearMedium = chooseSheetTarget(
             currentOffset = 440f,
             velocityY = 0f,
-            detents = resolvedDetents
+            detents = resolvedDetents,
+            containerHeightPx = 1000f
         )
         assertTrue(nearMedium is IOSSheetTarget.Detent)
         assertEquals(IOSSheetDetent.Medium, (nearMedium as IOSSheetTarget.Detent).value.detent)
@@ -25,7 +26,8 @@ class IOSSheetPhysicsTest {
         val nearLarge = chooseSheetTarget(
             currentOffset = 100f,
             velocityY = 100f,
-            detents = resolvedDetents
+            detents = resolvedDetents,
+            containerHeightPx = 1000f
         )
         assertTrue(nearLarge is IOSSheetTarget.Detent)
         assertEquals(IOSSheetDetent.Large, (nearLarge as IOSSheetTarget.Detent).value.detent)
@@ -33,11 +35,11 @@ class IOSSheetPhysicsTest {
 
     @Test
     fun fastUpwardVelocityChoosesHigherDetent() {
-        // At Medium offset, fast upward throw (-1500 px/s) should target Large
         val target = chooseSheetTarget(
             currentOffset = 450f,
             velocityY = -1500f,
             detents = resolvedDetents,
+            containerHeightPx = 1000f,
             velocityThreshold = 900f
         )
         assertTrue(target is IOSSheetTarget.Detent)
@@ -46,11 +48,11 @@ class IOSSheetPhysicsTest {
 
     @Test
     fun fastDownwardVelocityChoosesLowerDetent() {
-        // At Medium offset, fast downward throw (+1500 px/s) should target Compact
         val target = chooseSheetTarget(
             currentOffset = 450f,
             velocityY = 1500f,
             detents = resolvedDetents,
+            containerHeightPx = 1000f,
             velocityThreshold = 900f
         )
         assertTrue(target is IOSSheetTarget.Detent)
@@ -63,6 +65,7 @@ class IOSSheetPhysicsTest {
             currentOffset = 780f,
             velocityY = 2500f,
             detents = resolvedDetents,
+            containerHeightPx = 1000f,
             velocityThreshold = 900f,
             dismissible = true,
             dismissVelocityThreshold = 1800f
@@ -71,17 +74,15 @@ class IOSSheetPhysicsTest {
     }
 
     @Test
-    fun downwardFlingFromMediumTargetsCompactFirst() {
+    fun downwardDragPastThresholdDismisses() {
         val target = chooseSheetTarget(
-            currentOffset = 450f,
-            velocityY = 2000f,
+            currentOffset = 900f,
+            velocityY = 0f,
             detents = resolvedDetents,
-            velocityThreshold = 900f,
-            dismissible = true,
-            dismissVelocityThreshold = 1800f
+            containerHeightPx = 1000f,
+            dismissible = true
         )
-        assertTrue(target is IOSSheetTarget.Detent)
-        assertEquals(IOSSheetDetent.Compact, (target as IOSSheetTarget.Detent).value.detent)
+        assertEquals(IOSSheetTarget.Dismiss, target)
     }
 
     @Test

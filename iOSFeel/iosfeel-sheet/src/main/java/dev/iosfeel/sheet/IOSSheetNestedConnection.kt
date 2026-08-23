@@ -43,7 +43,7 @@ class IOSSheetNestedConnection(
 
         scope.launch {
             val newOffset = sheetState.offset.value - consumed
-            sheetState.snapTo(newOffset)
+            sheetState.dragTo(newOffset)
         }
 
         return Offset(x = 0f, y = -consumed)
@@ -64,14 +64,15 @@ class IOSSheetNestedConnection(
         val detents = detentsProvider()
         if (detents.isEmpty()) return Offset.Zero
 
-        val bottomDetentOffset = detents.last().offsetPx
-        val availableCollapse = (bottomDetentOffset - sheetState.offset.value).coerceAtLeast(0f)
+        val containerHeight = containerHeightPxProvider()
+        val bottomLimit = if (config.dismissible) containerHeight else detents.last().offsetPx
+        val availableCollapse = (bottomLimit - sheetState.offset.value).coerceAtLeast(0f)
         val consumedCollapse = minOf(deltaY, availableCollapse)
 
         if (consumedCollapse > 0f) {
             scope.launch {
                 val newOffset = sheetState.offset.value + consumedCollapse
-                sheetState.snapTo(newOffset)
+                sheetState.dragTo(newOffset)
             }
             return Offset(x = 0f, y = consumedCollapse)
         }
@@ -86,10 +87,12 @@ class IOSSheetNestedConnection(
         val detents = detentsProvider()
         if (detents.isEmpty()) return Velocity.Zero
 
+        val containerHeight = containerHeightPxProvider()
         val target = chooseSheetTarget(
             currentOffset = sheetState.offset.value,
             velocityY = available.y,
             detents = detents,
+            containerHeightPx = containerHeight,
             velocityThreshold = config.velocityThreshold,
             dismissible = config.dismissible,
             dismissVelocityThreshold = config.dismissVelocityThreshold
@@ -105,7 +108,7 @@ class IOSSheetNestedConnection(
             }
             is IOSSheetTarget.Dismiss -> {
                 sheetState.dismiss(
-                    containerHeightPx = containerHeightPxProvider(),
+                    containerHeightPx = containerHeight,
                     springSpec = config.springSpec
                 )
                 onDismissRequest()

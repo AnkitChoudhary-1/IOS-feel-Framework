@@ -22,7 +22,8 @@ enum class IOSSheetPhase {
 
 @Stable
 class IOSSheetState internal constructor(
-    initialDetent: IOSSheetDetent = IOSSheetDetent.Medium
+    initialDetent: IOSSheetDetent = IOSSheetDetent.Medium,
+    initialVisible: Boolean = false
 ) {
     val offset = Animatable(0f)
 
@@ -38,10 +39,11 @@ class IOSSheetState internal constructor(
     var velocity by mutableFloatStateOf(0f)
         internal set
 
-    var visible by mutableStateOf(true)
+    var visible by mutableStateOf(initialVisible)
         internal set
 
     internal var resolved: List<IOSResolvedDetent> = emptyList()
+    internal var containerHeightPx: Float = 2400f
 
     val isDragging: Boolean
         get() = phase == IOSSheetPhase.Dragging
@@ -53,6 +55,11 @@ class IOSSheetState internal constructor(
         velocity = offset.velocity
         offset.stop()
         phase = IOSSheetPhase.Dragging
+    }
+
+    suspend fun dragTo(newOffset: Float) {
+        phase = IOSSheetPhase.Dragging
+        offset.snapTo(newOffset)
     }
 
     suspend fun dragBy(
@@ -75,6 +82,7 @@ class IOSSheetState internal constructor(
         targetDetent = target.detent
         phase = IOSSheetPhase.Settling
         velocity = initialVelocity
+        visible = true
 
         try {
             offset.animateTo(
@@ -101,11 +109,14 @@ class IOSSheetState internal constructor(
         initialVelocity: Float = 0f,
         springSpec: IOSSpringSpec = IOSMotionPreset.Smooth
     ) {
-        val target = resolved.firstOrNull { it.detent.id == detent.id } ?: return
+        val target = resolved.firstOrNull { it.detent.id == detent.id }
+            ?: findResolvedDetent(detent, resolved)
+            ?: return
         settleTo(target, initialVelocity, springSpec)
     }
 
     suspend fun expand(springSpec: IOSSpringSpec = IOSMotionPreset.Smooth) {
+        visible = true
         resolved.firstOrNull()?.let {
             settleTo(it, 0f, springSpec)
         }
@@ -118,7 +129,7 @@ class IOSSheetState internal constructor(
     }
 
     suspend fun dismiss(
-        containerHeightPx: Float,
+        containerHeightPx: Float = this.containerHeightPx,
         springSpec: IOSSpringSpec = IOSMotionPreset.Snappy
     ) {
         phase = IOSSheetPhase.Settling
@@ -142,9 +153,19 @@ class IOSSheetState internal constructor(
         }
     }
 
-    suspend fun show(initialDetent: IOSSheetDetent = currentDetent) {
+    suspend fun hide(springSpec: IOSSpringSpec = IOSMotionPreset.Snappy) {
+        dismiss(containerHeightPx, springSpec)
+    }
+
+    suspend fun show(
+        initialDetent: IOSSheetDetent = currentDetent,
+        springSpec: IOSSpringSpec = IOSMotionPreset.Smooth
+    ) {
         visible = true
-        animateTo(initialDetent)
+        if (offset.value <= 0f || offset.value >= containerHeightPx * 0.95f) {
+            offset.snapTo(containerHeightPx)
+        }
+        animateTo(initialDetent, 0f, springSpec)
     }
 
     suspend fun interrupt() {
@@ -161,24 +182,27 @@ class IOSSheetState internal constructor(
     }
 }
 
-val IOSSheetStateSaver = Saver<IOSSheetState, String>(
-    save = { it.currentDetent.id },
-    restore = { id ->
+val IOSSheetStateSaver = Saver<IOSSheetState, List<Any>>(
+    save = { listOf(it.currentDetent.id, it.visible) },
+    restore = { list ->
+        val id = list.getOrNull(0) as? String ?: "medium"
+        val isVisible = list.getOrNull(1) as? Boolean ?: false
         val detent = when (id) {
             "compact" -> IOSSheetDetent.Compact
             "medium" -> IOSSheetDetent.Medium
             "large" -> IOSSheetDetent.Large
             else -> IOSSheetDetent.Medium
         }
-        IOSSheetState(initialDetent = detent)
+        IOSSheetState(initialDetent = detent, initialVisible = isVisible)
     }
 )
 
 @Composable
 fun rememberIOSSheetState(
-    initialDetent: IOSSheetDetent = IOSSheetDetent.Medium
+    initialDetent: IOSSheetDetent = IOSSheetDetent.Medium,
+    initialVisible: Boolean = false
 ): IOSSheetState {
     return rememberSaveable(saver = IOSSheetStateSaver) {
-        IOSSheetState(initialDetent = initialDetent)
+        IOSSheetState(initialDetent = initialDetent, initialVisible = initialVisible)
     }
 }
