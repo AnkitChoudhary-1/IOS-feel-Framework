@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -18,6 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import dev.iosfeel.scroll.IOSScrollableLazyRow
 import dev.iosfeel.sonora.core.design.LocalSonoraColors
 import dev.iosfeel.sonora.core.design.LocalSonoraTypography
 import dev.iosfeel.sonora.core.design.artwork.AlbumArtwork
@@ -44,12 +44,14 @@ fun RecentlyAddedSection(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        LazyRow(
+        IOSScrollableLazyRow(
             contentPadding = PaddingValues(horizontal = 16.dp),
-            horizontalArrangement = Arrangement.spacedBy(14.dp)
+            horizontalArrangement = Arrangement.spacedBy(14.dp),
+            startFadeWidth = 12.dp,
+            endFadeWidth = 12.dp
         ) {
             items(albums, key = { it.id }) { album ->
-                RecentlyAddedAlbumItem(
+                RecentlyAddedItem(
                     album = album,
                     onClick = { onAlbumClick(album) }
                 )
@@ -59,7 +61,7 @@ fun RecentlyAddedSection(
 }
 
 @Composable
-private fun RecentlyAddedAlbumItem(
+private fun RecentlyAddedItem(
     album: Album,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
@@ -69,13 +71,13 @@ private fun RecentlyAddedAlbumItem(
 
     Column(
         modifier = modifier
-            .width(150.dp)
+            .width(140.dp)
             .clickable(onClick = onClick)
     ) {
         AlbumArtwork(
             album = album,
-            cornerRadius = 12.dp,
-            modifier = Modifier.size(150.dp)
+            cornerRadius = 10.dp,
+            modifier = Modifier.size(140.dp)
         )
 
         Spacer(modifier = Modifier.height(6.dp))

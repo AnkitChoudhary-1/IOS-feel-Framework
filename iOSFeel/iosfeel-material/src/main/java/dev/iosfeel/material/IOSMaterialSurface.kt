@@ -37,11 +37,13 @@ fun IOSMaterialSurface(
 
     val resolved = remember(config.style) { resolveIOSMaterial(config.style) }
     val shape = remember(config.cornerRadius) { RoundedCornerShape(config.cornerRadius) }
+    val effectiveBlurRadius = config.customBlurRadius ?: resolved.blurRadius
+    val effectiveTintAlpha = config.customTintAlpha ?: resolved.tintAlpha
 
     val tintColor = config.tint ?: if (darkTheme) {
-        IOSBlurDefaults.DarkTint.copy(alpha = if (Build.VERSION.SDK_INT >= 31) resolved.tintAlpha else 0.85f)
+        IOSBlurDefaults.DarkTint.copy(alpha = if (Build.VERSION.SDK_INT >= 31) effectiveTintAlpha else 0.85f)
     } else {
-        IOSBlurDefaults.LightTint.copy(alpha = if (Build.VERSION.SDK_INT >= 31) resolved.tintAlpha else 0.85f)
+        IOSBlurDefaults.LightTint.copy(alpha = if (Build.VERSION.SDK_INT >= 31) effectiveTintAlpha else 0.85f)
     }
 
     val borderColor = config.borderColor ?: if (darkTheme) {
@@ -74,7 +76,7 @@ fun IOSMaterialSurface(
             Box(
                 modifier = Modifier
                     .matchParentSize()
-                    .blur(resolved.blurRadius)
+                    .blur(effectiveBlurRadius)
                     .drawWithContent {
                         drawContext.canvas.save()
                         drawContext.transform.translate(-positionInRoot.x, -positionInRoot.y)

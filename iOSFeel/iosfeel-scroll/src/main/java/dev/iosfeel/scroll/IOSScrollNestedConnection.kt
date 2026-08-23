@@ -8,7 +8,8 @@ import kotlinx.coroutines.CoroutineScope
 
 class IOSScrollNestedConnection(
     private val state: IOSScrollInteractionState,
-    private val coroutineScope: CoroutineScope? = null
+    private val coroutineScope: CoroutineScope? = null,
+    private val orientation: IOSScrollOrientation = IOSScrollOrientation.Vertical
 ) : NestedScrollConnection {
 
     override fun onPreScroll(
@@ -23,9 +24,16 @@ class IOSScrollNestedConnection(
          * If an existing elastic displacement is being pulled back toward zero,
          * consume that first in pre-scroll pass.
          */
-        val consumedY = state.consumeOverscrollRecovery(available.y)
-
-        return Offset(x = 0f, y = consumedY)
+        return when (orientation) {
+            IOSScrollOrientation.Vertical -> {
+                val consumedY = state.consumeOverscrollRecovery(available.y)
+                Offset(x = 0f, y = consumedY)
+            }
+            IOSScrollOrientation.Horizontal -> {
+                val consumedX = state.consumeOverscrollRecovery(available.x)
+                Offset(x = consumedX, y = 0f)
+            }
+        }
     }
 
     override fun onPostScroll(
@@ -33,22 +41,27 @@ class IOSScrollNestedConnection(
         available: Offset,
         source: NestedScrollSource
     ): Offset {
-        if (available.y == 0f) {
-            return Offset.Zero
+        return when (orientation) {
+            IOSScrollOrientation.Vertical -> {
+                if (available.y == 0f) return Offset.Zero
+                val consumedY = state.consumeOverscroll(available.y)
+                Offset(x = 0f, y = consumedY)
+            }
+            IOSScrollOrientation.Horizontal -> {
+                if (available.x == 0f) return Offset.Zero
+                val consumedX = state.consumeOverscroll(available.x)
+                Offset(x = consumedX, y = 0f)
+            }
         }
-
-        /*
-         * Child couldn't consume this movement (hit list boundary).
-         * Elastic overscroll begins here.
-         */
-        val consumedY = state.consumeOverscroll(available.y)
-
-        return Offset(x = 0f, y = consumedY)
     }
 
     override suspend fun onPreFling(available: Velocity): Velocity {
         if (state.overscroll != 0f) {
-            state.releaseOverscroll(velocityY = available.y, scope = coroutineScope)
+            val velocity = when (orientation) {
+                IOSScrollOrientation.Vertical -> available.y
+                IOSScrollOrientation.Horizontal -> available.x
+            }
+            state.releaseOverscroll(velocityY = velocity, scope = coroutineScope)
             return available
         }
         return Velocity.Zero
@@ -58,8 +71,12 @@ class IOSScrollNestedConnection(
         consumed: Velocity,
         available: Velocity
     ): Velocity {
-        if (state.overscroll != 0f || available.y != 0f) {
-            state.releaseOverscroll(velocityY = available.y, scope = coroutineScope)
+        val velocity = when (orientation) {
+            IOSScrollOrientation.Vertical -> available.y
+            IOSScrollOrientation.Horizontal -> available.x
+        }
+        if (state.overscroll != 0f || velocity != 0f) {
+            state.releaseOverscroll(velocityY = velocity, scope = coroutineScope)
         }
 
         return Velocity.Zero

@@ -1,7 +1,6 @@
 package dev.iosfeel.sonora.feature.home
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -12,8 +11,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -21,12 +22,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import dev.iosfeel.components.button.IOSButton
-import dev.iosfeel.components.button.IOSButtonStyle
 import dev.iosfeel.scroll.IOSScrollableLazyColumn
 import dev.iosfeel.sonora.core.design.LocalSonoraColors
 import dev.iosfeel.sonora.core.design.LocalSonoraTypography
-import dev.iosfeel.sonora.core.design.SonoraIcons
 import dev.iosfeel.sonora.core.model.Album
 import dev.iosfeel.sonora.core.model.Artist
 import dev.iosfeel.sonora.core.model.Song
@@ -40,7 +38,7 @@ import dev.iosfeel.sonora.feature.home.sections.RecentlyPlayedSection
 fun HomeScreen(
     uiState: HomeUiState,
     onAlbumClick: (Album) -> Unit,
-    onArtistClick: (Artist) -> Unit,
+    onArtistClick: (Artist) -> Unit = {},
     onSongClick: (Song, List<Song>) -> Unit,
     onNavigateToLibrary: () -> Unit = {},
     modifier: Modifier = Modifier
@@ -67,6 +65,8 @@ fun HomeScreen(
 
     IOSScrollableLazyColumn(
         state = listState,
+        topFadeHeight = 16.dp,
+        bottomFadeHeight = 84.dp,
         modifier = modifier
             .fillMaxSize()
             .background(colors.background)
@@ -121,16 +121,6 @@ fun HomeScreen(
             }
         }
 
-        if (uiState.recentArtists.isNotEmpty()) {
-            item {
-                HomeArtistsSection(
-                    artists = uiState.recentArtists,
-                    onArtistClick = onArtistClick
-                )
-                Spacer(modifier = Modifier.height(28.dp))
-            }
-        }
-
         if (uiState.mostPlayed.isNotEmpty()) {
             item {
                 MostPlayedSection(
@@ -141,80 +131,59 @@ fun HomeScreen(
             }
         }
 
+        if (uiState.recentArtists.isNotEmpty()) {
+            item {
+                HomeArtistsSection(
+                    artists = uiState.recentArtists,
+                    onArtistClick = onArtistClick
+                )
+                Spacer(modifier = Modifier.height(28.dp))
+            }
+        }
+
         if (uiState.isEmpty) {
             item {
-                EmptyHomeView(onScanClick = onNavigateToLibrary)
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 24.dp, vertical = 48.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(
+                            text = "No Music Found Yet",
+                            style = typography.title2.copy(fontWeight = FontWeight.Bold),
+                            color = colors.textPrimary,
+                            textAlign = TextAlign.Center
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = "Grant audio permissions in Library or add audio files to your device storage to start listening.",
+                            style = typography.body,
+                            color = colors.textSecondary,
+                            textAlign = TextAlign.Center
+                        )
+                        Spacer(modifier = Modifier.height(20.dp))
+                        Button(
+                            onClick = onNavigateToLibrary,
+                            colors = ButtonDefaults.buttonColors(containerColor = colors.accent),
+                            shape = RoundedCornerShape(20.dp)
+                        ) {
+                            Text(
+                                text = "Go to Library",
+                                style = typography.headline.copy(
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = androidx.compose.ui.graphics.Color.White
+                                )
+                            )
+                        }
+                    }
+                }
             }
         }
 
         item {
-            uiState.libraryStats?.let { stats ->
-                if (stats.songs > 0) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 24.dp)
-                    ) {
-                        Text(
-                            text = "${stats.songs} songs · ${stats.albums} albums · ${stats.artists} artists",
-                            style = typography.caption1,
-                            color = colors.textTertiary
-                        )
-                    }
-                }
-            }
-            Spacer(modifier = Modifier.height(110.dp))
-        }
-    }
-}
-
-@Composable
-private fun EmptyHomeView(onScanClick: () -> Unit) {
-    val colors = LocalSonoraColors.current
-    val typography = LocalSonoraTypography.current
-
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 32.dp, vertical = 48.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
-            Icon(
-                imageVector = SonoraIcons.MusicNote,
-                contentDescription = null,
-                tint = colors.textTertiary,
-                modifier = Modifier.size(48.dp)
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Text(
-                text = "Discover Your Music",
-                style = typography.title2,
-                color = colors.textPrimary,
-                textAlign = TextAlign.Center
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Text(
-                text = "Grant permission or scan your audio library to see your songs and albums here.",
-                style = typography.subheadline,
-                color = colors.textSecondary,
-                textAlign = TextAlign.Center
-            )
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            IOSButton(
-                text = "Go to Library",
-                onClick = onScanClick,
-                style = IOSButtonStyle.Filled
-            )
+            Spacer(modifier = Modifier.height(160.dp))
         }
     }
 }

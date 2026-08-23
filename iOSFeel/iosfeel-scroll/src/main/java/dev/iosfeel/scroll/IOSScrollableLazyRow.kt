@@ -3,9 +3,9 @@ package dev.iosfeel.scroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -22,18 +22,17 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun IOSScrollableLazyColumn(
+fun IOSScrollableLazyRow(
     modifier: Modifier = Modifier,
     state: LazyListState = rememberLazyListState(),
     contentPadding: PaddingValues = PaddingValues(0.dp),
-    reverseLayout: Boolean = false,
-    verticalArrangement: Arrangement.Vertical = if (!reverseLayout) Arrangement.Top else Arrangement.Bottom,
-    horizontalAlignment: Alignment.Horizontal = Alignment.Start,
+    horizontalArrangement: Arrangement.Horizontal = Arrangement.Start,
+    verticalAlignment: Alignment.Vertical = Alignment.Top,
     config: IOSScrollConfig = IOSScrollConfig(),
     flingObserver: IOSFlingObserver? = null,
     interactionState: IOSScrollInteractionState = rememberIOSScrollInteractionState(config),
-    topFadeHeight: Dp = 0.dp,
-    bottomFadeHeight: Dp = 0.dp,
+    startFadeWidth: Dp = 0.dp,
+    endFadeWidth: Dp = 0.dp,
     content: LazyListScope.() -> Unit
 ) {
     val coroutineScope = rememberCoroutineScope()
@@ -48,7 +47,7 @@ fun IOSScrollableLazyColumn(
         IOSScrollNestedConnection(
             state = interactionState,
             coroutineScope = coroutineScope,
-            orientation = IOSScrollOrientation.Vertical
+            orientation = IOSScrollOrientation.Horizontal
         )
     }
 
@@ -64,7 +63,7 @@ fun IOSScrollableLazyColumn(
 
     Box(
         modifier = modifier
-            .iosFadingEdge(top = topFadeHeight, bottom = bottomFadeHeight)
+            .iosFadingEdge(start = startFadeWidth, end = endFadeWidth)
             // Safety guarantee 2: Catch when all fingers are lifted off the screen
             .pointerInput(interactionState, coroutineScope) {
                 awaitPointerEventScope {
@@ -80,17 +79,16 @@ fun IOSScrollableLazyColumn(
                 }
             }
     ) {
-        LazyColumn(
+        LazyRow(
             modifier = Modifier
                 .nestedScroll(nestedConnection)
                 .graphicsLayer {
-                    translationY = interactionState.overscroll
+                    translationX = interactionState.overscroll
                 },
             state = state,
             contentPadding = contentPadding,
-            reverseLayout = reverseLayout,
-            verticalArrangement = verticalArrangement,
-            horizontalAlignment = horizontalAlignment,
+            horizontalArrangement = horizontalArrangement,
+            verticalAlignment = verticalAlignment,
             flingBehavior = flingBehavior,
             overscrollEffect = null,
             content = content

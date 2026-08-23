@@ -8,6 +8,8 @@ import androidx.compose.ui.unit.dp
 @Immutable
 data class IOSMaterialConfig(
     val style: IOSMaterialStyle = IOSMaterialStyle.Regular,
+    val customBlurRadius: Dp? = null,
+    val customTintAlpha: Float? = null,
     val tint: Color? = null,
     val cornerRadius: Dp = 20.dp,
     val borderStroke: Dp = 0.5.dp,

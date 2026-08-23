@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -18,6 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import dev.iosfeel.scroll.IOSScrollableLazyRow
 import dev.iosfeel.sonora.core.design.LocalSonoraColors
 import dev.iosfeel.sonora.core.design.LocalSonoraTypography
 import dev.iosfeel.sonora.core.design.artwork.SongArtwork
@@ -44,9 +44,11 @@ fun RecentlyPlayedSection(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        LazyRow(
+        IOSScrollableLazyRow(
             contentPadding = PaddingValues(horizontal = 16.dp),
-            horizontalArrangement = Arrangement.spacedBy(14.dp)
+            horizontalArrangement = Arrangement.spacedBy(14.dp),
+            startFadeWidth = 12.dp,
+            endFadeWidth = 12.dp
         ) {
             items(songs, key = { it.id }) { song ->
                 RecentlyPlayedItem(

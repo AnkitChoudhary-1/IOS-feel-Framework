@@ -39,7 +39,9 @@ fun SongList(
     val sortedSongs = songs.sorted(sort, sortDirection)
 
     IOSScrollableLazyColumn(
-        modifier = modifier.fillMaxSize()
+        modifier = modifier.fillMaxSize(),
+        topFadeHeight = 16.dp,
+        bottomFadeHeight = 84.dp
     ) {
         item(key = "header") {
             Row(
@@ -102,7 +104,7 @@ fun SongList(
         }
 
         item(key = "bottom_spacer") {
-            Spacer(modifier = Modifier.height(100.dp))
+            Spacer(modifier = Modifier.height(140.dp))
         }
     }
 }
