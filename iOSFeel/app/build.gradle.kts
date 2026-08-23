@@ -2,18 +2,19 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.compose.compiler)
+    alias(libs.plugins.ksp)
 }
 
 android {
-    namespace = "dev.iosfeel.lab"
+    namespace = "dev.iosfeel.dayline"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "dev.iosfeel.lab"
+        applicationId = "dev.iosfeel.dayline"
         minSdk = 26
         targetSdk = 35
         versionCode = 1
-        versionName = "0.1.0"
+        versionName = "1.0.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -43,7 +44,7 @@ android {
 }
 
 dependencies {
-    // Internal modules
+    // iOSFeel Framework Modules
     implementation(project(":iosfeel-core"))
     implementation(project(":iosfeel-motion"))
     implementation(project(":iosfeel-haptics"))
@@ -69,9 +70,18 @@ dependencies {
     implementation(libs.activity.compose)
     implementation(libs.lifecycle.runtime.ktx)
     implementation(libs.lifecycle.runtime.compose)
+    implementation(libs.lifecycle.viewmodel.compose)
     implementation(libs.navigation.compose)
 
-    // Debug tooling
+    // Room Database
+    implementation(libs.room.runtime)
+    implementation(libs.room.ktx)
+    ksp(libs.room.compiler)
+
+    // DataStore Preferences
+    implementation(libs.datastore.preferences)
+
+    // Debug Tooling
     debugImplementation(libs.compose.ui.tooling)
 
     // Testing

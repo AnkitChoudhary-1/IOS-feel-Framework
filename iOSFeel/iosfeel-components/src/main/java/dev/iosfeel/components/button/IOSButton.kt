@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
@@ -16,6 +17,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.sp
 import dev.iosfeel.components.interaction.IOSPressConfig
 import dev.iosfeel.components.interaction.iosPressEffect
 import dev.iosfeel.core.tokens.IOSShapes
@@ -89,5 +92,32 @@ fun IOSButton(
                 }
             }
         }
+    }
+}
+
+/**
+ * Text convenience overload for [IOSButton]
+ */
+@Composable
+fun IOSButton(
+    text: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    style: IOSButtonStyle = IOSButtonStyle.Filled,
+    enabled: Boolean = true,
+    backdrop: IOSBackdropState? = null
+) {
+    IOSButton(
+        onClick = onClick,
+        modifier = modifier,
+        style = style,
+        enabled = enabled,
+        backdrop = backdrop
+    ) {
+        Text(
+            text = text,
+            fontSize = 16.sp,
+            fontWeight = FontWeight.SemiBold
+        )
     }
 }
