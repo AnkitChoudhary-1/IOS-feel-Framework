@@ -1,7 +1,5 @@
 package dev.iosfeel.components.slider
 
-import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -10,16 +8,16 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -34,10 +32,15 @@ import androidx.compose.ui.semantics.progressBarRangeInfo
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
-import dev.iosfeel.core.tokens.IOSMotionTokens
 import dev.iosfeel.haptics.rememberIOSHaptics
+import dev.iosfeel.physics.ExperimentalIOSFeelV2Api
+import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
+/**
+ * Standard iOS Slider V2 with press expansion, detents, haptic feedback, and deferred commit support.
+ */
+@OptIn(ExperimentalIOSFeelV2Api::class)
 @Composable
 fun IOSSlider(
     value: Float,
@@ -46,27 +49,29 @@ fun IOSSlider(
     enabled: Boolean = true,
     valueRange: ClosedFloatingPointRange<Float> = 0f..1f,
     steps: Int = 0,
+    detents: List<Float> = emptyList(),
+    behavior: IOSSliderBehavior = IOSSliderBehavior.Immediate,
     activeColor: Color = Color(0xFF007AFF),
     inactiveColor: Color = Color(0xFF3A3A3C),
     thumbColor: Color = Color.White,
-    onValueChangeFinished: (() -> Unit)? = null
+    onValueChangeFinished: (() -> Unit)? = null,
+    onValueCommit: ((Float) -> Unit)? = null
 ) {
     val haptics = rememberIOSHaptics()
     val density = LocalDensity.current
+    val scope = rememberCoroutineScope()
 
-    val normalized = normalizeSliderValue(value, valueRange)
-    val thumbScale = remember { Animatable(1f) }
-    var isDragging by remember { mutableStateOf(false) }
-    var lastStepIndex by remember { mutableIntStateOf(-1) }
+    val initialNorm = normalizeSliderValue(value, valueRange)
+    val state = rememberIOSSliderState(initialNormalized = initialNorm, detents = detents)
 
-    LaunchedEffect(isDragging) {
-        thumbScale.animateTo(
-            targetValue = if (isDragging) 1.25f else 1.0f,
-            animationSpec = spring(
-                stiffness = IOSMotionTokens.PressStiffness,
-                dampingRatio = IOSMotionTokens.PressDampingRatio
-            )
-        )
+    var previewNormalized by remember { mutableFloatStateOf(initialNorm) }
+
+    LaunchedEffect(value) {
+        if (!state.isDragging) {
+            val norm = normalizeSliderValue(value, valueRange)
+            previewNormalized = norm
+            state.snapTo(norm)
+        }
     }
 
     BoxWithConstraints(
@@ -79,23 +84,26 @@ fun IOSSlider(
         contentAlignment = Alignment.CenterStart
     ) {
         val totalWidthPx = with(density) { (maxWidth - 28.dp).toPx().coerceAtLeast(1f) }
-        val thumbOffsetPx = (totalWidthPx * normalized).roundToInt()
+        val displayedNorm = if (state.isDragging) previewNormalized else state.progress
+        val thumbOffsetPx = (totalWidthPx * displayedNorm).roundToInt()
+
+        val trackHeight = if (state.isDragging) 6.dp else 4.dp
 
         // Track Background
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(4.dp)
-                .clip(RoundedCornerShape(2.dp))
+                .height(trackHeight)
+                .clip(RoundedCornerShape(3.dp))
                 .background(if (enabled) inactiveColor else inactiveColor.copy(alpha = 0.38f))
         )
 
         // Active Track Fill
-        val activeWidth = maxWidth * normalized
+        val activeWidth = maxWidth * displayedNorm
         Box(
             modifier = Modifier
-                .size(width = activeWidth, height = 4.dp)
-                .clip(RoundedCornerShape(2.dp))
+                .size(width = activeWidth, height = trackHeight)
+                .clip(RoundedCornerShape(3.dp))
                 .background(if (enabled) activeColor else activeColor.copy(alpha = 0.38f))
         )
 
@@ -103,66 +111,89 @@ fun IOSSlider(
         Box(
             modifier = Modifier
                 .matchParentSize()
-                .pointerInput(enabled, totalWidthPx, steps) {
+                .pointerInput(enabled, totalWidthPx, steps, behavior) {
                     if (!enabled) return@pointerInput
 
                     detectTapGestures(
                         onPress = { offset ->
-                            isDragging = true
                             val rawNorm = ((offset.x - 14.dp.toPx()) / totalWidthPx).coerceIn(0f, 1f)
                             val finalNorm = if (steps > 0) snapToStep(rawNorm, steps) else rawNorm
-                            onValueChange(denormalizeSliderValue(finalNorm, valueRange))
+                            previewNormalized = finalNorm
+                            scope.launch { state.dragTo(finalNorm) }
+
+                            if (behavior == IOSSliderBehavior.Immediate) {
+                                onValueChange(denormalizeSliderValue(finalNorm, valueRange))
+                            }
 
                             tryAwaitRelease()
-                            isDragging = false
-                            onValueChangeFinished?.invoke()
+                            scope.launch {
+                                val committedNorm = state.release()
+                                val finalVal = denormalizeSliderValue(committedNorm, valueRange)
+                                onValueChange(finalVal)
+                                onValueCommit?.invoke(finalVal)
+                                onValueChangeFinished?.invoke()
+                            }
                         }
                     )
                 }
-                .pointerInput(enabled, totalWidthPx, steps) {
+                .pointerInput(enabled, totalWidthPx, steps, behavior) {
                     if (!enabled) return@pointerInput
 
                     detectDragGestures(
-                        onDragStart = { isDragging = true },
+                        onDragStart = {
+                            scope.launch { state.dragTo(previewNormalized) }
+                        },
                         onDragEnd = {
-                            isDragging = false
-                            onValueChangeFinished?.invoke()
+                            scope.launch {
+                                val committedNorm = state.release()
+                                val finalVal = denormalizeSliderValue(committedNorm, valueRange)
+                                onValueChange(finalVal)
+                                onValueCommit?.invoke(finalVal)
+                                onValueChangeFinished?.invoke()
+                            }
                         },
                         onDragCancel = {
-                            isDragging = false
-                            onValueChangeFinished?.invoke()
+                            scope.launch {
+                                val norm = normalizeSliderValue(value, valueRange)
+                                state.release()
+                                state.snapTo(norm)
+                                previewNormalized = norm
+                                onValueChangeFinished?.invoke()
+                            }
                         },
                         onDrag = { change, dragAmount ->
                             change.consume()
-                            val currentPx = (totalWidthPx * normalized) + dragAmount.x
+                            val currentPx = (totalWidthPx * previewNormalized) + dragAmount.x
                             val rawNorm = (currentPx / totalWidthPx).coerceIn(0f, 1f)
-                            val finalNorm = if (steps > 0) {
-                                val snapped = snapToStep(rawNorm, steps)
-                                val currentStep = (snapped * (steps + 1)).roundToInt()
-                                if (currentStep != lastStepIndex) {
-                                    lastStepIndex = currentStep
+                            val finalNorm = if (steps > 0) snapToStep(rawNorm, steps) else rawNorm
+                            previewNormalized = finalNorm
+
+                            scope.launch {
+                                val snapped = state.dragTo(finalNorm)
+                                if (detents.isNotEmpty() && snapped != state.lastSnappedDetent) {
+                                    state.lastSnappedDetent = snapped
                                     haptics.selection()
                                 }
-                                snapped
-                            } else {
-                                rawNorm
                             }
-                            onValueChange(denormalizeSliderValue(finalNorm, valueRange))
+
+                            if (behavior == IOSSliderBehavior.Immediate) {
+                                onValueChange(denormalizeSliderValue(finalNorm, valueRange))
+                            }
                         }
                     )
                 }
         )
 
-        // Thumb Handle
+        // Expanding Thumb Handle
         Box(
             modifier = Modifier
                 .offset { IntOffset(x = thumbOffsetPx, y = 0) }
                 .size(28.dp)
                 .graphicsLayer {
-                    scaleX = thumbScale.value
-                    scaleY = thumbScale.value
+                    scaleX = state.thumbScale
+                    scaleY = state.thumbScale
                 }
-                .shadow(elevation = 3.dp, shape = CircleShape)
+                .shadow(elevation = if (state.isDragging) 6.dp else 3.dp, shape = CircleShape)
                 .clip(CircleShape)
                 .background(thumbColor)
         )

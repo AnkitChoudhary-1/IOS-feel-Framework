@@ -27,25 +27,25 @@ import dev.iosfeel.haptics.rememberIOSHaptics
 import dev.iosfeel.physics.ExperimentalIOSFeelV2Api
 
 /**
- * Standard iOS List Row with subtle V2 press surface physics and gesture arena cancellation on scroll.
+ * Standard iOS Settings/Navigation Disclosure Row with chevron.
  */
 @OptIn(ExperimentalIOSFeelV2Api::class)
 @Composable
-fun IOSListRow(
+fun IOSDisclosureRow(
     title: String,
+    onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    subtitle: String? = null,
+    value: String? = null,
     leading: (@Composable () -> Unit)? = null,
-    trailing: (@Composable () -> Unit)? = null,
     showDivider: Boolean = true,
-    dividerIndent: Boolean = true,
-    onClick: (() -> Unit)? = null
+    dividerIndent: Boolean = true
 ) {
     val haptics = rememberIOSHaptics()
     val pressState = rememberIOSPressSurfaceState()
 
-    val rowModifier = if (onClick != null) {
-        modifier
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
             .semantics { role = Role.Button }
             .iosPressSurface(
                 state = pressState,
@@ -56,22 +56,14 @@ fun IOSListRow(
                     onClick()
                 }
             )
-    } else {
-        modifier
-    }
-
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .then(rowModifier)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .defaultMinSize(minHeight = 48.dp)
+                .defaultMinSize(minHeight = 44.dp)
                 .padding(
                     horizontal = IOSSpacing.Large,
-                    vertical = IOSSpacing.Medium
+                    vertical = 12.dp
                 ),
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -80,35 +72,29 @@ fun IOSListRow(
                 Spacer(modifier = Modifier.width(IOSSpacing.Medium))
             }
 
-            Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = title,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Normal,
+                color = Color.White,
+                modifier = Modifier.weight(1f)
+            )
+
+            if (value != null) {
                 Text(
-                    text = title,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Normal,
-                    color = Color.White
+                    text = value,
+                    fontSize = 15.sp,
+                    color = Color.White.copy(alpha = 0.5f)
                 )
-                if (subtitle != null) {
-                    Text(
-                        text = subtitle,
-                        fontSize = 13.sp,
-                        color = Color.White.copy(alpha = 0.6f),
-                        modifier = Modifier.padding(top = 2.dp)
-                    )
-                }
+                Spacer(modifier = Modifier.width(6.dp))
             }
 
-            if (trailing != null) {
-                Spacer(modifier = Modifier.width(IOSSpacing.Small))
-                trailing()
-            } else if (onClick != null) {
-                Spacer(modifier = Modifier.width(IOSSpacing.Small))
-                Text(
-                    text = "›",
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = Color.White.copy(alpha = 0.35f)
-                )
-            }
+            Text(
+                text = "›",
+                fontSize = 20.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = Color.White.copy(alpha = 0.35f)
+            )
         }
 
         if (showDivider) {

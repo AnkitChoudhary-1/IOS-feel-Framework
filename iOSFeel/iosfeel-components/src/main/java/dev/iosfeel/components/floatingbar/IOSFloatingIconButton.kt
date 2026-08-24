@@ -1,13 +1,10 @@
 package dev.iosfeel.components.floatingbar
 
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -15,15 +12,22 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import dev.iosfeel.components.interaction.IOSPressConfig
-import dev.iosfeel.components.interaction.iosPressEffect
+import dev.iosfeel.components.interaction.iosPressSurface
+import dev.iosfeel.components.interaction.rememberIOSPressSurfaceState
 import dev.iosfeel.haptics.rememberIOSHaptics
 import dev.iosfeel.material.IOSBackdropState
 import dev.iosfeel.material.IOSMaterialConfig
 import dev.iosfeel.material.IOSMaterialSurface
+import dev.iosfeel.physics.ExperimentalIOSFeelV2Api
 
+/**
+ * High-fidelity floating circular icon button with frosted backdrop and V2 physics press.
+ */
+@OptIn(ExperimentalIOSFeelV2Api::class)
 @Composable
 fun IOSFloatingIconButton(
     onClick: () -> Unit,
@@ -38,7 +42,7 @@ fun IOSFloatingIconButton(
     content: @Composable () -> Unit
 ) {
     val haptics = rememberIOSHaptics()
-    val interactionSource = remember { MutableInteractionSource() }
+    val pressState = rememberIOSPressSurfaceState()
 
     Box(
         modifier = modifier
@@ -54,20 +58,17 @@ fun IOSFloatingIconButton(
                 color = borderColor,
                 shape = shape
             )
-            .iosPressEffect(
-                interactionSource = interactionSource,
-                config = IOSPressConfig(pressedScale = 0.92f)
-            )
-            .clickable(
-                interactionSource = interactionSource,
-                indication = null,
-                role = Role.Button
-            ) {
-                if (hapticsEnabled) {
-                    haptics.selection()
+            .iosPressSurface(
+                state = pressState,
+                pressedScale = 0.92f,
+                onClick = {
+                    if (hapticsEnabled) {
+                        haptics.selection()
+                    }
+                    onClick()
                 }
-                onClick()
-            },
+            )
+            .semantics { role = Role.Button },
         contentAlignment = Alignment.Center
     ) {
         IOSMaterialSurface(

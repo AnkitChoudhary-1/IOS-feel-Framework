@@ -113,4 +113,20 @@ object IOSSprings {
         response = 0.52f,
         bounce = 0.00f
     )
+
+    /**
+     * Highly responsive spring for interactive swipes and releases.
+     */
+    val Responsive = IOSSpringSpec(
+        response = 0.30f,
+        bounce = 0.08f
+    )
+
+    /**
+     * Smooth balanced spring for list rows and card morphs.
+     */
+    val Smooth = IOSSpringSpec(
+        response = 0.36f,
+        bounce = 0.05f
+    )
 }

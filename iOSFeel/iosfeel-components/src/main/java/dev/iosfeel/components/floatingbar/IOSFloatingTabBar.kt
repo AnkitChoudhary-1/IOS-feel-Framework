@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
@@ -57,6 +58,8 @@ fun <T> IOSFloatingTabBar(
     selected: T,
     onSelected: (T) -> Unit,
     modifier: Modifier = Modifier,
+    onTabReselected: ((T) -> Unit)? = null,
+    accessory: (@Composable () -> Unit)? = null,
     state: IOSFloatingBarState = rememberIOSFloatingBarState(),
     scrubConfig: IOSFloatingTabScrubConfig = IOSFloatingTabScrubConfig(),
     backdrop: IOSBackdropState? = null,
@@ -98,18 +101,28 @@ fun <T> IOSFloatingTabBar(
             .padding(horizontal = horizontalMargin),
         contentAlignment = Alignment.Center
     ) {
-        IOSFloatingBar(
-            backdrop = backdrop,
-            materialStyle = IOSFloatingMaterialStyle.Regular,
-            shape = IOSFloatingShapes.Bar,
-            modifier = Modifier
-                .fillMaxWidth()
-                .graphicsLayer {
-                    scaleX = barScale
-                    scaleY = barScale
-                    translationY = barTranslationY
-                }
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.fillMaxWidth()
         ) {
+            // Accessory slot (e.g. Floating MiniPlayer)
+            if (accessory != null) {
+                accessory()
+                Spacer(modifier = Modifier.height(8.dp))
+            }
+
+            IOSFloatingBar(
+                backdrop = backdrop,
+                materialStyle = IOSFloatingMaterialStyle.Regular,
+                shape = IOSFloatingShapes.Bar,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .graphicsLayer {
+                        scaleX = barScale
+                        scaleY = barScale
+                        translationY = barTranslationY
+                    }
+            ) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -257,10 +270,14 @@ fun <T> IOSFloatingTabBar(
                                 interactionSource = interactionSource,
                                 indication = null
                             ) {
-                                if (hapticsEnabled && !isSelected) {
-                                    haptics.selection()
+                                if (isSelected) {
+                                    onTabReselected?.invoke(item.value)
+                                } else {
+                                    if (hapticsEnabled) {
+                                        haptics.selection()
+                                    }
+                                    onSelected(item.value)
                                 }
-                                onSelected(item.value)
                             }
                             .padding(vertical = 4.dp),
                         contentAlignment = Alignment.Center
@@ -307,3 +324,5 @@ fun <T> IOSFloatingTabBar(
         }
     }
 }
+}
+
