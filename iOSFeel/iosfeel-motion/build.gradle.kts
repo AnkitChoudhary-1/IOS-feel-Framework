@@ -40,9 +40,11 @@ android {
 }
 
 dependencies {
-    // Internal dependency — motion depends on core and physics
+    // Internal dependency — motion depends on core, physics, haptics, material
     implementation(project(":iosfeel-core"))
     implementation(project(":iosfeel-physics"))
+    implementation(project(":iosfeel-haptics"))
+    implementation(project(":iosfeel-material"))
 
     // Compose BOM
     implementation(platform(libs.compose.bom))
