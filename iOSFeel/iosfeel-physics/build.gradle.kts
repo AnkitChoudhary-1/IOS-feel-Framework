@@ -5,7 +5,7 @@ plugins {
 }
 
 android {
-    namespace = "dev.iosfeel.motion"
+    namespace = "dev.iosfeel.physics"
     compileSdk = 35
 
     defaultConfig {
@@ -40,9 +40,8 @@ android {
 }
 
 dependencies {
-    // Internal dependency — motion depends on core and physics
+    // Core module
     implementation(project(":iosfeel-core"))
-    implementation(project(":iosfeel-physics"))
 
     // Compose BOM
     implementation(platform(libs.compose.bom))
