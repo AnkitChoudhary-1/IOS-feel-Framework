@@ -15,8 +15,10 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import dev.iosfeel.haptics.rememberIOSHaptics
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -611,6 +613,10 @@ private fun SonoraModalOverlay(
     content: @Composable () -> Unit
 ) {
     val colors = LocalSonoraColors.current
+    val haptics = rememberIOSHaptics()
+
+    androidx.activity.compose.BackHandler(onBack = onDismiss)
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -624,12 +630,13 @@ private fun SonoraModalOverlay(
     ) {
         Box(
             modifier = Modifier
+                .fillMaxWidth()
                 .clickable(
                     interactionSource = remember { MutableInteractionSource() },
                     indication = null,
                     onClick = {}
                 )
-                .clip(RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp))
+                .clip(RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp))
                 .background(colors.surfaceElevated)
                 .navigationBarsPadding()
         ) {

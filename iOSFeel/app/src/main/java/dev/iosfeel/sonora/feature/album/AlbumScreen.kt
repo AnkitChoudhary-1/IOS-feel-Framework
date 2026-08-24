@@ -29,6 +29,11 @@ import dev.iosfeel.sonora.core.design.SonoraIcons
 import dev.iosfeel.sonora.core.model.Album
 import dev.iosfeel.sonora.core.model.Song
 
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import dev.iosfeel.sonora.core.design.sheet.SonoraActionItem
+import dev.iosfeel.sonora.core.design.sheet.SonoraActionSheet
+
 @Composable
 fun AlbumScreen(
     album: Album?,
@@ -43,6 +48,7 @@ fun AlbumScreen(
     val colors = LocalSonoraColors.current
     val typography = LocalSonoraTypography.current
     val listState = rememberLazyListState()
+    var optionsSheetVisible by remember { mutableStateOf(false) }
 
     if (album == null) {
         Box(
@@ -135,6 +141,51 @@ fun AlbumScreen(
                         contentDescription = "Back",
                         tint = colors.accent,
                         modifier = Modifier.size(24.dp)
+                    )
+                }
+            },
+            actions = {
+                IOSFloatingIconButton(
+                    onClick = { optionsSheetVisible = true }
+                ) {
+                    Icon(
+                        imageVector = SonoraIcons.MoreHorizontal,
+                        contentDescription = "Options",
+                        tint = colors.accent,
+                        modifier = Modifier.size(22.dp)
+                    )
+                }
+            }
+        )
+
+        // Album Actions Sheet
+        SonoraActionSheet(
+            visible = optionsSheetVisible,
+            onDismiss = { optionsSheetVisible = false },
+            title = album.title,
+            subtitle = album.artist,
+            actions = buildList {
+                add(
+                    SonoraActionItem(
+                        title = "Play All",
+                        icon = SonoraIcons.Play,
+                        onClick = { onPlayAll(album.songs) }
+                    )
+                )
+                add(
+                    SonoraActionItem(
+                        title = "Shuffle All",
+                        icon = SonoraIcons.Shuffle,
+                        onClick = { onShuffleAll(album.songs) }
+                    )
+                )
+                if (album.artistId != null) {
+                    add(
+                        SonoraActionItem(
+                            title = "Go to Artist",
+                            icon = SonoraIcons.Folder,
+                            onClick = { onArtistClick(album.artistId) }
+                        )
                     )
                 }
             }

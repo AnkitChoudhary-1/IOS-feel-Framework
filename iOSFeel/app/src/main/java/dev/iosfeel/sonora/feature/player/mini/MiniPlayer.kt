@@ -34,6 +34,10 @@ import dev.iosfeel.sonora.core.design.artwork.SongArtwork
 import dev.iosfeel.sonora.core.model.PlaybackState
 import kotlinx.coroutines.launch
 
+import dev.iosfeel.components.iconbutton.IOSIconButton
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.draw.clip
+
 @Composable
 fun MiniPlayer(
     state: PlaybackState,
@@ -107,8 +111,10 @@ fun MiniPlayer(
         ) {
             SongArtwork(
                 song = song,
-                cornerRadius = 8.dp,
-                modifier = Modifier.size(48.dp)
+                cornerRadius = 24.dp,
+                modifier = Modifier
+                    .size(48.dp)
+                    .clip(CircleShape)
             )
 
             Spacer(modifier = Modifier.width(12.dp))
@@ -131,25 +137,27 @@ fun MiniPlayer(
                 )
             }
 
-            IconButton(
+            IOSIconButton(
                 onClick = onPlayPause,
-                modifier = Modifier.size(44.dp)
+                size = 44.dp,
+                contentDescription = if (state.isPlaying) "Pause" else "Play"
             ) {
                 Icon(
                     imageVector = if (state.isPlaying) SonoraIcons.Pause else SonoraIcons.Play,
-                    contentDescription = if (state.isPlaying) "Pause" else "Play",
+                    contentDescription = null,
                     tint = colors.textPrimary,
                     modifier = Modifier.size(26.dp)
                 )
             }
 
-            IconButton(
+            IOSIconButton(
                 onClick = onNext,
-                modifier = Modifier.size(44.dp)
+                size = 44.dp,
+                contentDescription = "Next"
             ) {
                 Icon(
                     imageVector = SonoraIcons.SkipNext,
-                    contentDescription = "Next",
+                    contentDescription = null,
                     tint = colors.textPrimary,
                     modifier = Modifier.size(24.dp)
                 )

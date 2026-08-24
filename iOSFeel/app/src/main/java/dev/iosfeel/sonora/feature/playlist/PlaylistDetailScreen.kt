@@ -47,6 +47,12 @@ import dev.iosfeel.sonora.core.model.Playlist
 import dev.iosfeel.sonora.core.model.Song
 import dev.iosfeel.sonora.feature.library.songs.SongRow
 
+import dev.iosfeel.components.iconbutton.IOSIconButton
+import dev.iosfeel.components.interaction.iosPressSurface
+import dev.iosfeel.components.interaction.rememberIOSPressSurfaceState
+import dev.iosfeel.sonora.core.design.sheet.SonoraActionItem
+import dev.iosfeel.sonora.core.design.sheet.SonoraActionSheet
+
 @Composable
 fun PlaylistDetailScreen(
     playlist: Playlist?,
@@ -66,7 +72,11 @@ fun PlaylistDetailScreen(
     val typography = LocalSonoraTypography.current
     val listState = rememberLazyListState()
     val haptics = rememberIOSHaptics()
-    var optionsMenuExpanded by remember { mutableStateOf(false) }
+    var optionsSheetVisible by remember { mutableStateOf(false) }
+
+    val playPressState = rememberIOSPressSurfaceState()
+    val shufflePressState = rememberIOSPressSurfaceState()
+    val addSongsPressState = rememberIOSPressSurfaceState()
 
     Box(
         modifier = modifier
@@ -118,56 +128,68 @@ fun PlaylistDetailScreen(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
-                            Button(
-                                onClick = {
-                                    haptics.impact(IOSImpact.Medium)
-                                    onPlayAll(playlist.songs)
-                                },
+                            Box(
                                 modifier = Modifier
                                     .weight(1f)
-                                    .height(48.dp),
-                                shape = RoundedCornerShape(12.dp),
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = colors.surfaceElevated,
-                                    contentColor = colors.accent
-                                )
+                                    .height(48.dp)
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(colors.surfaceElevated)
+                                    .iosPressSurface(
+                                        state = playPressState,
+                                        pressedScale = 0.95f,
+                                        onClick = {
+                                            haptics.impact(IOSImpact.Medium)
+                                            onPlayAll(playlist.songs)
+                                        }
+                                    ),
+                                contentAlignment = Alignment.Center
                             ) {
-                                Icon(
-                                    imageVector = SonoraIcons.Play,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(18.dp)
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(
-                                    text = "Play",
-                                    style = typography.headline.copy(fontWeight = FontWeight.SemiBold)
-                                )
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(
+                                        imageVector = SonoraIcons.Play,
+                                        contentDescription = null,
+                                        tint = colors.accent,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        text = "Play",
+                                        style = typography.headline.copy(fontWeight = FontWeight.SemiBold),
+                                        color = colors.accent
+                                    )
+                                }
                             }
 
-                            Button(
-                                onClick = {
-                                    haptics.impact(IOSImpact.Medium)
-                                    onShuffleAll(playlist.songs)
-                                },
+                            Box(
                                 modifier = Modifier
                                     .weight(1f)
-                                    .height(48.dp),
-                                shape = RoundedCornerShape(12.dp),
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = colors.surfaceElevated,
-                                    contentColor = colors.accent
-                                )
+                                    .height(48.dp)
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(colors.surfaceElevated)
+                                    .iosPressSurface(
+                                        state = shufflePressState,
+                                        pressedScale = 0.95f,
+                                        onClick = {
+                                            haptics.impact(IOSImpact.Medium)
+                                            onShuffleAll(playlist.songs)
+                                        }
+                                    ),
+                                contentAlignment = Alignment.Center
                             ) {
-                                Icon(
-                                    imageVector = SonoraIcons.Shuffle,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(18.dp)
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(
-                                    text = "Shuffle",
-                                    style = typography.headline.copy(fontWeight = FontWeight.SemiBold)
-                                )
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(
+                                        imageVector = SonoraIcons.Shuffle,
+                                        contentDescription = null,
+                                        tint = colors.accent,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        text = "Shuffle",
+                                        style = typography.headline.copy(fontWeight = FontWeight.SemiBold),
+                                        color = colors.accent
+                                    )
+                                }
                             }
                         }
                     }
@@ -191,18 +213,27 @@ fun PlaylistDetailScreen(
                                 color = colors.textPrimary
                             )
                             Spacer(modifier = Modifier.height(16.dp))
-                            Button(
-                                onClick = onAddSongs,
-                                shape = RoundedCornerShape(12.dp),
-                                colors = ButtonDefaults.buttonColors(containerColor = colors.accent)
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(colors.accent)
+                                    .iosPressSurface(
+                                        state = addSongsPressState,
+                                        pressedScale = 0.95f,
+                                        onClick = onAddSongs
+                                    )
+                                    .padding(horizontal = 20.dp, vertical = 12.dp)
                             ) {
-                                Icon(
-                                    imageVector = SonoraIcons.Plus,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(18.dp)
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text("Add Songs", color = Color.White)
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(
+                                        imageVector = SonoraIcons.Plus,
+                                        contentDescription = null,
+                                        tint = Color.White,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text("Add Songs", color = Color.White, style = typography.headline)
+                                }
                             }
                         }
                     }
@@ -227,88 +258,63 @@ fun PlaylistDetailScreen(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            IconButton(
+            IOSIconButton(
                 onClick = onBack,
+                size = 40.dp,
+                contentDescription = "Back",
                 modifier = Modifier
-                    .size(40.dp)
                     .clip(RoundedCornerShape(20.dp))
                     .background(colors.surfaceElevated.copy(alpha = 0.9f))
             ) {
                 Icon(
                     imageVector = SonoraIcons.ChevronLeft,
-                    contentDescription = "Back",
+                    contentDescription = null,
                     tint = colors.textPrimary,
                     modifier = Modifier.size(24.dp)
                 )
             }
 
-            Box {
-                IconButton(
-                    onClick = { optionsMenuExpanded = true },
-                    modifier = Modifier
-                        .size(40.dp)
-                        .clip(RoundedCornerShape(20.dp))
-                        .background(colors.surfaceElevated.copy(alpha = 0.9f))
-                ) {
-                    Icon(
-                        imageVector = SonoraIcons.MoreHorizontal,
-                        contentDescription = "Options",
-                        tint = colors.textPrimary,
-                        modifier = Modifier.size(22.dp)
-                    )
-                }
-
-                DropdownMenu(
-                    expanded = optionsMenuExpanded,
-                    onDismissRequest = { optionsMenuExpanded = false },
-                    modifier = Modifier.background(colors.surfaceElevated)
-                ) {
-                    DropdownMenuItem(
-                        text = { Text("Add Songs", color = colors.textPrimary) },
-                        leadingIcon = {
-                            Icon(
-                                imageVector = SonoraIcons.Plus,
-                                contentDescription = null,
-                                tint = colors.textPrimary
-                            )
-                        },
-                        onClick = {
-                            optionsMenuExpanded = false
-                            onAddSongs()
-                        }
-                    )
-
-                    DropdownMenuItem(
-                        text = { Text("Rename Playlist", color = colors.textPrimary) },
-                        leadingIcon = {
-                            Icon(
-                                imageVector = SonoraIcons.Edit,
-                                contentDescription = null,
-                                tint = colors.textPrimary
-                            )
-                        },
-                        onClick = {
-                            optionsMenuExpanded = false
-                            onRenamePlaylist()
-                        }
-                    )
-
-                    DropdownMenuItem(
-                        text = { Text("Delete Playlist", color = Color(0xFFFF3B30)) },
-                        leadingIcon = {
-                            Icon(
-                                imageVector = SonoraIcons.Trash,
-                                contentDescription = null,
-                                tint = Color(0xFFFF3B30)
-                            )
-                        },
-                        onClick = {
-                            optionsMenuExpanded = false
-                            onDeletePlaylist()
-                        }
-                    )
-                }
+            IOSIconButton(
+                onClick = { optionsSheetVisible = true },
+                size = 40.dp,
+                contentDescription = "Options",
+                modifier = Modifier
+                    .clip(RoundedCornerShape(20.dp))
+                    .background(colors.surfaceElevated.copy(alpha = 0.9f))
+            ) {
+                Icon(
+                    imageVector = SonoraIcons.MoreHorizontal,
+                    contentDescription = null,
+                    tint = colors.textPrimary,
+                    modifier = Modifier.size(22.dp)
+                )
             }
         }
+
+        // iOSFeel Action Sheet for Playlist Options
+        SonoraActionSheet(
+            visible = optionsSheetVisible,
+            onDismiss = { optionsSheetVisible = false },
+            title = playlist.name,
+            subtitle = "${playlist.songs.size} songs",
+            actions = listOf(
+                SonoraActionItem(
+                    title = "Add Songs",
+                    icon = SonoraIcons.Plus,
+                    onClick = onAddSongs
+                ),
+                SonoraActionItem(
+                    title = "Rename Playlist",
+                    icon = SonoraIcons.Edit,
+                    onClick = onRenamePlaylist
+                ),
+                SonoraActionItem(
+                    title = "Delete Playlist",
+                    icon = SonoraIcons.Trash,
+                    isDestructive = true,
+                    onClick = onDeletePlaylist
+                )
+            )
+        )
     }
 }

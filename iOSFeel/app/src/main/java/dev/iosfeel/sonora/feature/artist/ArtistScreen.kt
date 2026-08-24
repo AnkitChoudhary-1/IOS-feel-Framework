@@ -30,6 +30,11 @@ import dev.iosfeel.sonora.core.model.Album
 import dev.iosfeel.sonora.core.model.Artist
 import dev.iosfeel.sonora.core.model.Song
 
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import dev.iosfeel.sonora.core.design.sheet.SonoraActionItem
+import dev.iosfeel.sonora.core.design.sheet.SonoraActionSheet
+
 @Composable
 fun ArtistScreen(
     artist: Artist?,
@@ -44,6 +49,7 @@ fun ArtistScreen(
     val colors = LocalSonoraColors.current
     val typography = LocalSonoraTypography.current
     val listState = rememberLazyListState()
+    var optionsSheetVisible by remember { mutableStateOf(false) }
 
     if (artist == null) {
         Box(
@@ -150,7 +156,41 @@ fun ArtistScreen(
                         modifier = Modifier.size(24.dp)
                     )
                 }
+            },
+            actions = {
+                if (allSongs.isNotEmpty()) {
+                    IOSFloatingIconButton(
+                        onClick = { optionsSheetVisible = true }
+                    ) {
+                        Icon(
+                            imageVector = SonoraIcons.MoreHorizontal,
+                            contentDescription = "Options",
+                            tint = colors.accent,
+                            modifier = Modifier.size(22.dp)
+                        )
+                    }
+                }
             }
+        )
+
+        // Artist Action Sheet
+        SonoraActionSheet(
+            visible = optionsSheetVisible,
+            onDismiss = { optionsSheetVisible = false },
+            title = artist.name,
+            subtitle = "${allSongs.size} songs",
+            actions = listOf(
+                SonoraActionItem(
+                    title = "Play All",
+                    icon = SonoraIcons.Play,
+                    onClick = { onPlayAll(allSongs) }
+                ),
+                SonoraActionItem(
+                    title = "Shuffle All",
+                    icon = SonoraIcons.Shuffle,
+                    onClick = { onShuffleAll(allSongs) }
+                )
+            )
         )
     }
 }

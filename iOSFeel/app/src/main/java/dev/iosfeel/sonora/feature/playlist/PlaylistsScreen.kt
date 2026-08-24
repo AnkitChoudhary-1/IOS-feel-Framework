@@ -43,6 +43,10 @@ import dev.iosfeel.sonora.core.design.LocalSonoraTypography
 import dev.iosfeel.sonora.core.design.SonoraIcons
 import dev.iosfeel.sonora.core.model.Playlist
 
+import dev.iosfeel.components.iconbutton.IOSIconButton
+import dev.iosfeel.components.interaction.iosPressSurface
+import dev.iosfeel.components.interaction.rememberIOSPressSurfaceState
+
 @Composable
 fun PlaylistsScreen(
     playlists: List<Playlist>,
@@ -55,6 +59,7 @@ fun PlaylistsScreen(
     val typography = LocalSonoraTypography.current
     val gridState = rememberLazyGridState()
     val haptics = rememberIOSHaptics()
+    val newPlaylistPressState = rememberIOSPressSurfaceState()
 
     Box(
         modifier = modifier
@@ -84,16 +89,14 @@ fun PlaylistsScreen(
                             color = colors.textPrimary
                         )
 
-                        IconButton(
-                            onClick = {
-                                haptics.impact(IOSImpact.Light)
-                                onCreatePlaylist()
-                            },
-                            modifier = Modifier.size(36.dp)
+                        IOSIconButton(
+                            onClick = onCreatePlaylist,
+                            size = 36.dp,
+                            contentDescription = "New Playlist"
                         ) {
                             Icon(
                                 imageVector = SonoraIcons.Plus,
-                                contentDescription = "New Playlist",
+                                contentDescription = null,
                                 tint = colors.accent,
                                 modifier = Modifier.size(24.dp)
                             )
@@ -111,10 +114,11 @@ fun PlaylistsScreen(
                         .aspectRatio(1f)
                         .clip(RoundedCornerShape(14.dp))
                         .background(colors.surfaceElevated)
-                        .clickable {
-                            haptics.impact(IOSImpact.Light)
-                            onCreatePlaylist()
-                        },
+                        .iosPressSurface(
+                            state = newPlaylistPressState,
+                            pressedScale = 0.95f,
+                            onClick = onCreatePlaylist
+                        ),
                     contentAlignment = Alignment.Center
                 ) {
                     Column(
@@ -174,16 +178,17 @@ fun PlaylistsScreen(
                 .padding(horizontal = 16.dp, vertical = 8.dp),
             horizontalArrangement = Arrangement.Start
         ) {
-            IconButton(
+            IOSIconButton(
                 onClick = onBack,
+                size = 40.dp,
+                contentDescription = "Back",
                 modifier = Modifier
-                    .size(40.dp)
                     .clip(RoundedCornerShape(20.dp))
                     .background(colors.surfaceElevated.copy(alpha = 0.9f))
             ) {
                 Icon(
                     imageVector = SonoraIcons.ChevronLeft,
-                    contentDescription = "Back",
+                    contentDescription = null,
                     tint = colors.textPrimary,
                     modifier = Modifier.size(24.dp)
                 )
@@ -199,11 +204,16 @@ private fun PlaylistItem(
 ) {
     val colors = LocalSonoraColors.current
     val typography = LocalSonoraTypography.current
+    val pressState = rememberIOSPressSurfaceState()
 
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick)
+            .iosPressSurface(
+                state = pressState,
+                pressedScale = 0.96f,
+                onClick = onClick
+            )
     ) {
         PlaylistArtwork(
             playlist = playlist,

@@ -39,6 +39,16 @@ import dev.iosfeel.sonora.core.design.SonoraIcons
 import dev.iosfeel.sonora.core.model.Song
 import dev.iosfeel.sonora.feature.library.songs.SongRow
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import dev.iosfeel.components.iconbutton.IOSIconButton
+import dev.iosfeel.components.interaction.iosPressSurface
+import dev.iosfeel.components.interaction.rememberIOSPressSurfaceState
+import dev.iosfeel.sonora.core.design.sheet.SonoraActionItem
+import dev.iosfeel.sonora.core.design.sheet.SonoraActionSheet
+
 @Composable
 fun FavoritesScreen(
     favoriteSongs: List<Song>,
@@ -53,6 +63,10 @@ fun FavoritesScreen(
     val typography = LocalSonoraTypography.current
     val listState = rememberLazyListState()
     val haptics = rememberIOSHaptics()
+    var optionsSheetVisible by remember { mutableStateOf(false) }
+
+    val playPressState = rememberIOSPressSurfaceState()
+    val shufflePressState = rememberIOSPressSurfaceState()
 
     val totalDurationMs = favoriteSongs.sumOf { it.durationMs }
     val formattedDuration = run {
@@ -122,56 +136,68 @@ fun FavoritesScreen(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
-                            Button(
-                                onClick = {
-                                    haptics.impact(IOSImpact.Medium)
-                                    onPlayAll(favoriteSongs)
-                                },
+                            Box(
                                 modifier = Modifier
                                     .weight(1f)
-                                    .height(48.dp),
-                                shape = RoundedCornerShape(12.dp),
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = colors.surfaceElevated,
-                                    contentColor = colors.accent
-                                )
+                                    .height(48.dp)
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(colors.surfaceElevated)
+                                    .iosPressSurface(
+                                        state = playPressState,
+                                        pressedScale = 0.95f,
+                                        onClick = {
+                                            haptics.impact(IOSImpact.Medium)
+                                            onPlayAll(favoriteSongs)
+                                        }
+                                    ),
+                                contentAlignment = Alignment.Center
                             ) {
-                                Icon(
-                                    imageVector = SonoraIcons.Play,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(18.dp)
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(
-                                    text = "Play",
-                                    style = typography.headline.copy(fontWeight = FontWeight.SemiBold)
-                                )
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(
+                                        imageVector = SonoraIcons.Play,
+                                        contentDescription = null,
+                                        tint = colors.accent,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        text = "Play",
+                                        style = typography.headline.copy(fontWeight = FontWeight.SemiBold),
+                                        color = colors.accent
+                                    )
+                                }
                             }
 
-                            Button(
-                                onClick = {
-                                    haptics.impact(IOSImpact.Medium)
-                                    onShuffleAll(favoriteSongs)
-                                },
+                            Box(
                                 modifier = Modifier
                                     .weight(1f)
-                                    .height(48.dp),
-                                shape = RoundedCornerShape(12.dp),
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = colors.surfaceElevated,
-                                    contentColor = colors.accent
-                                )
+                                    .height(48.dp)
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(colors.surfaceElevated)
+                                    .iosPressSurface(
+                                        state = shufflePressState,
+                                        pressedScale = 0.95f,
+                                        onClick = {
+                                            haptics.impact(IOSImpact.Medium)
+                                            onShuffleAll(favoriteSongs)
+                                        }
+                                    ),
+                                contentAlignment = Alignment.Center
                             ) {
-                                Icon(
-                                    imageVector = SonoraIcons.Shuffle,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(18.dp)
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(
-                                    text = "Shuffle",
-                                    style = typography.headline.copy(fontWeight = FontWeight.SemiBold)
-                                )
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(
+                                        imageVector = SonoraIcons.Shuffle,
+                                        contentDescription = null,
+                                        tint = colors.accent,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        text = "Shuffle",
+                                        style = typography.headline.copy(fontWeight = FontWeight.SemiBold),
+                                        color = colors.accent
+                                    )
+                                }
                             }
                         }
                     }
@@ -226,28 +252,68 @@ fun FavoritesScreen(
             }
         }
 
-        // Floating Top Bar with Back Button
+        // Floating Top Bar with Back Button and 3-dots Menu
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .statusBarsPadding()
                 .padding(horizontal = 16.dp, vertical = 8.dp),
-            horizontalArrangement = Arrangement.Start
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            IconButton(
+            IOSIconButton(
                 onClick = onBack,
+                size = 40.dp,
+                contentDescription = "Back",
                 modifier = Modifier
-                    .size(40.dp)
                     .clip(RoundedCornerShape(20.dp))
                     .background(colors.surfaceElevated.copy(alpha = 0.9f))
             ) {
                 Icon(
                     imageVector = SonoraIcons.ChevronLeft,
-                    contentDescription = "Back",
+                    contentDescription = null,
                     tint = colors.textPrimary,
                     modifier = Modifier.size(24.dp)
                 )
             }
+
+            if (favoriteSongs.isNotEmpty()) {
+                IOSIconButton(
+                    onClick = { optionsSheetVisible = true },
+                    size = 40.dp,
+                    contentDescription = "Options",
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(20.dp))
+                        .background(colors.surfaceElevated.copy(alpha = 0.9f))
+                ) {
+                    Icon(
+                        imageVector = SonoraIcons.MoreHorizontal,
+                        contentDescription = null,
+                        tint = colors.textPrimary,
+                        modifier = Modifier.size(22.dp)
+                    )
+                }
+            }
         }
+
+        // iOSFeel Action Sheet for Favorites Options
+        SonoraActionSheet(
+            visible = optionsSheetVisible,
+            onDismiss = { optionsSheetVisible = false },
+            title = "Favorites",
+            subtitle = "${favoriteSongs.size} songs",
+            actions = listOf(
+                SonoraActionItem(
+                    title = "Play All",
+                    icon = SonoraIcons.Play,
+                    onClick = { onPlayAll(favoriteSongs) }
+                ),
+                SonoraActionItem(
+                    title = "Shuffle All",
+                    icon = SonoraIcons.Shuffle,
+                    onClick = { onShuffleAll(favoriteSongs) }
+                )
+            )
+        )
     }
 }

@@ -22,6 +22,10 @@ import dev.iosfeel.sonora.core.design.SonoraIcons
 import dev.iosfeel.sonora.core.design.artwork.SongArtwork
 import dev.iosfeel.sonora.core.model.Song
 
+import dev.iosfeel.components.iconbutton.IOSIconButton
+import dev.iosfeel.components.interaction.iosPressSurface
+import dev.iosfeel.components.interaction.rememberIOSPressSurfaceState
+
 @Composable
 fun SongRow(
     song: Song,
@@ -31,11 +35,16 @@ fun SongRow(
 ) {
     val colors = LocalSonoraColors.current
     val typography = LocalSonoraTypography.current
+    val pressState = rememberIOSPressSurfaceState()
 
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick)
+            .iosPressSurface(
+                state = pressState,
+                pressedScale = 0.98f,
+                onClick = onClick
+            )
             .padding(horizontal = 16.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -67,13 +76,14 @@ fun SongRow(
         }
 
         if (onOptionsClick != null) {
-            IconButton(
+            IOSIconButton(
                 onClick = onOptionsClick,
-                modifier = Modifier.size(36.dp)
+                size = 36.dp,
+                contentDescription = "Song options"
             ) {
                 Icon(
                     imageVector = SonoraIcons.MoreHorizontal,
-                    contentDescription = "Song options",
+                    contentDescription = null,
                     tint = colors.textTertiary,
                     modifier = Modifier.size(20.dp)
                 )

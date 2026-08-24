@@ -40,6 +40,8 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import dev.iosfeel.components.button.IOSButton
 import dev.iosfeel.components.button.IOSButtonStyle
+import dev.iosfeel.components.interaction.iosPressSurface
+import dev.iosfeel.components.interaction.rememberIOSPressSurfaceState
 import dev.iosfeel.components.segmented.IOSSegmentedControl
 import dev.iosfeel.components.segmented.IOSSegmentedItem
 import dev.iosfeel.sonora.core.design.LocalSonoraColors
@@ -175,6 +177,9 @@ fun LibraryScreen(
 
             if (state.permissionGranted && state.library.songs.isNotEmpty()) {
                 Spacer(modifier = Modifier.height(10.dp))
+                val favPressState = rememberIOSPressSurfaceState()
+                val playlistPressState = rememberIOSPressSurfaceState()
+
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -184,7 +189,11 @@ fun LibraryScreen(
                             .weight(1f)
                             .clip(RoundedCornerShape(12.dp))
                             .background(colors.surfaceElevated)
-                            .clickable(onClick = onFavoritesClick)
+                            .iosPressSurface(
+                                state = favPressState,
+                                pressedScale = 0.96f,
+                                onClick = onFavoritesClick
+                            )
                             .padding(horizontal = 14.dp, vertical = 12.dp)
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -208,7 +217,11 @@ fun LibraryScreen(
                             .weight(1f)
                             .clip(RoundedCornerShape(12.dp))
                             .background(colors.surfaceElevated)
-                            .clickable(onClick = onPlaylistsClick)
+                            .iosPressSurface(
+                                state = playlistPressState,
+                                pressedScale = 0.96f,
+                                onClick = onPlaylistsClick
+                            )
                             .padding(horizontal = 14.dp, vertical = 12.dp)
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {

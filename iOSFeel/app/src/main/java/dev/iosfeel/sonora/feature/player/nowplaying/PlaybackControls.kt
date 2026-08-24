@@ -17,6 +17,8 @@ import dev.iosfeel.sonora.core.design.LocalSonoraColors
 import dev.iosfeel.sonora.core.design.SonoraIcons
 import dev.iosfeel.sonora.core.model.PlaybackState
 
+import dev.iosfeel.components.iconbutton.IOSIconButton
+
 @Composable
 fun PlaybackControls(
     state: PlaybackState,
@@ -35,46 +37,49 @@ fun PlaybackControls(
         horizontalArrangement = Arrangement.SpaceEvenly,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        IconButton(
+        IOSIconButton(
             onClick = {
                 haptics.selection()
                 onPrevious()
             },
-            modifier = Modifier.size(54.dp)
+            size = 54.dp,
+            contentDescription = "Previous"
         ) {
             Icon(
                 imageVector = SonoraIcons.SkipPrevious,
-                contentDescription = "Previous",
+                contentDescription = null,
                 tint = colors.textPrimary,
                 modifier = Modifier.size(34.dp)
             )
         }
 
-        IconButton(
+        IOSIconButton(
             onClick = {
                 haptics.impact(IOSImpact.Light)
                 onPlayPause()
             },
-            modifier = Modifier.size(72.dp)
+            size = 72.dp,
+            contentDescription = if (state.isPlaying) "Pause" else "Play"
         ) {
             Icon(
                 imageVector = if (state.isPlaying) SonoraIcons.Pause else SonoraIcons.Play,
-                contentDescription = if (state.isPlaying) "Pause" else "Play",
+                contentDescription = null,
                 tint = colors.textPrimary,
                 modifier = Modifier.size(46.dp)
             )
         }
 
-        IconButton(
+        IOSIconButton(
             onClick = {
                 haptics.selection()
                 onNext()
             },
-            modifier = Modifier.size(54.dp)
+            size = 54.dp,
+            contentDescription = "Next"
         ) {
             Icon(
                 imageVector = SonoraIcons.SkipNext,
-                contentDescription = "Next",
+                contentDescription = null,
                 tint = colors.textPrimary,
                 modifier = Modifier.size(34.dp)
             )

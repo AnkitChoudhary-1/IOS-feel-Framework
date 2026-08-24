@@ -22,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
+import dev.iosfeel.components.iconbutton.IOSIconButton
 import dev.iosfeel.sonora.core.design.LocalSonoraColors
 import dev.iosfeel.sonora.core.design.LocalSonoraTypography
 import dev.iosfeel.sonora.core.design.SonoraIcons
@@ -72,16 +73,17 @@ fun NowPlayingContent(
                     .background(colors.textTertiary.copy(alpha = 0.4f))
             )
 
-            IconButton(
+            IOSIconButton(
                 onClick = onCollapse,
+                size = 44.dp,
+                contentDescription = "Collapse",
                 modifier = Modifier
                     .align(Alignment.CenterStart)
                     .padding(start = 16.dp)
-                    .size(44.dp)
             ) {
                 Icon(
                     imageVector = SonoraIcons.ChevronDown,
-                    contentDescription = "Collapse",
+                    contentDescription = null,
                     tint = colors.textSecondary,
                     modifier = Modifier.size(28.dp)
                 )

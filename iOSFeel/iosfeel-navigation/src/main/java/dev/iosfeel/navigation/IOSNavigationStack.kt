@@ -40,7 +40,7 @@ fun IOSNavigationStack(
     modifier: Modifier = Modifier,
     backTransition: IOSBackTransitionState = remember { IOSBackTransitionState() },
     pushTransition: IOSPushTransitionState = remember { IOSPushTransitionState() },
-    edgeWidthPx: Float = 120f,
+    edgeWidthPx: Float = 220f,
     swipeBackEnabled: Boolean = true,
     content: @Composable (IOSNavigationEntry) -> Unit
 ) {
@@ -149,12 +149,12 @@ fun IOSNavigationStack(
                     val finalVelocity = currentGesture.velocityX
                     val currentProgress = backTransition.currentProgress
 
-                    val finalDecision = decideDirectionalGestureCompletion(
-                        progress = currentProgress,
-                        velocity = finalVelocity,
-                        direction = IOSGestureAxisDirection.Positive,
-                        thresholds = thresholds
-                    )
+                    // Authentic iOS back gesture completion:
+                    // 1. Swiped past 20% of screen width without strong backward flick
+                    // 2. OR flicked rightward with velocity >= 250 px/sec
+                    val isFlickRight = finalVelocity >= 250f
+                    val isDraggedPastThreshold = currentProgress >= 0.20f && finalVelocity >= -150f
+                    val shouldComplete = isFlickRight || isDraggedPastThreshold
 
                     val normalizedVelocity = normalizeGestureVelocity(
                         velocityPxPerSecond = finalVelocity,
@@ -162,15 +162,12 @@ fun IOSNavigationStack(
                     ).coerceIn(-8f, 8f)
 
                     scope.launch {
-                        when (finalDecision) {
-                            IOSGestureDecision.Complete -> {
-                                backTransition.complete(initialVelocity = normalizedVelocity)
-                                state.pop()
-                                backTransition.reset()
-                            }
-                            IOSGestureDecision.Cancel -> {
-                                backTransition.cancel(initialVelocity = normalizedVelocity)
-                            }
+                        if (shouldComplete) {
+                            backTransition.complete(initialVelocity = normalizedVelocity)
+                            state.pop()
+                            backTransition.reset()
+                        } else {
+                            backTransition.cancel(initialVelocity = normalizedVelocity)
                         }
                     }
                 }

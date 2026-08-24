@@ -91,11 +91,12 @@ fun HomeScreen(
                     state = listState,
                     topFadeHeight = 24.dp,
                     bottomFadeHeight = 92.dp,
-                    contentPadding = PaddingValues(top = 96.dp, bottom = 24.dp),
+                    contentPadding = PaddingValues(top = 112.dp, bottom = 24.dp),
                     modifier = Modifier.fillMaxSize()
                 ) {
                     item {
                         Spacer(modifier = Modifier.statusBarsPadding())
+                        Spacer(modifier = Modifier.height(16.dp))
                     }
 
                     if (uiState.recentlyPlayed.isNotEmpty()) {

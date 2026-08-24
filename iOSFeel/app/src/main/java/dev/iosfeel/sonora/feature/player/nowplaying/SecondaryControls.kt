@@ -23,6 +23,8 @@ import dev.iosfeel.sonora.core.design.SonoraIcons
 import dev.iosfeel.sonora.core.model.PlaybackState
 import dev.iosfeel.sonora.core.model.RepeatMode
 
+import dev.iosfeel.components.iconbutton.IOSIconButton
+
 @Composable
 fun SecondaryControls(
     state: PlaybackState,
@@ -50,16 +52,17 @@ fun SecondaryControls(
         verticalAlignment = Alignment.CenterVertically
     ) {
         // Favorite Button
-        IconButton(
+        IOSIconButton(
             onClick = {
                 haptics.impact(IOSImpact.Medium)
                 onToggleFavorite()
             },
-            modifier = Modifier.size(44.dp)
+            size = 44.dp,
+            contentDescription = "Favorite"
         ) {
             Icon(
                 imageVector = if (isFavorite) SonoraIcons.HeartFilled else SonoraIcons.Heart,
-                contentDescription = "Favorite",
+                contentDescription = null,
                 tint = if (isFavorite) Color(0xFFFF2D55) else colors.textTertiary,
                 modifier = Modifier
                     .size(24.dp)
@@ -71,51 +74,54 @@ fun SecondaryControls(
         }
 
         // Shuffle Button
-        IconButton(
+        IOSIconButton(
             onClick = {
                 haptics.selection()
                 onToggleShuffle()
             },
-            modifier = Modifier.size(44.dp)
+            size = 44.dp,
+            contentDescription = "Shuffle"
         ) {
             Icon(
                 imageVector = SonoraIcons.Shuffle,
-                contentDescription = "Shuffle",
+                contentDescription = null,
                 tint = if (state.shuffleEnabled) colors.accent else colors.textTertiary,
                 modifier = Modifier.size(24.dp)
             )
         }
 
         // Repeat Button
-        IconButton(
+        IOSIconButton(
             onClick = {
                 haptics.selection()
                 onCycleRepeat()
             },
-            modifier = Modifier.size(44.dp)
+            size = 44.dp,
+            contentDescription = "Repeat"
         ) {
             val isRepeatActive = state.repeatMode != RepeatMode.Off
             val repeatIcon = if (state.repeatMode == RepeatMode.One) SonoraIcons.RepeatOne else SonoraIcons.Repeat
 
             Icon(
                 imageVector = repeatIcon,
-                contentDescription = "Repeat",
+                contentDescription = null,
                 tint = if (isRepeatActive) colors.accent else colors.textTertiary,
                 modifier = Modifier.size(24.dp)
             )
         }
 
         // Options ⋯ Button
-        IconButton(
+        IOSIconButton(
             onClick = {
                 haptics.impact(IOSImpact.Light)
                 onOptionsClick()
             },
-            modifier = Modifier.size(44.dp)
+            size = 44.dp,
+            contentDescription = "More Options"
         ) {
             Icon(
                 imageVector = SonoraIcons.MoreHorizontal,
-                contentDescription = "More Options",
+                contentDescription = null,
                 tint = colors.textTertiary,
                 modifier = Modifier.size(22.dp)
             )

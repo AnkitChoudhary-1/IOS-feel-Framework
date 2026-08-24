@@ -23,6 +23,9 @@ import dev.iosfeel.sonora.core.design.SonoraIcons
 import dev.iosfeel.sonora.core.model.Song
 import dev.iosfeel.sonora.core.model.formatDuration
 
+import dev.iosfeel.components.interaction.iosPressSurface
+import dev.iosfeel.components.interaction.rememberIOSPressSurfaceState
+
 @Composable
 fun AlbumTrackRow(
     song: Song,
@@ -33,12 +36,17 @@ fun AlbumTrackRow(
 ) {
     val colors = LocalSonoraColors.current
     val typography = LocalSonoraTypography.current
+    val pressState = rememberIOSPressSurfaceState()
 
     Row(
         modifier = modifier
             .fillMaxWidth()
             .height(54.dp)
-            .clickable(onClick = onClick)
+            .iosPressSurface(
+                state = pressState,
+                pressedScale = 0.98f,
+                onClick = onClick
+            )
             .padding(horizontal = 20.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {

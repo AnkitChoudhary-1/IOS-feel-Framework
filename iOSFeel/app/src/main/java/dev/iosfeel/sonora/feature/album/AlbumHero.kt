@@ -1,7 +1,9 @@
 package dev.iosfeel.sonora.feature.album
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -11,6 +13,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.FilledTonalButton
@@ -28,6 +31,9 @@ import dev.iosfeel.sonora.core.design.SonoraIcons
 import dev.iosfeel.sonora.core.design.artwork.AlbumArtwork
 import dev.iosfeel.sonora.core.model.Album
 
+import dev.iosfeel.components.interaction.iosPressSurface
+import dev.iosfeel.components.interaction.rememberIOSPressSurfaceState
+
 @Composable
 fun AlbumHero(
     album: Album,
@@ -38,6 +44,9 @@ fun AlbumHero(
 ) {
     val colors = LocalSonoraColors.current
     val typography = LocalSonoraTypography.current
+    val playPressState = rememberIOSPressSurfaceState()
+    val shufflePressState = rememberIOSPressSurfaceState()
+    val artistPressState = rememberIOSPressSurfaceState()
 
     Column(
         modifier = modifier
@@ -70,7 +79,11 @@ fun AlbumHero(
             style = typography.title3,
             color = colors.accent,
             textAlign = TextAlign.Center,
-            modifier = Modifier.clickable(onClick = onArtistClick)
+            modifier = Modifier.iosPressSurface(
+                state = artistPressState,
+                pressedScale = 0.95f,
+                onClick = onArtistClick
+            )
         )
 
         Spacer(modifier = Modifier.height(4.dp))
@@ -95,50 +108,62 @@ fun AlbumHero(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Button(
-                onClick = onPlayAll,
+            Box(
                 modifier = Modifier
                     .weight(1f)
-                    .height(48.dp),
-                shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = colors.accent,
-                    contentColor = androidx.compose.ui.graphics.Color.White
-                )
+                    .height(48.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(colors.accent)
+                    .iosPressSurface(
+                        state = playPressState,
+                        pressedScale = 0.95f,
+                        onClick = onPlayAll
+                    ),
+                contentAlignment = Alignment.Center
             ) {
-                Icon(
-                    imageVector = SonoraIcons.Play,
-                    contentDescription = null,
-                    modifier = Modifier.size(18.dp)
-                )
-                Spacer(modifier = Modifier.width(6.dp))
-                Text(
-                    text = "Play",
-                    style = typography.headline
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = SonoraIcons.Play,
+                        contentDescription = null,
+                        tint = androidx.compose.ui.graphics.Color.White,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = "Play",
+                        style = typography.headline,
+                        color = androidx.compose.ui.graphics.Color.White
+                    )
+                }
             }
 
-            FilledTonalButton(
-                onClick = onShuffleAll,
+            Box(
                 modifier = Modifier
                     .weight(1f)
-                    .height(48.dp),
-                shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.filledTonalButtonColors(
-                    containerColor = colors.surfaceElevated,
-                    contentColor = colors.accent
-                )
+                    .height(48.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(colors.surfaceElevated)
+                    .iosPressSurface(
+                        state = shufflePressState,
+                        pressedScale = 0.95f,
+                        onClick = onShuffleAll
+                    ),
+                contentAlignment = Alignment.Center
             ) {
-                Icon(
-                    imageVector = SonoraIcons.Shuffle,
-                    contentDescription = null,
-                    modifier = Modifier.size(18.dp)
-                )
-                Spacer(modifier = Modifier.width(6.dp))
-                Text(
-                    text = "Shuffle",
-                    style = typography.headline
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = SonoraIcons.Shuffle,
+                        contentDescription = null,
+                        tint = colors.accent,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = "Shuffle",
+                        style = typography.headline,
+                        color = colors.accent
+                    )
+                }
             }
         }
 

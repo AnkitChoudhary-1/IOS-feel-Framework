@@ -23,6 +23,8 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import dev.iosfeel.components.interaction.iosPressSurface
+import dev.iosfeel.components.interaction.rememberIOSPressSurfaceState
 import dev.iosfeel.haptics.IOSImpact
 import dev.iosfeel.haptics.rememberIOSHaptics
 import dev.iosfeel.sonora.core.design.LocalSonoraColors
@@ -237,11 +239,16 @@ private fun ActionRow(
     textColor: Color = LocalSonoraColors.current.textPrimary
 ) {
     val typography = LocalSonoraTypography.current
+    val pressState = rememberIOSPressSurfaceState()
 
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick)
+            .iosPressSurface(
+                state = pressState,
+                pressedScale = 0.97f,
+                onClick = onClick
+            )
             .padding(horizontal = 16.dp, vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
