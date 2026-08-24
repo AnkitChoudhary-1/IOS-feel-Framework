@@ -1,5 +1,12 @@
 package dev.iosfeel.sonora.navigation
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -59,7 +66,6 @@ fun SonoraNavigationShell(
     val colors = LocalSonoraColors.current
     val density = LocalDensity.current
     var currentTab by remember { mutableStateOf(SonoraTab.Home) }
-    var inDeveloperLab by remember { mutableStateOf(false) }
 
     val devSettings by container.preferences.developerSettings.collectAsState(initial = DeveloperSettings())
 
@@ -189,12 +195,6 @@ fun SonoraNavigationShell(
         LocalIOSMaterialOverride provides materialOverride,
         LocalDeveloperSettings provides devSettings
     ) {
-        if (inDeveloperLab) {
-            DeveloperSettingsScreen(
-                preferences = container.preferences,
-                onBack = { inDeveloperLab = false }
-            )
-        } else {
         IOSBackdropLayout(
             state = backdropState,
             modifier = modifier.fillMaxSize(),
@@ -204,128 +204,170 @@ fun SonoraNavigationShell(
                         .fillMaxSize()
                         .background(colors.background)
                 ) {
-                    when (currentTab) {
-                        SonoraTab.Home -> {
-                            IOSNavigationStack(
-                                state = homeNavState,
-                                modifier = Modifier.fillMaxSize()
-                            ) { entry ->
-                                RenderDestination(
-                                    entry = entry,
-                                    navState = homeNavState,
-                                    homeState = homeState,
-                                    libraryState = libraryState,
-                                    playbackState = playbackState,
-                                    backdrop = backdropState,
-                                    onSongClick = { song, queue ->
-                                        playbackController.playSong(song = song, queue = queue)
-                                    },
-                                    onPlayAll = { songs ->
-                                        playbackController.setShuffle(false)
-                                        playbackController.playQueue(songs = songs, startIndex = 0)
-                                    },
-                                    onShuffleAll = { songs ->
-                                        playbackController.setShuffle(true)
-                                        playbackController.playQueue(songs = songs, startIndex = 0)
-                                    },
-                                    libraryViewModel = libraryViewModel,
-                                    container = container,
-                                    onOpenDeveloperSettings = { inDeveloperLab = true },
-                                    onNavigateToLibrary = { currentTab = SonoraTab.Library }
-                                )
+                    AnimatedContent(
+                        targetState = currentTab,
+                        transitionSpec = {
+                            (fadeIn(animationSpec = spring(stiffness = 500f, dampingRatio = 0.90f)) +
+                             scaleIn(initialScale = 0.985f, animationSpec = spring(stiffness = 500f, dampingRatio = 0.90f)))
+                            .togetherWith(
+                                fadeOut(animationSpec = spring(stiffness = 500f, dampingRatio = 0.90f)) +
+                                scaleOut(targetScale = 1.015f, animationSpec = spring(stiffness = 500f, dampingRatio = 0.90f))
+                            )
+                        },
+                        label = "ios_tab_switch",
+                        modifier = Modifier.fillMaxSize()
+                    ) { targetTab ->
+                        when (targetTab) {
+                            SonoraTab.Home -> {
+                                IOSNavigationStack(
+                                    state = homeNavState,
+                                    modifier = Modifier.fillMaxSize()
+                                ) { entry ->
+                                    RenderDestination(
+                                        entry = entry,
+                                        navState = homeNavState,
+                                        homeState = homeState,
+                                        libraryState = libraryState,
+                                        playbackState = playbackState,
+                                        backdrop = backdropState,
+                                        onSongClick = { song, queue ->
+                                            playbackController.playSong(song = song, queue = queue)
+                                        },
+                                        onPlayAll = { songs ->
+                                            playbackController.setShuffle(false)
+                                            playbackController.playQueue(songs = songs, startIndex = 0)
+                                        },
+                                        onShuffleAll = { songs ->
+                                            playbackController.setShuffle(true)
+                                            playbackController.playQueue(songs = songs, startIndex = 0)
+                                        },
+                                        libraryViewModel = libraryViewModel,
+                                        container = container,
+                                        onOpenDeveloperSettings = {
+                                            homeNavState.push(
+                                                IOSNavigationEntry(
+                                                    key = "dev_settings_${System.currentTimeMillis()}",
+                                                    route = "developer_settings"
+                                                )
+                                            )
+                                        },
+                                        onNavigateToLibrary = { currentTab = SonoraTab.Library }
+                                    )
+                                }
                             }
-                        }
 
-                        SonoraTab.Library -> {
-                            IOSNavigationStack(
-                                state = libraryNavState,
-                                modifier = Modifier.fillMaxSize()
-                            ) { entry ->
-                                RenderDestination(
-                                    entry = entry,
-                                    navState = libraryNavState,
-                                    homeState = homeState,
-                                    libraryState = libraryState,
-                                    playbackState = playbackState,
-                                    backdrop = backdropState,
-                                    onSongClick = { song, queue ->
-                                        playbackController.playSong(song = song, queue = queue)
-                                    },
-                                    onPlayAll = { songs ->
-                                        playbackController.setShuffle(false)
-                                        playbackController.playQueue(songs = songs, startIndex = 0)
-                                    },
-                                    onShuffleAll = { songs ->
-                                        playbackController.setShuffle(true)
-                                        playbackController.playQueue(songs = songs, startIndex = 0)
-                                    },
-                                    libraryViewModel = libraryViewModel,
-                                    container = container,
-                                    onOpenDeveloperSettings = { inDeveloperLab = true },
-                                    onNavigateToLibrary = { currentTab = SonoraTab.Library }
-                                )
+                            SonoraTab.Library -> {
+                                IOSNavigationStack(
+                                    state = libraryNavState,
+                                    modifier = Modifier.fillMaxSize()
+                                ) { entry ->
+                                    RenderDestination(
+                                        entry = entry,
+                                        navState = libraryNavState,
+                                        homeState = homeState,
+                                        libraryState = libraryState,
+                                        playbackState = playbackState,
+                                        backdrop = backdropState,
+                                        onSongClick = { song, queue ->
+                                            playbackController.playSong(song = song, queue = queue)
+                                        },
+                                        onPlayAll = { songs ->
+                                            playbackController.setShuffle(false)
+                                            playbackController.playQueue(songs = songs, startIndex = 0)
+                                        },
+                                        onShuffleAll = { songs ->
+                                            playbackController.setShuffle(true)
+                                            playbackController.playQueue(songs = songs, startIndex = 0)
+                                        },
+                                        libraryViewModel = libraryViewModel,
+                                        container = container,
+                                        onOpenDeveloperSettings = {
+                                            libraryNavState.push(
+                                                IOSNavigationEntry(
+                                                    key = "dev_settings_${System.currentTimeMillis()}",
+                                                    route = "developer_settings"
+                                                )
+                                            )
+                                        },
+                                        onNavigateToLibrary = { currentTab = SonoraTab.Library }
+                                    )
+                                }
                             }
-                        }
 
-                        SonoraTab.Search -> {
-                            IOSNavigationStack(
-                                state = searchNavState,
-                                modifier = Modifier.fillMaxSize()
-                            ) { entry ->
-                                RenderDestination(
-                                    entry = entry,
-                                    navState = searchNavState,
-                                    homeState = homeState,
-                                    libraryState = libraryState,
-                                    playbackState = playbackState,
-                                    backdrop = backdropState,
-                                    onSongClick = { song, queue ->
-                                        playbackController.playSong(song = song, queue = queue)
-                                    },
-                                    onPlayAll = { songs ->
-                                        playbackController.setShuffle(false)
-                                        playbackController.playQueue(songs = songs, startIndex = 0)
-                                    },
-                                    onShuffleAll = { songs ->
-                                        playbackController.setShuffle(true)
-                                        playbackController.playQueue(songs = songs, startIndex = 0)
-                                    },
-                                    libraryViewModel = libraryViewModel,
-                                    container = container,
-                                    onOpenDeveloperSettings = { inDeveloperLab = true },
-                                    onNavigateToLibrary = { currentTab = SonoraTab.Library }
-                                )
+                            SonoraTab.Search -> {
+                                IOSNavigationStack(
+                                    state = searchNavState,
+                                    modifier = Modifier.fillMaxSize()
+                                ) { entry ->
+                                    RenderDestination(
+                                        entry = entry,
+                                        navState = searchNavState,
+                                        homeState = homeState,
+                                        libraryState = libraryState,
+                                        playbackState = playbackState,
+                                        backdrop = backdropState,
+                                        onSongClick = { song, queue ->
+                                            playbackController.playSong(song = song, queue = queue)
+                                        },
+                                        onPlayAll = { songs ->
+                                            playbackController.setShuffle(false)
+                                            playbackController.playQueue(songs = songs, startIndex = 0)
+                                        },
+                                        onShuffleAll = { songs ->
+                                            playbackController.setShuffle(true)
+                                            playbackController.playQueue(songs = songs, startIndex = 0)
+                                        },
+                                        libraryViewModel = libraryViewModel,
+                                        container = container,
+                                        onOpenDeveloperSettings = {
+                                            searchNavState.push(
+                                                IOSNavigationEntry(
+                                                    key = "dev_settings_${System.currentTimeMillis()}",
+                                                    route = "developer_settings"
+                                                )
+                                            )
+                                        },
+                                        onNavigateToLibrary = { currentTab = SonoraTab.Library }
+                                    )
+                                }
                             }
-                        }
 
-                        SonoraTab.Settings -> {
-                            IOSNavigationStack(
-                                state = settingsNavState,
-                                modifier = Modifier.fillMaxSize()
-                            ) { entry ->
-                                RenderDestination(
-                                    entry = entry,
-                                    navState = settingsNavState,
-                                    homeState = homeState,
-                                    libraryState = libraryState,
-                                    playbackState = playbackState,
-                                    backdrop = backdropState,
-                                    onSongClick = { song, queue ->
-                                        playbackController.playSong(song = song, queue = queue)
-                                    },
-                                    onPlayAll = { songs ->
-                                        playbackController.setShuffle(false)
-                                        playbackController.playQueue(songs = songs, startIndex = 0)
-                                    },
-                                    onShuffleAll = { songs ->
-                                        playbackController.setShuffle(true)
-                                        playbackController.playQueue(songs = songs, startIndex = 0)
-                                    },
-                                    libraryViewModel = libraryViewModel,
-                                    container = container,
-                                    onOpenDeveloperSettings = { inDeveloperLab = true },
-                                    onNavigateToLibrary = { currentTab = SonoraTab.Library }
-                                )
+                            SonoraTab.Settings -> {
+                                IOSNavigationStack(
+                                    state = settingsNavState,
+                                    modifier = Modifier.fillMaxSize()
+                                ) { entry ->
+                                    RenderDestination(
+                                        entry = entry,
+                                        navState = settingsNavState,
+                                        homeState = homeState,
+                                        libraryState = libraryState,
+                                        playbackState = playbackState,
+                                        backdrop = backdropState,
+                                        onSongClick = { song, queue ->
+                                            playbackController.playSong(song = song, queue = queue)
+                                        },
+                                        onPlayAll = { songs ->
+                                            playbackController.setShuffle(false)
+                                            playbackController.playQueue(songs = songs, startIndex = 0)
+                                        },
+                                        onShuffleAll = { songs ->
+                                            playbackController.setShuffle(true)
+                                            playbackController.playQueue(songs = songs, startIndex = 0)
+                                        },
+                                        libraryViewModel = libraryViewModel,
+                                        container = container,
+                                        onOpenDeveloperSettings = {
+                                            settingsNavState.push(
+                                                IOSNavigationEntry(
+                                                    key = "dev_settings_${System.currentTimeMillis()}",
+                                                    route = "developer_settings"
+                                                )
+                                            )
+                                        },
+                                        onNavigateToLibrary = { currentTab = SonoraTab.Library }
+                                    )
+                                }
                             }
                         }
                     }
@@ -402,7 +444,6 @@ fun SonoraNavigationShell(
         )
     }
 }
-}
 
 @Composable
 private fun RenderDestination(
@@ -443,7 +484,8 @@ private fun RenderDestination(
                     )
                 },
                 onSongClick = onSongClick,
-                onNavigateToLibrary = onNavigateToLibrary
+                onNavigateToLibrary = onNavigateToLibrary,
+                backdrop = backdrop
             )
         }
 
@@ -525,13 +567,23 @@ private fun RenderDestination(
         }
 
         route == "search" -> {
-            SearchScreen()
+            SearchScreen(
+                backdrop = backdrop
+            )
         }
 
         route == "settings" -> {
             SettingsScreen(
                 preferences = container.preferences,
-                onOpenDeveloperSettings = onOpenDeveloperSettings
+                onOpenDeveloperSettings = onOpenDeveloperSettings,
+                backdrop = backdrop
+            )
+        }
+
+        route == "developer_settings" -> {
+            DeveloperSettingsScreen(
+                preferences = container.preferences,
+                onBack = { navState.pop() }
             )
         }
     }

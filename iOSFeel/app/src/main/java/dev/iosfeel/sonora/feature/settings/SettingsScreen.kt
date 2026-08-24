@@ -37,18 +37,26 @@ import dev.iosfeel.haptics.rememberIOSHaptics
 import dev.iosfeel.sonora.core.datastore.SonoraPreferences
 import dev.iosfeel.sonora.core.datastore.ThemeMode
 import dev.iosfeel.sonora.core.design.SonoraTheme
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.lazy.rememberLazyListState
+import dev.iosfeel.components.navigation.IOSLargeTitleTopBar
+import dev.iosfeel.material.IOSBackdropState
+import dev.iosfeel.scroll.IOSScrollableLazyColumn
 import kotlinx.coroutines.launch
 
 @Composable
 fun SettingsScreen(
     preferences: SonoraPreferences,
     onOpenDeveloperSettings: () -> Unit,
+    backdrop: IOSBackdropState? = null,
     modifier: Modifier = Modifier
 ) {
     val colors = SonoraTheme.colors
     val typography = SonoraTheme.typography
     val scope = rememberCoroutineScope()
     val haptics = rememberIOSHaptics()
+    val listState = rememberLazyListState()
 
     val currentTheme by preferences.themeMode.collectAsState(initial = ThemeMode.System)
     val isDevModeEnabled by preferences.isDeveloperModeEnabled.collectAsState(initial = false)
@@ -64,28 +72,25 @@ fun SettingsScreen(
         )
     }
 
-    LazyColumn(
+    Box(
         modifier = modifier
             .fillMaxSize()
             .background(colors.background)
-            .padding(horizontal = 20.dp)
     ) {
-        item {
-            Spacer(modifier = Modifier.height(54.dp))
+        IOSScrollableLazyColumn(
+            state = listState,
+            topFadeHeight = 24.dp,
+            bottomFadeHeight = 92.dp,
+            contentPadding = PaddingValues(top = 96.dp, bottom = 24.dp, start = 20.dp, end = 20.dp),
+            modifier = Modifier.fillMaxSize()
+        ) {
+            item {
+                Spacer(modifier = Modifier.statusBarsPadding())
+                Spacer(modifier = Modifier.height(10.dp))
+            }
 
-            Text(
-                text = "Settings",
-                style = typography.largeTitle.copy(
-                    color = colors.textPrimary,
-                    fontWeight = FontWeight.Bold
-                )
-            )
-
-            Spacer(modifier = Modifier.height(24.dp))
-        }
-
-        // Appearance Section
-        item {
+            // Appearance Section
+            item {
             Text(
                 text = "APPEARANCE",
                 style = typography.caption1.copy(
@@ -270,7 +275,18 @@ fun SettingsScreen(
                 )
             }
 
-            Spacer(modifier = Modifier.height(120.dp))
+            Spacer(modifier = Modifier.height(140.dp))
         }
     }
+
+    IOSLargeTitleTopBar(
+        title = "Settings",
+        subtitle = "Sonora",
+        scrollState = listState,
+        backdrop = backdrop,
+        titleColor = colors.textPrimary,
+        subtitleColor = colors.accent,
+        dividerColor = colors.separator
+    )
+}
 }

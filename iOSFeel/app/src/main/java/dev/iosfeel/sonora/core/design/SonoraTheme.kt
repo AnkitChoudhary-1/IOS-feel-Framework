@@ -6,6 +6,8 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.staticCompositionLocalOf
 
+import dev.iosfeel.material.LocalIOSDarkTheme
+
 val LocalSonoraColors = staticCompositionLocalOf { SonoraColors.Dark }
 val LocalSonoraTypography = staticCompositionLocalOf { SonoraTypography.Default }
 
@@ -31,6 +33,7 @@ fun SonoraTheme(
     CompositionLocalProvider(
         LocalSonoraColors provides colorScheme,
         LocalSonoraTypography provides SonoraTypography.Default,
+        LocalIOSDarkTheme provides darkTheme,
         content = content
     )
 }

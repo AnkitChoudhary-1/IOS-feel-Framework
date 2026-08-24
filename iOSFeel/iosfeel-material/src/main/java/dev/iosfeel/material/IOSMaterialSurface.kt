@@ -24,13 +24,14 @@ import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.unit.dp
 
 val LocalIOSMaterialOverride = compositionLocalOf<IOSMaterialConfig?> { null }
+val LocalIOSDarkTheme = compositionLocalOf { false }
 
 @Composable
 fun IOSMaterialSurface(
     modifier: Modifier = Modifier,
     backdrop: IOSBackdropState? = null,
     config: IOSMaterialConfig = IOSMaterialConfig(),
-    darkTheme: Boolean = isSystemInDarkTheme(),
+    darkTheme: Boolean = LocalIOSDarkTheme.current,
     content: @Composable () -> Unit
 ) {
     val override = LocalIOSMaterialOverride.current

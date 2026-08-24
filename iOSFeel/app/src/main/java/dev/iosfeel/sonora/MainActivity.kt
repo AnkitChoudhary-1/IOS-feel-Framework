@@ -19,6 +19,10 @@ import dev.iosfeel.sonora.core.design.SonoraTheme
 import dev.iosfeel.sonora.core.di.SonoraContainer
 import dev.iosfeel.sonora.navigation.SonoraNavigationShell
 
+import androidx.compose.runtime.SideEffect
+import androidx.compose.ui.platform.LocalView
+import androidx.core.view.WindowCompat
+
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -41,6 +45,16 @@ fun SonoraApp() {
         ThemeMode.System -> isSystemDark
         ThemeMode.Light -> false
         ThemeMode.Dark -> true
+    }
+
+    val view = LocalView.current
+    if (!view.isInEditMode) {
+        SideEffect {
+            val window = (view.context as? ComponentActivity)?.window ?: return@SideEffect
+            val insetsController = WindowCompat.getInsetsController(window, view)
+            insetsController.isAppearanceLightStatusBars = !isDark
+            insetsController.isAppearanceLightNavigationBars = !isDark
+        }
     }
 
     SonoraTheme(darkTheme = isDark) {

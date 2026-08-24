@@ -151,8 +151,8 @@ fun DeveloperSettingsScreen(
                     .fillMaxSize()
                     .statusBarsPadding()
                     .padding(horizontal = 20.dp),
-                topFadeHeight = 20.dp,
-                bottomFadeHeight = 36.dp
+                topFadeHeight = 24.dp,
+                bottomFadeHeight = 40.dp
             ) {
                 item {
                     Spacer(modifier = Modifier.height(12.dp))

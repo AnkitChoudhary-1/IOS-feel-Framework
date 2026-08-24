@@ -5,6 +5,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.ReadOnlyComposable
 
+import dev.iosfeel.material.LocalIOSDarkTheme
+
 object IOSFeelTheme {
     val colors: IOSFeelColors
         @Composable
@@ -32,7 +34,8 @@ fun IOSFeelTheme(
     CompositionLocalProvider(
         LocalIOSFeelColors provides colors,
         LocalIOSFeelTypography provides IOSFeelTypography.Default,
-        LocalIOSFeelShapes provides IOSFeelShapes.Default
+        LocalIOSFeelShapes provides IOSFeelShapes.Default,
+        LocalIOSDarkTheme provides darkTheme
     ) {
         content()
     }

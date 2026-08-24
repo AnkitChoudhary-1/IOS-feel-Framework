@@ -15,6 +15,8 @@ import dev.iosfeel.material.IOSBackdropState
 import dev.iosfeel.material.IOSMaterialConfig
 import dev.iosfeel.material.IOSMaterialSurface
 
+import dev.iosfeel.material.LocalIOSDarkTheme
+
 @Composable
 fun IOSFloatingBar(
     modifier: Modifier = Modifier,
@@ -22,21 +24,30 @@ fun IOSFloatingBar(
     materialStyle: IOSFloatingMaterialStyle = IOSFloatingMaterialStyle.Regular,
     shape: Shape = IOSFloatingBarDefaults.Shape,
     elevation: Dp = IOSFloatingBarDefaults.Elevation,
-    borderColor: Color = Color.White.copy(alpha = 0.15f),
+    borderColor: Color = Color.Unspecified,
     content: @Composable () -> Unit
 ) {
+    val isDark = LocalIOSDarkTheme.current
+    val resolvedBorderColor = if (borderColor != Color.Unspecified) {
+        borderColor
+    } else if (isDark) {
+        Color.White.copy(alpha = 0.15f)
+    } else {
+        Color.Black.copy(alpha = 0.08f)
+    }
+
     Box(
         modifier = modifier
             .shadow(
                 elevation = elevation,
                 shape = shape,
-                spotColor = Color.Black.copy(alpha = 0.22f),
-                ambientColor = Color.Black.copy(alpha = 0.10f)
+                spotColor = if (isDark) Color.Black.copy(alpha = 0.35f) else Color.Black.copy(alpha = 0.12f),
+                ambientColor = if (isDark) Color.Black.copy(alpha = 0.18f) else Color.Black.copy(alpha = 0.06f)
             )
             .clip(shape)
             .border(
                 width = IOSFloatingBarDefaults.BorderWidth,
-                color = borderColor,
+                color = resolvedBorderColor,
                 shape = shape
             )
     ) {

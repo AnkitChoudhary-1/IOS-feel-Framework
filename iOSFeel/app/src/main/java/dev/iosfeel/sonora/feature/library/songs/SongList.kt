@@ -40,8 +40,8 @@ fun SongList(
 
     IOSScrollableLazyColumn(
         modifier = modifier.fillMaxSize(),
-        topFadeHeight = 20.dp,
-        bottomFadeHeight = 88.dp
+        topFadeHeight = 24.dp,
+        bottomFadeHeight = 92.dp
     ) {
         item(key = "header") {
             Row(

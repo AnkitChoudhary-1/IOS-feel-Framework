@@ -31,8 +31,11 @@ import dev.iosfeel.sonora.core.model.Song
 import dev.iosfeel.sonora.feature.home.sections.HomeArtistsSection
 import dev.iosfeel.sonora.feature.home.sections.MostPlayedSection
 import dev.iosfeel.sonora.feature.home.sections.QuickPicksSection
-import dev.iosfeel.sonora.feature.home.sections.RecentlyAddedSection
 import dev.iosfeel.sonora.feature.home.sections.RecentlyPlayedSection
+import dev.iosfeel.sonora.feature.home.sections.RecentlyAddedSection
+import androidx.compose.foundation.layout.PaddingValues
+import dev.iosfeel.components.navigation.IOSLargeTitleTopBar
+import dev.iosfeel.material.IOSBackdropState
 
 @Composable
 fun HomeScreen(
@@ -41,6 +44,7 @@ fun HomeScreen(
     onArtistClick: (Artist) -> Unit = {},
     onSongClick: (Song, List<Song>) -> Unit,
     onNavigateToLibrary: () -> Unit = {},
+    backdrop: IOSBackdropState? = null,
     modifier: Modifier = Modifier
 ) {
     val colors = LocalSonoraColors.current
@@ -63,35 +67,23 @@ fun HomeScreen(
         return
     }
 
-    IOSScrollableLazyColumn(
-        state = listState,
-        topFadeHeight = 20.dp,
-        bottomFadeHeight = 88.dp,
+    Box(
         modifier = modifier
             .fillMaxSize()
             .background(colors.background)
     ) {
-        item {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .statusBarsPadding()
-                    .padding(horizontal = 16.dp, vertical = 12.dp)
-            ) {
-                Text(
-                    text = "Sonora",
-                    style = typography.subheadline.copy(fontWeight = FontWeight.Bold),
-                    color = colors.accent
-                )
-                Text(
-                    text = "Listen Now",
-                    style = typography.largeTitle.copy(fontWeight = FontWeight.Bold),
-                    color = colors.textPrimary
-                )
+        IOSScrollableLazyColumn(
+            state = listState,
+            topFadeHeight = 24.dp,
+            bottomFadeHeight = 92.dp,
+            contentPadding = PaddingValues(top = 96.dp, bottom = 24.dp),
+            modifier = Modifier.fillMaxSize()
+        ) {
+            item {
+                Spacer(modifier = Modifier.statusBarsPadding())
             }
-        }
 
-        if (uiState.recentlyPlayed.isNotEmpty()) {
+            if (uiState.recentlyPlayed.isNotEmpty()) {
             item {
                 RecentlyPlayedSection(
                     songs = uiState.recentlyPlayed,
@@ -186,4 +178,15 @@ fun HomeScreen(
             Spacer(modifier = Modifier.height(160.dp))
         }
     }
+
+    IOSLargeTitleTopBar(
+        title = "Listen Now",
+        subtitle = "Sonora",
+        scrollState = listState,
+        backdrop = backdrop,
+        titleColor = colors.textPrimary,
+        subtitleColor = colors.accent,
+        dividerColor = colors.separator
+    )
+}
 }
