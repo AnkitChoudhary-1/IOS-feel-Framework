@@ -1,11 +1,14 @@
 package dev.iosfeel.sheet
 
 import androidx.compose.runtime.saveable.SaverScope
+import dev.iosfeel.physics.ExperimentalIOSFeelV2Api
+import dev.iosfeel.sheet.detent.IOSSheetDetent
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
+@OptIn(ExperimentalIOSFeelV2Api::class)
 class IOSSheetStateSaverTest {
 
     private val saverScope = object : SaverScope {
@@ -14,7 +17,7 @@ class IOSSheetStateSaverTest {
 
     @Test
     fun mediumDetentCanBeSavedAndRestored() {
-        val state = IOSSheetState(initialDetent = IOSSheetDetent.Medium, initialVisible = true)
+        val state = IOSSheetState(initialDetent = IOSSheetDetent.Medium)
         val saved = with(IOSSheetStateSaver) {
             with(saverScope) {
                 save(state)
@@ -25,38 +28,22 @@ class IOSSheetStateSaverTest {
 
         val restoredState = IOSSheetStateSaver.restore(saved ?: emptyList<Any>())
         assertEquals(IOSSheetDetent.Medium, restoredState?.currentDetent)
-        assertTrue(restoredState?.visible == true)
+        assertTrue(restoredState?.isVisible == true)
     }
 
     @Test
-    fun largeDetentCanBeSavedAndRestored() {
-        val state = IOSSheetState(initialDetent = IOSSheetDetent.Large, initialVisible = false)
+    fun hiddenDetentCanBeSavedAndRestored() {
+        val state = IOSSheetState(initialDetent = IOSSheetDetent.Hidden)
         val saved = with(IOSSheetStateSaver) {
             with(saverScope) {
                 save(state)
             }
         }
 
-        assertEquals(listOf("large", false), saved)
+        assertEquals(listOf("hidden", false), saved)
 
         val restoredState = IOSSheetStateSaver.restore(saved ?: emptyList<Any>())
-        assertEquals(IOSSheetDetent.Large, restoredState?.currentDetent)
-        assertFalse(restoredState?.visible == true)
-    }
-
-    @Test
-    fun compactDetentCanBeSavedAndRestored() {
-        val state = IOSSheetState(initialDetent = IOSSheetDetent.Compact, initialVisible = false)
-        val saved = with(IOSSheetStateSaver) {
-            with(saverScope) {
-                save(state)
-            }
-        }
-
-        assertEquals(listOf("compact", false), saved)
-
-        val restoredState = IOSSheetStateSaver.restore(saved ?: emptyList<Any>())
-        assertEquals(IOSSheetDetent.Compact, restoredState?.currentDetent)
-        assertFalse(restoredState?.visible == true)
+        assertEquals(IOSSheetDetent.Hidden, restoredState?.currentDetent)
+        assertFalse(restoredState?.isVisible == true)
     }
 }

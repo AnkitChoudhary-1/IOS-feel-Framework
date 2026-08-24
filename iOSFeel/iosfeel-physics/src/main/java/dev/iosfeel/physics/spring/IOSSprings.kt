@@ -30,16 +30,56 @@ object IOSSprings {
      * Smooth, fluid spring for screen navigation transitions and page sliding.
      */
     val Navigation = IOSSpringSpec(
-        response = 0.42f,
+        response = 0.38f,
+        bounce = 0.00f
+    )
+
+    /**
+     * Forward push navigation spring.
+     */
+    val NavigationPush = IOSSpringSpec(
+        response = 0.38f,
+        bounce = 0.00f
+    )
+
+    /**
+     * Pop navigation spring.
+     */
+    val NavigationPop = IOSSpringSpec(
+        response = 0.36f,
+        bounce = 0.00f
+    )
+
+    /**
+     * Navigation cancel / return spring.
+     */
+    val NavigationCancel = IOSSpringSpec(
+        response = 0.32f,
         bounce = 0.05f
+    )
+
+    /**
+     * Elastic scroll overscroll return spring.
+     */
+    val ScrollReturn = IOSSpringSpec(
+        response = 0.34f,
+        bounce = 0.00f
     )
 
     /**
      * Balanced, weighted spring for bottom sheets, modal overlays, and action sheets.
      */
     val Sheet = IOSSpringSpec(
-        response = 0.46f,
-        bounce = 0.06f
+        response = 0.40f,
+        bounce = 0.04f
+    )
+
+    /**
+     * Quick, snappy dismiss spring for bottom sheets.
+     */
+    val SheetDismiss = IOSSpringSpec(
+        response = 0.32f,
+        bounce = 0.00f
     )
 
     /**

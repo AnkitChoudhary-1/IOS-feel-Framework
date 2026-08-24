@@ -45,14 +45,16 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dev.iosfeel.scroll.IOSScrollableLazyColumn
+import dev.iosfeel.physics.ExperimentalIOSFeelV2Api
 import dev.iosfeel.sheet.IOSSheet
 import dev.iosfeel.sheet.IOSSheetConfig
-import dev.iosfeel.sheet.IOSSheetDetent
+import dev.iosfeel.sheet.detent.IOSSheetDetent
 import dev.iosfeel.sheet.IOSSheetImeBehavior
 import dev.iosfeel.sheet.rememberIOSSheetState
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
+@OptIn(ExperimentalIOSFeelV2Api::class)
 @Composable
 fun SheetLaboratory(
     onBack: () -> Unit
@@ -62,7 +64,7 @@ fun SheetLaboratory(
     val scope = rememberCoroutineScope()
 
     val detents = remember {
-        listOf(
+        listOf<IOSSheetDetent>(
             IOSSheetDetent.Large,
             IOSSheetDetent.Medium,
             IOSSheetDetent.Compact
@@ -309,7 +311,7 @@ fun SheetLaboratory(
                         Button(
                             onClick = {
                                 scope.launch {
-                                    if (sheetState.visible) sheetState.dismiss(2400f)
+                                    if (sheetState.visible) sheetState.dismiss()
                                     else sheetState.show(IOSSheetDetent.Medium)
                                 }
                             },
@@ -356,7 +358,7 @@ fun SheetLaboratory(
 
                         SheetTelemetryRow("Detent", sheetState.currentDetent.id)
                         SheetTelemetryRow("Visible", sheetState.visible.toString())
-                        SheetTelemetryRow("Offset", "${sheetState.offset.value.roundToInt()} px")
+                        SheetTelemetryRow("Offset", "${sheetState.offset.roundToInt()} px")
                         SheetTelemetryRow("Velocity", "${sheetState.velocity.roundToInt()} px/s")
                         SheetTelemetryRow("Frame Time", "%.2f ms".format(frameMonitor.frameTimeMs))
                         SheetTelemetryRow("FPS", "${frameMonitor.approximateFps.roundToInt()}")

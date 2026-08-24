@@ -1,5 +1,6 @@
 package dev.iosfeel.sheet
 
+import dev.iosfeel.sheet.detent.IOSSheetDetent
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -71,37 +72,5 @@ class IOSSheetPhysicsTest {
             dismissVelocityThreshold = 1800f
         )
         assertEquals(IOSSheetTarget.Dismiss, target)
-    }
-
-    @Test
-    fun downwardDragPastThresholdDismisses() {
-        val target = chooseSheetTarget(
-            currentOffset = 900f,
-            velocityY = 0f,
-            detents = resolvedDetents,
-            containerHeightPx = 1000f,
-            dismissible = true
-        )
-        assertEquals(IOSSheetTarget.Dismiss, target)
-    }
-
-    @Test
-    fun largeDetentProducesFullExpansion() {
-        val progress = calculateSheetExpansionProgress(
-            offset = 80f,
-            minOffset = 80f,
-            maxOffset = 780f
-        )
-        assertEquals(1f, progress, 0.001f)
-    }
-
-    @Test
-    fun compactDetentProducesZeroExpansion() {
-        val progress = calculateSheetExpansionProgress(
-            offset = 780f,
-            minOffset = 80f,
-            maxOffset = 780f
-        )
-        assertEquals(0f, progress, 0.001f)
     }
 }

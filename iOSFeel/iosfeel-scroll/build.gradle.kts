@@ -44,6 +44,8 @@ dependencies {
     implementation(project(":iosfeel-core"))
     implementation(project(":iosfeel-motion"))
     implementation(project(":iosfeel-haptics"))
+    implementation(project(":iosfeel-physics"))
+    implementation(project(":iosfeel-interaction"))
 
     // Compose BOM
     implementation(platform(libs.compose.bom))

@@ -1,6 +1,12 @@
 package dev.iosfeel.sheet
 
+import dev.iosfeel.sheet.detent.IOSSheetDetent
 import kotlin.math.abs
+
+data class IOSResolvedDetent(
+    val detent: IOSSheetDetent,
+    val offsetPx: Float
+)
 
 sealed interface IOSSheetTarget {
     data class Detent(val value: IOSResolvedDetent) : IOSSheetTarget

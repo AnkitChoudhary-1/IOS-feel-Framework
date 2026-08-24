@@ -1,208 +1,285 @@
 package dev.iosfeel.sheet
 
-import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.spring
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.Saver
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import dev.iosfeel.motion.IOSMotionPreset
-import dev.iosfeel.motion.IOSSpringSpec
-import kotlinx.coroutines.CancellationException
+import androidx.compose.runtime.saveable.Saver
+import androidx.compose.runtime.saveable.listSaver
+import androidx.compose.runtime.saveable.rememberSaveable
+import dev.iosfeel.physics.ExperimentalIOSFeelV2Api
+import dev.iosfeel.physics.detent.IOSDetent
+import dev.iosfeel.physics.interruption.IOSInterruptibleMotion
+import dev.iosfeel.physics.spring.IOSSpringSpec
+import dev.iosfeel.physics.spring.IOSSprings
+import dev.iosfeel.sheet.detent.IOSSheetDetent
+import dev.iosfeel.sheet.detent.IOSSheetDetentResolver
 
+/**
+ * Universal sheet interaction lifecycle phases in iOSFeel V2.
+ */
+@ExperimentalIOSFeelV2Api
 enum class IOSSheetPhase {
+    /**
+     * Sheet is completely collapsed off-screen.
+     */
+    Hidden,
+
+    /**
+     * Sheet is at rest at its current semantic detent.
+     */
     Idle,
+
+    /**
+     * User is directly dragging the sheet surface.
+     */
     Dragging,
-    Settling
+
+    /**
+     * Sheet is actively springing into a target detent.
+     */
+    Settling,
+
+    /**
+     * Sheet is animating off-screen toward complete dismissal.
+     */
+    Dismissing
 }
 
+/**
+ * Observable bottom sheet state in iOSFeel V2 powered by [IOSInterruptibleMotion].
+ */
 @Stable
-class IOSSheetState internal constructor(
-    initialDetent: IOSSheetDetent = IOSSheetDetent.Medium,
-    initialVisible: Boolean = false
+@ExperimentalIOSFeelV2Api
+class IOSSheetState(
+    initialDetent: IOSSheetDetent = IOSSheetDetent.Hidden,
+    val detents: List<IOSSheetDetent> = listOf(IOSSheetDetent.Medium, IOSSheetDetent.Large)
 ) {
-    val offset = Animatable(0f)
-
-    var currentDetent by mutableStateOf(initialDetent)
+    /**
+     * Container height in pixels (updated on layout).
+     */
+    var containerHeightPx: Float by mutableFloatStateOf(1000f)
         internal set
 
-    var targetDetent by mutableStateOf(initialDetent)
+    /**
+     * Content height in pixels.
+     */
+    var contentHeightPx: Float by mutableFloatStateOf(0f)
         internal set
 
-    var phase by mutableStateOf(IOSSheetPhase.Idle)
+    /**
+     * Underlying interruptible motion tracking top sheet edge offset in pixels.
+     * Offset coordinate: 0px = top of container, containerHeightPx = hidden at bottom.
+     */
+    val motion = IOSInterruptibleMotion(initialValue = containerHeightPx)
+
+    /**
+     * Current visual offset in pixels from container top.
+     */
+    val offset: Float
+        get() = motion.state.value
+
+    /**
+     * Instantaneous sheet velocity in pixels per second.
+     */
+    val velocity: Float
+        get() = motion.state.velocity
+
+    /**
+     * Active semantic detent.
+     */
+    var currentDetent: IOSSheetDetent by mutableStateOf(initialDetent)
         internal set
 
-    var velocity by mutableFloatStateOf(0f)
+    /**
+     * Target semantic detent currently being settled into.
+     */
+    var targetDetent: IOSSheetDetent by mutableStateOf(initialDetent)
         internal set
 
-    var visible by mutableStateOf(initialVisible)
+    /**
+     * Current sheet lifecycle phase.
+     */
+    var phase: IOSSheetPhase by mutableStateOf(if (initialDetent == IOSSheetDetent.Hidden) IOSSheetPhase.Hidden else IOSSheetPhase.Idle)
         internal set
 
-    internal var resolved: List<IOSResolvedDetent> = emptyList()
-    internal var containerHeightPx: Float = 2400f
+    /**
+     * Returns true if sheet is visible on screen.
+     */
+    val isVisible: Boolean
+        get() = phase != IOSSheetPhase.Hidden
 
-    val isDragging: Boolean
-        get() = phase == IOSSheetPhase.Dragging
+    /**
+     * Normalized expansion progress [0f, 1f] (0f = hidden, 1f = fully expanded to Large).
+     */
+    val expansionProgress: Float
+        get() {
+            val totalSpan = containerHeightPx.coerceAtLeast(1f)
+            return (1f - (offset / totalSpan)).coerceIn(0f, 1f)
+        }
+
+    /**
+     * Resolves detent list into physical pixel coordinates.
+     */
+    val resolvedDetents: List<IOSDetent<IOSSheetDetent>>
+        get() = IOSSheetDetentResolver.resolveDetents(
+            detents = detents + IOSSheetDetent.Hidden,
+            containerHeightPx = containerHeightPx,
+            contentHeightPx = contentHeightPx
+        )
+
+    /**
+     * Claims user ownership on touch initiation.
+     */
+    fun acquireByUser() {
+        motion.acquireByUser()
+        phase = IOSSheetPhase.Dragging
+    }
+
+    /**
+     * Updates sheet offset during interactive drag.
+     */
+    fun dragTo(offsetPx: Float, velocityPxPerSec: Float = 0f) {
+        val minOffset = resolvedDetents.firstOrNull { it.key != IOSSheetDetent.Hidden }?.value ?: 0f
+        val maxOffset = containerHeightPx
+        val clamped = offsetPx.coerceIn(minOffset * 0.5f, maxOffset)
+        motion.dragTo(value = clamped, velocity = velocityPxPerSec)
+    }
+
+    /**
+     * Resolves target detent and releases sheet to spring settlement.
+     */
+    suspend fun release(velocityPxPerSec: Float = this.velocity, spec: IOSSpringSpec = IOSSprings.Sheet) {
+        val target = IOSSheetDetentResolver.resolveTarget(
+            offsetPx = offset,
+            velocityPxPerSec = velocityPxPerSec,
+            resolvedDetents = resolvedDetents
+        )
+
+        targetDetent = target.key
+        phase = if (targetDetent == IOSSheetDetent.Hidden) IOSSheetPhase.Dismissing else IOSSheetPhase.Settling
+
+        motion.releaseToSpring(
+            target = target.value,
+            initialVelocity = velocityPxPerSec,
+            spec = if (targetDetent == IOSSheetDetent.Hidden) IOSSprings.SheetDismiss else spec
+        )
+
+        currentDetent = targetDetent
+        phase = if (currentDetent == IOSSheetDetent.Hidden) IOSSheetPhase.Hidden else IOSSheetPhase.Idle
+    }
+
+    val value: Float
+        get() = offset
+
+    val visible: Boolean
+        get() = isVisible
 
     val isSettling: Boolean
-        get() = phase == IOSSheetPhase.Settling
+        get() = phase == IOSSheetPhase.Settling || phase == IOSSheetPhase.Dismissing
 
-    suspend fun beginDrag() {
-        velocity = offset.velocity
-        offset.stop()
-        phase = IOSSheetPhase.Dragging
-    }
-
-    suspend fun dragTo(newOffset: Float) {
-        phase = IOSSheetPhase.Dragging
-        offset.snapTo(newOffset)
-    }
-
-    suspend fun dragBy(
-        deltaY: Float,
-        minOffset: Float,
-        maxOffset: Float,
-        gestureVelocity: Float
-    ) {
-        phase = IOSSheetPhase.Dragging
-        velocity = gestureVelocity
-        val next = (offset.value + deltaY).coerceIn(minOffset, maxOffset)
-        offset.snapTo(next)
+    fun beginDrag() {
+        acquireByUser()
     }
 
     suspend fun settleTo(
-        target: IOSResolvedDetent,
-        initialVelocity: Float = 0f,
-        springSpec: IOSSpringSpec = IOSMotionPreset.Smooth
-    ) {
-        targetDetent = target.detent
-        phase = IOSSheetPhase.Settling
-        velocity = initialVelocity
-        visible = true
-
-        try {
-            offset.animateTo(
-                targetValue = target.offsetPx,
-                initialVelocity = initialVelocity,
-                animationSpec = spring(
-                    stiffness = springSpec.stiffness,
-                    dampingRatio = springSpec.dampingRatio
-                )
-            ) {
-                this@IOSSheetState.velocity = this.velocity
-            }
-            currentDetent = target.detent
-            velocity = 0f
-            phase = IOSSheetPhase.Idle
-        } catch (cancellation: CancellationException) {
-            phase = IOSSheetPhase.Idle
-            throw cancellation
-        }
-    }
-
-    suspend fun animateTo(
         detent: IOSSheetDetent,
-        initialVelocity: Float = 0f,
-        springSpec: IOSSpringSpec = IOSMotionPreset.Smooth
+        velocity: Float = this.velocity
     ) {
-        val target = resolved.firstOrNull { it.detent.id == detent.id }
-            ?: findResolvedDetent(detent, resolved)
-            ?: return
-        settleTo(target, initialVelocity, springSpec)
-    }
-
-    suspend fun expand(springSpec: IOSSpringSpec = IOSMotionPreset.Smooth) {
-        visible = true
-        resolved.firstOrNull()?.let {
-            settleTo(it, 0f, springSpec)
-        }
-    }
-
-    suspend fun collapse(springSpec: IOSSpringSpec = IOSMotionPreset.Smooth) {
-        resolved.lastOrNull()?.let {
-            settleTo(it, 0f, springSpec)
-        }
-    }
-
-    suspend fun dismiss(
-        containerHeightPx: Float = this.containerHeightPx,
-        springSpec: IOSSpringSpec = IOSMotionPreset.Snappy
-    ) {
-        phase = IOSSheetPhase.Settling
-        try {
-            offset.animateTo(
-                targetValue = containerHeightPx,
-                initialVelocity = velocity,
-                animationSpec = spring(
-                    stiffness = springSpec.stiffness,
-                    dampingRatio = springSpec.dampingRatio
-                )
-            ) {
-                this@IOSSheetState.velocity = this.velocity
-            }
-            visible = false
-            velocity = 0f
-            phase = IOSSheetPhase.Idle
-        } catch (cancellation: CancellationException) {
-            phase = IOSSheetPhase.Idle
-            throw cancellation
-        }
-    }
-
-    suspend fun hide(springSpec: IOSSpringSpec = IOSMotionPreset.Snappy) {
-        dismiss(containerHeightPx, springSpec)
+        animateTo(detent, velocity = velocity)
     }
 
     suspend fun show(
-        initialDetent: IOSSheetDetent = currentDetent,
-        springSpec: IOSSpringSpec = IOSMotionPreset.Smooth
+        detent: IOSSheetDetent = IOSSheetDetent.Medium,
+        velocity: Float = 0f
     ) {
-        visible = true
-        if (offset.value <= 0f || offset.value >= containerHeightPx * 0.95f) {
-            offset.snapTo(containerHeightPx)
-        }
-        animateTo(initialDetent, 0f, springSpec)
+        animateTo(detent, velocity = velocity)
     }
 
-    suspend fun interrupt() {
-        val current = offset.value
-        offset.stop()
-        offset.snapTo(current)
-        phase = IOSSheetPhase.Dragging
+    suspend fun expand(velocity: Float = this.velocity) {
+        animateTo(IOSSheetDetent.Large, velocity = velocity)
     }
 
-    suspend fun snapTo(newOffset: Float) {
-        offset.stop()
-        offset.snapTo(newOffset)
-        phase = IOSSheetPhase.Idle
+    suspend fun collapse(velocity: Float = this.velocity) {
+        val target = detents.firstOrNull { it != IOSSheetDetent.Large && it != IOSSheetDetent.Hidden } ?: IOSSheetDetent.Medium
+        animateTo(target, velocity = velocity)
+    }
+
+    /**
+     * Smoothly animates sheet to a semantic detent.
+     */
+    suspend fun animateTo(
+        detent: IOSSheetDetent,
+        velocity: Float = this.velocity,
+        spec: IOSSpringSpec = IOSSprings.Sheet
+    ) {
+        val resolved = resolvedDetents.find { it.key == detent } ?: return
+        targetDetent = detent
+        phase = if (detent == IOSSheetDetent.Hidden) IOSSheetPhase.Dismissing else IOSSheetPhase.Settling
+
+        motion.releaseToSpring(
+            target = resolved.value,
+            initialVelocity = velocity,
+            spec = if (detent == IOSSheetDetent.Hidden) IOSSprings.SheetDismiss else spec
+        )
+
+        currentDetent = detent
+        phase = if (detent == IOSSheetDetent.Hidden) IOSSheetPhase.Hidden else IOSSheetPhase.Idle
+    }
+
+    /**
+     * Dismisses sheet off-screen.
+     */
+    suspend fun dismiss(velocity: Float = this.velocity) {
+        animateTo(IOSSheetDetent.Hidden, velocity = velocity, spec = IOSSprings.SheetDismiss)
+    }
+
+    /**
+     * Snaps sheet directly to detent without animation.
+     */
+    fun snapTo(detent: IOSSheetDetent) {
+        val resolved = resolvedDetents.find { it.key == detent } ?: return
+        currentDetent = detent
+        targetDetent = detent
+        motion.state.update(value = resolved.value, velocity = 0f, target = resolved.value)
+        phase = if (detent == IOSSheetDetent.Hidden) IOSSheetPhase.Hidden else IOSSheetPhase.Idle
     }
 }
 
-val IOSSheetStateSaver = Saver<IOSSheetState, List<Any>>(
-    save = { listOf(it.currentDetent.id, it.visible) },
+/**
+ * Saver for [IOSSheetState] to persist across configuration changes and process death.
+ */
+@OptIn(ExperimentalIOSFeelV2Api::class)
+val IOSSheetStateSaver: Saver<IOSSheetState, Any> = listSaver(
+    save = { listOf(it.currentDetent.id, it.isVisible) },
     restore = { list ->
-        val id = list.getOrNull(0) as? String ?: "medium"
-        val isVisible = list.getOrNull(1) as? Boolean ?: false
+        val id = list[0] as String
+        val isVisible = list[1] as Boolean
         val detent = when (id) {
-            "compact" -> IOSSheetDetent.Compact
-            "medium" -> IOSSheetDetent.Medium
             "large" -> IOSSheetDetent.Large
-            else -> IOSSheetDetent.Medium
+            "medium" -> IOSSheetDetent.Medium
+            "compact" -> IOSSheetDetent.Compact
+            "content" -> IOSSheetDetent.Content
+            else -> if (isVisible) IOSSheetDetent.Medium else IOSSheetDetent.Hidden
         }
-        IOSSheetState(initialDetent = detent, initialVisible = isVisible)
+        IOSSheetState(
+            initialDetent = if (isVisible) detent else IOSSheetDetent.Hidden
+        )
     }
 )
 
+/**
+ * Creates and remembers an [IOSSheetState].
+ */
 @Composable
+@ExperimentalIOSFeelV2Api
 fun rememberIOSSheetState(
-    initialDetent: IOSSheetDetent = IOSSheetDetent.Medium,
-    initialVisible: Boolean = false
+    initialDetent: IOSSheetDetent = IOSSheetDetent.Hidden,
+    detents: List<IOSSheetDetent> = listOf(IOSSheetDetent.Medium, IOSSheetDetent.Large)
 ): IOSSheetState {
     return rememberSaveable(saver = IOSSheetStateSaver) {
-        IOSSheetState(initialDetent = initialDetent, initialVisible = initialVisible)
+        IOSSheetState(initialDetent, detents)
     }
 }

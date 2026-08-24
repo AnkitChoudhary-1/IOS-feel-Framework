@@ -142,6 +142,8 @@ class IOSEdgeSwipeRecognizer(
                 } else {
                     state = IOSGestureState.Rejected
                 }
+            } else if (absY > slopPx && absY >= absX * directionBias) {
+                state = IOSGestureState.Rejected
             }
         } else if (state == IOSGestureState.Accepted) {
             val absX = kotlin.math.abs(pointerState.translation.x)

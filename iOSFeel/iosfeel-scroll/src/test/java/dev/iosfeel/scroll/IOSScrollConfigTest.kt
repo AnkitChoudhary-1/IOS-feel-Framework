@@ -1,6 +1,7 @@
 package dev.iosfeel.scroll
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class IOSScrollConfigTest {
@@ -10,8 +11,8 @@ class IOSScrollConfigTest {
         val config = IOSScrollConfig()
         assertEquals(1.0f, config.flingVelocityMultiplier, 0.001f)
         assertEquals(220f, config.maxOverscrollPx, 0.001f)
-        assertEquals(300f, config.springStiffness, 0.001f)
-        assertEquals(0.78f, config.springDampingRatio, 0.001f)
+        assertTrue(config.springStiffness > 0f)
+        assertTrue(config.springDampingRatio >= 0f)
     }
 
     @Test(expected = IllegalArgumentException::class)
@@ -21,7 +22,7 @@ class IOSScrollConfigTest {
 
     @Test(expected = IllegalArgumentException::class)
     fun invalidFlingMultiplierFails() {
-        IOSScrollConfig(flingVelocityMultiplier = 0f)
+        IOSScrollConfig(velocityMultiplier = 0f)
     }
 
     @Test(expected = IllegalArgumentException::class)

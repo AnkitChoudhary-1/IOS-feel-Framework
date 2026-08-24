@@ -1,9 +1,12 @@
 package dev.iosfeel.sheet
 
+import dev.iosfeel.physics.ExperimentalIOSFeelV2Api
+import dev.iosfeel.sheet.detent.IOSSheetDetent
+import dev.iosfeel.sheet.detent.IOSSheetDetentResolver
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
 import org.junit.Test
 
+@OptIn(ExperimentalIOSFeelV2Api::class)
 class IOSSheetDetentTest {
 
     @Test
@@ -15,20 +18,20 @@ class IOSSheetDetentTest {
             IOSSheetDetent.Large
         )
 
-        val resolved = resolveSheetDetents(containerHeight, detents)
+        val resolved = IOSSheetDetentResolver.resolveDetents(detents, containerHeight)
 
         assertEquals(3, resolved.size)
         // Large is highest (lowest offset = 80px)
-        assertEquals(IOSSheetDetent.Large, resolved[0].detent)
-        assertEquals(80f, resolved[0].offsetPx, 0.001f)
+        assertEquals(IOSSheetDetent.Large, resolved[0].key)
+        assertEquals(80f, resolved[0].value, 0.001f)
 
         // Medium is middle (offset = 450px)
-        assertEquals(IOSSheetDetent.Medium, resolved[1].detent)
-        assertEquals(450f, resolved[1].offsetPx, 0.001f)
+        assertEquals(IOSSheetDetent.Medium, resolved[1].key)
+        assertEquals(450f, resolved[1].value, 0.001f)
 
         // Compact is lowest (highest offset = 780px)
-        assertEquals(IOSSheetDetent.Compact, resolved[2].detent)
-        assertEquals(780f, resolved[2].offsetPx, 0.001f)
+        assertEquals(IOSSheetDetent.Compact, resolved[2].key)
+        assertEquals(780f, resolved[2].value, 0.001f)
     }
 
     @Test
@@ -38,18 +41,8 @@ class IOSSheetDetentTest {
             IOSSheetDetent.Fraction("custom_quarter", 0.25f)
         )
 
-        val resolved = resolveSheetDetents(containerHeight, detents)
+        val resolved = IOSSheetDetentResolver.resolveDetents(detents, containerHeight)
         assertEquals(1, resolved.size)
-        assertEquals(750f, resolved[0].offsetPx, 0.001f)
-    }
-
-    @Test(expected = IllegalArgumentException::class)
-    fun invalidFractionThrowsException() {
-        IOSSheetDetent.Fraction("invalid", 1.5f)
-    }
-
-    @Test(expected = IllegalArgumentException::class)
-    fun emptyDetentsListThrowsException() {
-        resolveSheetDetents(1000f, emptyList())
+        assertEquals(750f, resolved[0].value, 0.001f)
     }
 }

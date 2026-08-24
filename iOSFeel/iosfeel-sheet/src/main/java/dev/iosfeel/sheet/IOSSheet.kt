@@ -45,17 +45,19 @@ import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.unit.dp
 import dev.iosfeel.haptics.IOSImpact
 import dev.iosfeel.haptics.rememberIOSHaptics
+import dev.iosfeel.physics.ExperimentalIOSFeelV2Api
+import dev.iosfeel.sheet.detent.IOSSheetDetent
+import dev.iosfeel.sheet.nested.rememberIOSSheetNestedScrollCoordinator
 import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalLayoutApi::class)
+@OptIn(ExperimentalLayoutApi::class, ExperimentalIOSFeelV2Api::class)
 @Composable
 fun IOSSheet(
     state: IOSSheetState,
-    detents: List<IOSSheetDetent>,
+    detents: List<IOSSheetDetent> = state.detents,
     onDismissRequest: () -> Unit = {},
     modifier: Modifier = Modifier,
     config: IOSSheetConfig = IOSSheetConfig(),
-    resolver: IOSSheetDetentResolver = IOSDefaultDetentResolver,
     backgroundContent: @Composable () -> Unit = {},
     content: @Composable IOSSheetScope.() -> Unit
 ) {
@@ -64,9 +66,9 @@ fun IOSSheet(
     val haptics = rememberIOSHaptics()
 
     // Android Back button handler
-    BackHandler(enabled = state.visible && config.dismissible) {
+    BackHandler(enabled = state.isVisible && config.dismissible) {
         scope.launch {
-            state.dismiss(springSpec = config.springSpec)
+            state.dismiss()
             onDismissRequest()
         }
     }
@@ -77,73 +79,22 @@ fun IOSSheet(
         val heightPx = with(density) { maxHeight.toPx() }
         val widthPx = with(density) { maxWidth.toPx() }
 
-        val resolvedDetents = remember(heightPx, widthPx, detents, resolver) {
-            resolveSheetDetents(
-                containerHeightPx = heightPx,
-                containerWidthPx = widthPx,
-                detents = detents,
-                resolver = resolver
-            )
-        }
-
-        val minOffset = resolvedDetents.first().offsetPx
-        val maxOffset = resolvedDetents.last().offsetPx
-
         // Keep state informed of latest geometry
-        LaunchedEffect(resolvedDetents, heightPx) {
-            state.resolved = resolvedDetents
+        LaunchedEffect(heightPx) {
             state.containerHeightPx = heightPx
-
-            if (!state.visible && state.phase == IOSSheetPhase.Idle) {
-                state.offset.snapTo(heightPx)
-            } else if (state.visible && state.offset.value <= 0f) {
-                val target = findResolvedDetent(state.currentDetent, resolvedDetents) ?: resolvedDetents.first()
-                state.offset.snapTo(target.offsetPx)
+            if (!state.isVisible && state.phase == IOSSheetPhase.Idle) {
+                state.snapTo(IOSSheetDetent.Hidden)
             }
         }
 
-        // Master expansion progress (0.0 at lowest/hidden, 1.0 at highest)
-        val expansionProgress by remember(minOffset, maxOffset) {
-            derivedStateOf {
-                if (!state.visible && state.phase == IOSSheetPhase.Idle) 0f
-                else calculateSheetExpansionProgress(
-                    offset = state.offset.value,
-                    minOffset = minOffset,
-                    maxOffset = heightPx
-                )
-            }
-        }
+        val expansionProgress = state.expansionProgress
 
-        // IME Keyboard behavior
-        val imeBottom = WindowInsets.ime.getBottom(density)
-        val imeVisible = imeBottom > 0
-
-        LaunchedEffect(imeVisible) {
-            if (imeVisible && config.imeBehavior == IOSSheetImeBehavior.ExpandToLarge && state.visible) {
-                state.animateTo(IOSSheetDetent.Large, springSpec = config.springSpec)
-            }
-        }
-
-        // Haptic feedback on crossing detent thresholds
-        val currentNearestDetent by remember(resolvedDetents) {
-            derivedStateOf {
-                nearestDetent(state.offset.value, resolvedDetents).detent.id
-            }
-        }
-
-        var lastHapticDetent by remember { mutableStateOf<String?>(null) }
-        LaunchedEffect(currentNearestDetent) {
-            if (lastHapticDetent != null && lastHapticDetent != currentNearestDetent && state.phase == IOSSheetPhase.Dragging) {
-                haptics.impact(IOSImpact.Light)
-            }
-            lastHapticDetent = currentNearestDetent
-        }
-
-        // Background layer scaling & corner radius transformation
+        // Background scaling
         val bgScale = 1f - (1f - config.backgroundScaleMin) * expansionProgress
-        val bgCornerRadius = (16f * expansionProgress).dp
+        val bgCornerRadius = (12f * expansionProgress).dp
         val scrimAlpha = config.scrimAlphaMax * expansionProgress
 
+        // Background Layer
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -156,7 +107,7 @@ fun IOSSheet(
             backgroundContent()
 
             // Scrim overlay with tap to dismiss
-            if (scrimAlpha > 0.01f && (state.visible || state.isSettling)) {
+            if (scrimAlpha > 0.01f && (state.isVisible || state.isSettling)) {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
@@ -167,7 +118,7 @@ fun IOSSheet(
                             enabled = config.dismissOnScrimTap && config.dismissible
                         ) {
                             scope.launch {
-                                state.dismiss(heightPx, config.springSpec)
+                                state.dismiss()
                                 onDismissRequest()
                             }
                         }
@@ -175,16 +126,7 @@ fun IOSSheet(
             }
         }
 
-        val nestedConnection = remember(state, resolvedDetents, heightPx, config) {
-            IOSSheetNestedConnection(
-                sheetState = state,
-                scope = scope,
-                detentsProvider = { resolvedDetents },
-                containerHeightPxProvider = { heightPx },
-                onDismissRequest = onDismissRequest,
-                config = config
-            )
-        }
+        val nestedCoordinator = rememberIOSSheetNestedScrollCoordinator(sheetState = state)
 
         // Sheet Scope object
         val sheetScope = remember(state, expansionProgress) {
@@ -192,31 +134,31 @@ fun IOSSheet(
         }
 
         // Sheet Layer
-        if (state.visible || state.isSettling) {
+        if (state.isVisible || state.isSettling) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .graphicsLayer {
-                        translationY = state.offset.value
+                        translationY = state.offset
                     }
-                    .nestedScroll(nestedConnection)
+                    .nestedScroll(nestedCoordinator)
                     .semantics {
                         contentDescription = "Bottom Sheet"
                         stateDescription = state.currentDetent.id
                         customActions = listOf(
                             CustomAccessibilityAction("Expand sheet") {
-                                scope.launch { state.expand(config.springSpec) }
+                                scope.launch { state.expand() }
                                 true
                             },
                             CustomAccessibilityAction("Collapse sheet") {
-                                scope.launch { state.collapse(config.springSpec) }
+                                scope.launch { state.collapse() }
                                 true
                             }
                         )
                         if (config.dismissible) {
                             dismiss {
                                 scope.launch {
-                                    state.dismiss(heightPx, config.springSpec)
+                                    state.dismiss()
                                     onDismissRequest()
                                 }
                                 true
@@ -246,81 +188,50 @@ fun IOSSheet(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .height(44.dp)
-                                    .pointerInput(resolvedDetents, heightPx, config) {
+                                    .pointerInput(heightPx, config) {
                                         detectVerticalDragGestures(
                                             onDragStart = {
                                                 velocityTracker.resetTracking()
-                                                scope.launch { state.beginDrag() }
+                                                state.beginDrag()
                                             },
                                             onDragEnd = {
                                                 val velocityY = velocityTracker.calculateVelocity().y
-                                                val target = chooseSheetTarget(
-                                                    currentOffset = state.offset.value,
-                                                    velocityY = velocityY,
-                                                    detents = resolvedDetents,
-                                                    containerHeightPx = heightPx,
-                                                    velocityThreshold = config.velocityThreshold,
-                                                    dismissible = config.dismissible,
-                                                    dismissVelocityThreshold = config.dismissVelocityThreshold
-                                                )
                                                 scope.launch {
-                                                    when (target) {
-                                                        is IOSSheetTarget.Detent -> {
-                                                            state.settleTo(
-                                                                target = target.value,
-                                                                initialVelocity = velocityY,
-                                                                springSpec = config.springSpec
-                                                            )
-                                                        }
-                                                        is IOSSheetTarget.Dismiss -> {
-                                                            state.dismiss(heightPx, config.springSpec)
-                                                            onDismissRequest()
-                                                        }
+                                                    state.release(velocityPxPerSec = velocityY)
+                                                    if (state.currentDetent == IOSSheetDetent.Hidden) {
+                                                        onDismissRequest()
                                                     }
                                                 }
                                             },
                                             onDragCancel = {
-                                                val target = nearestDetent(state.offset.value, resolvedDetents)
                                                 scope.launch {
-                                                    state.settleTo(
-                                                        target = target,
-                                                        initialVelocity = 0f,
-                                                        springSpec = config.springSpec
-                                                    )
+                                                    state.release(velocityPxPerSec = 0f)
                                                 }
                                             },
                                             onVerticalDrag = { change, dragAmount ->
                                                 change.consume()
                                                 velocityTracker.addPosition(change.uptimeMillis, change.position)
-                                                val maxDragLimit = if (config.dismissible) heightPx else maxOffset
-                                                val targetOffset = (state.offset.value + dragAmount)
-                                                    .coerceIn(minOffset, maxDragLimit)
-                                                scope.launch {
-                                                    state.dragTo(targetOffset)
-                                                }
+                                                val targetOffset = state.offset + dragAmount
+                                                state.dragTo(targetOffset)
                                             }
                                         )
                                     },
                                 contentAlignment = Alignment.Center
                             ) {
-                                // Grabber pill (36x5dp)
+                                // Rounded Grabber Pill
                                 Box(
                                     modifier = Modifier
                                         .size(width = 36.dp, height = 5.dp)
-                                        .clip(RoundedCornerShape(50))
-                                        .background(Color(0xFF8E8E93).copy(alpha = 0.6f))
+                                        .background(
+                                            color = Color.White.copy(alpha = 0.35f),
+                                            shape = RoundedCornerShape(100)
+                                        )
                                 )
                             }
                         }
 
-                        // Sheet Body Content with Scope
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .weight(1f)
-                        ) {
-                            sheetScope.content()
-                        }
+                        // Sheet Content
+                        sheetScope.content()
                     }
                 }
             }
