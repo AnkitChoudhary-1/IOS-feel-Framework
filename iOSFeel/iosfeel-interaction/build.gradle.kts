@@ -5,11 +5,12 @@ plugins {
 }
 
 android {
-    namespace = "dev.iosfeel.components"
+    namespace = "dev.iosfeel.interaction"
     compileSdk = 35
 
     defaultConfig {
         minSdk = 26
+
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles("consumer-rules.pro")
     }
@@ -23,39 +24,36 @@ android {
             )
         }
     }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
+
     kotlinOptions {
         jvmTarget = "17"
     }
+
     buildFeatures {
         compose = true
     }
 }
 
 dependencies {
+    // Internal dependencies
     implementation(project(":iosfeel-core"))
-    implementation(project(":iosfeel-motion"))
-    implementation(project(":iosfeel-haptics"))
-    implementation(project(":iosfeel-gesture"))
-    implementation(project(":iosfeel-navigation"))
-    implementation(project(":iosfeel-scroll"))
-    implementation(project(":iosfeel-material"))
     implementation(project(":iosfeel-physics"))
-    implementation(project(":iosfeel-interaction"))
 
+    // Compose BOM
     implementation(platform(libs.compose.bom))
     implementation(libs.compose.runtime)
     implementation(libs.compose.ui)
-    implementation(libs.compose.ui.graphics)
-    implementation(libs.compose.material3)
     implementation(libs.compose.foundation)
-    implementation(libs.compose.animation)
+    implementation(libs.compose.animation.core)
 
+    // AndroidX
     implementation(libs.core.ktx)
-    implementation(libs.activity.compose)
 
+    // Testing
     testImplementation(libs.junit)
 }

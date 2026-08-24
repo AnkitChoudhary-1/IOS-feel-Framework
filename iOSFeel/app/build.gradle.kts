@@ -60,6 +60,7 @@ dependencies {
     implementation(project(":iosfeel-material"))
     implementation(project(":iosfeel-components"))
     implementation(project(":iosfeel-physics"))
+    implementation(project(":iosfeel-interaction"))
 
     // Compose BOM
     implementation(platform(libs.compose.bom))
