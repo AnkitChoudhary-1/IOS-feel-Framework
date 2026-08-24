@@ -550,4 +550,301 @@ object SonoraIcons {
             }
         }.build()
     }
+
+    val Heart: ImageVector by lazy {
+        ImageVector.Builder(
+            name = "Heart",
+            defaultWidth = 24.dp,
+            defaultHeight = 24.dp,
+            viewportWidth = 24f,
+            viewportHeight = 24f
+        ).apply {
+            path(
+                fill = SolidColor(Color.Black),
+                pathFillType = PathFillType.NonZero
+            ) {
+                moveTo(12f, 21.35f)
+                lineToRelative(-1.45f, -1.32f)
+                curveTo(5.4f, 15.36f, 2f, 12.28f, 2f, 8.5f)
+                curveTo(2f, 5.42f, 4.42f, 3f, 7.5f, 3f)
+                curveToRelative(1.74f, 0f, 3.41f, 0.81f, 4.5f, 2.09f)
+                curveTo(13.09f, 3.81f, 14.76f, 3f, 16.5f, 3f)
+                curveTo(19.58f, 3f, 22f, 5.42f, 22f, 8.5f)
+                curveToRelative(0f, 3.78f, -3.4f, 6.86f, -8.55f, 11.54f)
+                lineTo(12f, 21.35f)
+                close()
+                moveTo(12.1f, 18.55f)
+                lineToRelative(0.1f, -0.1f)
+                curveTo(16.55f, 14.53f, 19.5f, 11.83f, 19.5f, 8.5f)
+                curveTo(19.5f, 6.5f, 18f, 5f, 16f, 5f)
+                curveToRelative(-1.54f, 0f, -3.04f, 0.99f, -3.57f, 2.36f)
+                horizontalLineToRelative(-1.87f)
+                curveTo(9.96f, 5.99f, 8.46f, 5f, 7f, 5f)
+                curveTo(5f, 5f, 3.5f, 6.5f, 3.5f, 8.5f)
+                curveToRelative(0f, 3.33f, 2.95f, 6.03f, 7.3f, 9.95f)
+                lineToRelative(1.3f, 0.1f)
+                close()
+            }
+        }.build()
+    }
+
+    val HeartFilled: ImageVector by lazy {
+        ImageVector.Builder(
+            name = "HeartFilled",
+            defaultWidth = 24.dp,
+            defaultHeight = 24.dp,
+            viewportWidth = 24f,
+            viewportHeight = 24f
+        ).apply {
+            path(
+                fill = SolidColor(Color.Black),
+                pathFillType = PathFillType.NonZero
+            ) {
+                moveTo(12f, 21.35f)
+                lineToRelative(-1.45f, -1.32f)
+                curveTo(5.4f, 15.36f, 2f, 12.28f, 2f, 8.5f)
+                curveTo(2f, 5.42f, 4.42f, 3f, 7.5f, 3f)
+                curveToRelative(1.74f, 0f, 3.41f, 0.81f, 4.5f, 2.09f)
+                curveTo(13.09f, 3.81f, 14.76f, 3f, 16.5f, 3f)
+                curveTo(19.58f, 3f, 22f, 5.42f, 22f, 8.5f)
+                curveToRelative(0f, 3.78f, -3.4f, 6.86f, -8.55f, 11.54f)
+                lineTo(12f, 21.35f)
+                close()
+            }
+        }.build()
+    }
+
+    val Playlist: ImageVector by lazy {
+        ImageVector.Builder(
+            name = "Playlist",
+            defaultWidth = 24.dp,
+            defaultHeight = 24.dp,
+            viewportWidth = 24f,
+            viewportHeight = 24f
+        ).apply {
+            path(
+                fill = SolidColor(Color.Black),
+                pathFillType = PathFillType.NonZero
+            ) {
+                moveTo(3f, 6f)
+                horizontalLineToRelative(18f)
+                verticalLineToRelative(2f)
+                horizontalLineTo(3f)
+                verticalLineTo(6f)
+                close()
+                moveTo(3f, 11f)
+                horizontalLineToRelative(14f)
+                verticalLineToRelative(2f)
+                horizontalLineTo(3f)
+                verticalLineToRelative(-2f)
+                close()
+                moveTo(3f, 16f)
+                horizontalLineToRelative(10f)
+                verticalLineToRelative(2f)
+                horizontalLineTo(3f)
+                verticalLineToRelative(-2f)
+                close()
+                moveTo(18f, 12f)
+                verticalLineToRelative(6.18f)
+                curveToRelative(-0.31f, -0.11f, -0.65f, -0.18f, -1f, -0.18f)
+                curveToRelative(-1.66f, 0f, -3f, 1.34f, -3f, 3f)
+                reflectiveCurveToRelative(1.34f, 3f, 3f, 3f)
+                reflectiveCurveToRelative(3f, -1.34f, 3f, -3f)
+                verticalLineToRelative(-7f)
+                horizontalLineToRelative(3f)
+                verticalLineToRelative(-2f)
+                horizontalLineToRelative(-5f)
+                close()
+            }
+        }.build()
+    }
+
+    val Plus: ImageVector by lazy {
+        ImageVector.Builder(
+            name = "Plus",
+            defaultWidth = 24.dp,
+            defaultHeight = 24.dp,
+            viewportWidth = 24f,
+            viewportHeight = 24f
+        ).apply {
+            path(
+                fill = SolidColor(Color.Black),
+                pathFillType = PathFillType.NonZero
+            ) {
+                moveTo(19f, 13f)
+                horizontalLineToRelative(-6f)
+                verticalLineToRelative(6f)
+                horizontalLineToRelative(-2f)
+                verticalLineToRelative(-6f)
+                horizontalLineTo(5f)
+                verticalLineToRelative(-2f)
+                horizontalLineToRelative(6f)
+                verticalLineTo(5f)
+                horizontalLineToRelative(2f)
+                verticalLineToRelative(6f)
+                horizontalLineToRelative(6f)
+                verticalLineToRelative(2f)
+                close()
+            }
+        }.build()
+    }
+
+    val Trash: ImageVector by lazy {
+        ImageVector.Builder(
+            name = "Trash",
+            defaultWidth = 24.dp,
+            defaultHeight = 24.dp,
+            viewportWidth = 24f,
+            viewportHeight = 24f
+        ).apply {
+            path(
+                fill = SolidColor(Color.Black),
+                pathFillType = PathFillType.NonZero
+            ) {
+                moveTo(6f, 19f)
+                curveToRelative(0f, 1.1f, 0.9f, 2f, 2f, 2f)
+                horizontalLineToRelative(8f)
+                curveToRelative(1.1f, 0f, 2f, -0.9f, 2f, -2f)
+                verticalLineTo(7f)
+                horizontalLineTo(6f)
+                verticalLineToRelative(12f)
+                close()
+                moveTo(19f, 4f)
+                horizontalLineToRelative(-3.5f)
+                lineToRelative(-1f, -1f)
+                horizontalLineToRelative(-5f)
+                lineToRelative(-1f, 1f)
+                horizontalLineTo(5f)
+                verticalLineToRelative(2f)
+                horizontalLineToRelative(14f)
+                verticalLineTo(4f)
+                close()
+            }
+        }.build()
+    }
+
+    val Info: ImageVector by lazy {
+        ImageVector.Builder(
+            name = "Info",
+            defaultWidth = 24.dp,
+            defaultHeight = 24.dp,
+            viewportWidth = 24f,
+            viewportHeight = 24f
+        ).apply {
+            path(
+                fill = SolidColor(Color.Black),
+                pathFillType = PathFillType.NonZero
+            ) {
+                moveTo(12f, 2f)
+                curveTo(6.48f, 2f, 2f, 6.48f, 2f, 12f)
+                reflectiveCurveToRelative(4.48f, 10f, 10f, 10f)
+                reflectiveCurveToRelative(10f, -4.48f, 10f, -10f)
+                reflectiveCurveTo(17.52f, 2f, 12f, 2f)
+                close()
+                moveTo(13f, 17f)
+                horizontalLineToRelative(-2f)
+                verticalLineToRelative(-6f)
+                horizontalLineToRelative(2f)
+                verticalLineToRelative(6f)
+                close()
+                moveTo(13f, 9f)
+                horizontalLineToRelative(-2f)
+                verticalLineTo(7f)
+                horizontalLineToRelative(2f)
+                verticalLineToRelative(2f)
+                close()
+            }
+        }.build()
+    }
+
+    val Check: ImageVector by lazy {
+        ImageVector.Builder(
+            name = "Check",
+            defaultWidth = 24.dp,
+            defaultHeight = 24.dp,
+            viewportWidth = 24f,
+            viewportHeight = 24f
+        ).apply {
+            path(
+                fill = SolidColor(Color.Black),
+                pathFillType = PathFillType.NonZero
+            ) {
+                moveTo(9f, 16.17f)
+                lineTo(4.83f, 12f)
+                lineToRelative(-1.42f, 1.41f)
+                lineTo(9f, 19f)
+                lineTo(21f, 7f)
+                lineToRelative(-1.41f, -1.41f)
+                close()
+            }
+        }.build()
+    }
+
+    val Edit: ImageVector by lazy {
+        ImageVector.Builder(
+            name = "Edit",
+            defaultWidth = 24.dp,
+            defaultHeight = 24.dp,
+            viewportWidth = 24f,
+            viewportHeight = 24f
+        ).apply {
+            path(
+                fill = SolidColor(Color.Black),
+                pathFillType = PathFillType.NonZero
+            ) {
+                moveTo(3f, 17.25f)
+                verticalLineTo(21f)
+                horizontalLineToRelative(3.75f)
+                lineTo(17.81f, 9.94f)
+                lineToRelative(-3.75f, -3.75f)
+                lineTo(3f, 17.25f)
+                close()
+                moveTo(20.71f, 7.04f)
+                curveToRelative(0.39f, -0.39f, 0.39f, -1.02f, 0f, -1.41f)
+                lineToRelative(-2.34f, -2.34f)
+                curveToRelative(-0.39f, -0.39f, -1.02f, -0.39f, -1.41f, 0f)
+                lineToRelative(-1.83f, 1.83f)
+                lineToRelative(3.75f, 3.75f)
+                lineToRelative(1.83f, -1.83f)
+                close()
+            }
+        }.build()
+    }
+
+    val Search: ImageVector by lazy {
+        ImageVector.Builder(
+            name = "Search",
+            defaultWidth = 24.dp,
+            defaultHeight = 24.dp,
+            viewportWidth = 24f,
+            viewportHeight = 24f
+        ).apply {
+            path(
+                fill = SolidColor(Color.Black),
+                pathFillType = PathFillType.NonZero
+            ) {
+                moveTo(15.5f, 14f)
+                horizontalLineToRelative(-0.79f)
+                lineToRelative(-0.28f, -0.27f)
+                curveTo(15.41f, 12.59f, 16f, 11.11f, 16f, 9.5f)
+                curveTo(16f, 5.91f, 13.09f, 3f, 9.5f, 3f)
+                reflectiveCurveTo(3f, 5.91f, 3f, 9.5f)
+                reflectiveCurveTo(5.91f, 16f, 9.5f, 16f)
+                curveToRelative(1.61f, 0f, 3.09f, -0.59f, 4.23f, -1.57f)
+                lineToRelative(0.27f, 0.28f)
+                verticalLineToRelative(0.79f)
+                lineToRelative(5f, 4.99f)
+                lineTo(20.49f, 19f)
+                lineToRelative(-4.99f, -5f)
+                close()
+                moveTo(9.5f, 14f)
+                curveTo(7.01f, 14f, 5f, 11.99f, 5f, 9.5f)
+                reflectiveCurveTo(7.01f, 5f, 9.5f, 5f)
+                reflectiveCurveTo(14f, 7.01f, 14f, 9.5f)
+                reflectiveCurveTo(11.99f, 14f, 9.5f, 14f)
+                close()
+            }
+        }.build()
+    }
 }
+

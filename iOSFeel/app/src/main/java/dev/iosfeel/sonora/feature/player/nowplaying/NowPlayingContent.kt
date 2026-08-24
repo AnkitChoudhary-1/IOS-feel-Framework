@@ -32,6 +32,8 @@ import dev.iosfeel.sonora.core.model.RepeatMode
 fun NowPlayingContent(
     state: PlaybackState,
     progress: Float,
+    isFavorite: Boolean = false,
+    onToggleFavorite: () -> Unit = {},
     onCollapse: () -> Unit,
     onPlayPause: () -> Unit,
     onPrevious: () -> Unit,
@@ -39,6 +41,7 @@ fun NowPlayingContent(
     onSeek: (Long) -> Unit,
     onToggleShuffle: () -> Unit,
     onCycleRepeat: () -> Unit,
+    onOptionsClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val song = state.currentSong ?: return
@@ -123,11 +126,14 @@ fun NowPlayingContent(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Secondary controls
+        // Secondary controls with Favorite and Options buttons
         SecondaryControls(
             state = state,
+            isFavorite = isFavorite,
+            onToggleFavorite = onToggleFavorite,
             onToggleShuffle = onToggleShuffle,
-            onCycleRepeat = onCycleRepeat
+            onCycleRepeat = onCycleRepeat,
+            onOptionsClick = onOptionsClick
         )
 
         Spacer(modifier = Modifier.height(20.dp))

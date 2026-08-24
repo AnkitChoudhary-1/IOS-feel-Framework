@@ -19,4 +19,6 @@ interface PlaybackController {
     fun setShuffle(enabled: Boolean)
     fun setRepeatMode(mode: RepeatMode)
     fun skipToQueueItem(index: Int)
+    fun playNext(song: Song)
+    fun addToQueue(song: Song)
 }

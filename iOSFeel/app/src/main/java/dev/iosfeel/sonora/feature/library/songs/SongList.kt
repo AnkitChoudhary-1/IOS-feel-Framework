@@ -32,6 +32,7 @@ fun SongList(
     sortDirection: SortDirection,
     onSortSelected: (SongSort) -> Unit,
     onSongClick: (Song) -> Unit,
+    onSongOptionsClick: ((Song) -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val colors = LocalSonoraColors.current
@@ -94,7 +95,8 @@ fun SongList(
         ) { song ->
             SongRow(
                 song = song,
-                onClick = { onSongClick(song) }
+                onClick = { onSongClick(song) },
+                onOptionsClick = if (onSongOptionsClick != null) { { onSongOptionsClick(song) } } else null
             )
             HorizontalDivider(
                 modifier = Modifier.padding(start = 80.dp),

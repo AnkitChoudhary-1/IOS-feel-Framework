@@ -176,6 +176,33 @@ class SonoraPlaybackController(
         }
     }
 
+    override fun playNext(song: Song) {
+        val player = controller
+        if (player == null || currentQueue.isEmpty()) {
+            playSong(song, listOf(song))
+            return
+        }
+        val insertIndex = (player.currentMediaItemIndex + 1).coerceAtMost(currentQueue.size)
+        val mutable = currentQueue.toMutableList()
+        mutable.add(insertIndex, song)
+        currentQueue = mutable
+        player.addMediaItem(insertIndex, song.toMediaItem())
+        _state.update { it.copy(queue = currentQueue) }
+    }
+
+    override fun addToQueue(song: Song) {
+        val player = controller
+        if (player == null || currentQueue.isEmpty()) {
+            playSong(song, listOf(song))
+            return
+        }
+        val mutable = currentQueue.toMutableList()
+        mutable.add(song)
+        currentQueue = mutable
+        player.addMediaItem(song.toMediaItem())
+        _state.update { it.copy(queue = currentQueue) }
+    }
+
     private fun synchronizeState() {
         val player = controller ?: return
 

@@ -1,28 +1,38 @@
 package dev.iosfeel.sonora.navigation
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
-import androidx.compose.runtime.CompositionLocalProvider
 import dev.iosfeel.components.expandable.IOSExpandableSurfaceConfig
 import dev.iosfeel.components.expandable.rememberIOSExpandableSurfaceState
 import dev.iosfeel.components.floatingbar.IOSFloatingTabBar
@@ -43,20 +53,33 @@ import dev.iosfeel.sonora.core.datastore.LocalDeveloperSettings
 import dev.iosfeel.sonora.core.design.LocalSonoraColors
 import dev.iosfeel.sonora.core.di.SonoraContainer
 import dev.iosfeel.sonora.core.media.controller.SonoraPlaybackController
+import dev.iosfeel.sonora.core.model.Playlist
 import dev.iosfeel.sonora.core.model.RepeatMode
+import dev.iosfeel.sonora.core.model.Song
 import dev.iosfeel.sonora.core.model.findAlbum
 import dev.iosfeel.sonora.core.model.findArtist
 import dev.iosfeel.sonora.core.model.sorted
 import dev.iosfeel.sonora.feature.album.AlbumScreen
 import dev.iosfeel.sonora.feature.artist.ArtistScreen
 import dev.iosfeel.sonora.feature.developer.DeveloperSettingsScreen
+import dev.iosfeel.sonora.feature.favorites.FavoritesScreen
 import dev.iosfeel.sonora.feature.home.HomeScreen
 import dev.iosfeel.sonora.feature.home.HomeViewModel
 import dev.iosfeel.sonora.feature.library.LibraryRoute
 import dev.iosfeel.sonora.feature.library.LibraryViewModel
 import dev.iosfeel.sonora.feature.player.PlayerSurface
+import dev.iosfeel.sonora.feature.player.actions.SongActionContext
+import dev.iosfeel.sonora.feature.player.actions.SongActionsSheet
+import dev.iosfeel.sonora.feature.player.actions.SongInfoSheet
+import dev.iosfeel.sonora.feature.playlist.AddSongsToPlaylistSheet
+import dev.iosfeel.sonora.feature.playlist.AddToPlaylistSheet
+import dev.iosfeel.sonora.feature.playlist.CreatePlaylistSheet
+import dev.iosfeel.sonora.feature.playlist.PlaylistDetailScreen
+import dev.iosfeel.sonora.feature.playlist.PlaylistsScreen
 import dev.iosfeel.sonora.feature.search.SearchScreen
+import dev.iosfeel.sonora.feature.search.SearchViewModel
 import dev.iosfeel.sonora.feature.settings.SettingsScreen
+import kotlinx.coroutines.launch
 
 @Composable
 fun SonoraNavigationShell(
@@ -65,6 +88,7 @@ fun SonoraNavigationShell(
 ) {
     val colors = LocalSonoraColors.current
     val density = LocalDensity.current
+    val scope = rememberCoroutineScope()
     var currentTab by remember { mutableStateOf(SonoraTab.Home) }
 
     val devSettings by container.preferences.developerSettings.collectAsState(initial = DeveloperSettings())
@@ -79,11 +103,11 @@ fun SonoraNavigationShell(
             customBlurRadius = devSettings.blurRadius.coerceAtLeast(0f).dp,
             customTintAlpha = devSettings.tintAlpha.coerceIn(0f, 1f),
             tint = if (devSettings.tintColorArgb != 0L) {
-                androidx.compose.ui.graphics.Color(devSettings.tintColorArgb.toInt()).copy(alpha = devSettings.tintAlpha.coerceIn(0f, 1f))
+                Color(devSettings.tintColorArgb.toInt()).copy(alpha = devSettings.tintAlpha.coerceIn(0f, 1f))
             } else {
                 null
             },
-            borderColor = androidx.compose.ui.graphics.Color.White.copy(alpha = devSettings.borderAlpha.coerceIn(0f, 1f)),
+            borderColor = Color.White.copy(alpha = devSettings.borderAlpha.coerceIn(0f, 1f)),
             borderStroke = devSettings.borderStroke.coerceAtLeast(0f).dp,
             enabled = devSettings.backdropBlurEnabled
         )
@@ -92,7 +116,9 @@ fun SonoraNavigationShell(
     val homeViewModel = remember {
         HomeViewModel(
             musicRepository = container.musicRepository,
-            historyRepository = container.historyRepository
+            historyRepository = container.historyRepository,
+            favoritesRepository = container.favoritesRepository,
+            playlistRepository = container.playlistRepository
         )
     }
     val homeState by homeViewModel.state.collectAsState()
@@ -101,6 +127,18 @@ fun SonoraNavigationShell(
         LibraryViewModel(repository = container.musicRepository)
     }
     val libraryState by libraryViewModel.state.collectAsState()
+
+    val searchViewModel = remember {
+        SearchViewModel(
+            musicRepository = container.musicRepository,
+            playlistRepository = container.playlistRepository,
+            preferences = container.preferences
+        )
+    }
+
+    val favoriteIds by container.favoritesRepository.favoriteSongIds.collectAsState(initial = emptySet())
+    val favoriteSongs by container.favoritesRepository.observeFavoriteSongs(container.musicRepository).collectAsState(initial = emptyList())
+    val playlists by container.playlistRepository.playlists.collectAsState(initial = emptyList())
 
     val playbackController = container.playbackController
     val playbackState by playbackController.state.collectAsState()
@@ -137,6 +175,22 @@ fun SonoraNavigationShell(
     val settingsNavState = rememberIOSNavigationState(
         initialEntry = IOSNavigationEntry(key = "settings_root", route = "settings")
     )
+
+    fun activeNav(): IOSNavigationState = when (currentTab) {
+        SonoraTab.Home -> homeNavState
+        SonoraTab.Library -> libraryNavState
+        SonoraTab.Search -> searchNavState
+        SonoraTab.Settings -> settingsNavState
+    }
+
+    // Modal sheet states
+    var activeSongActions by remember { mutableStateOf<Song?>(null) }
+    var activeSongActionContext by remember { mutableStateOf(SongActionContext()) }
+    var activeSongInfo by remember { mutableStateOf<Song?>(null) }
+    var activeAddToPlaylistSong by remember { mutableStateOf<Song?>(null) }
+    var isCreatePlaylistSheetVisible by remember { mutableStateOf(false) }
+    var activeRenamePlaylist by remember { mutableStateOf<Playlist?>(null) }
+    var activeAddSongsPlaylist by remember { mutableStateOf<Playlist?>(null) }
 
     val tabItems = remember {
         listOf(
@@ -217,158 +271,92 @@ fun SonoraNavigationShell(
                         label = "ios_tab_switch",
                         modifier = Modifier.fillMaxSize()
                     ) { targetTab ->
-                        when (targetTab) {
-                            SonoraTab.Home -> {
-                                IOSNavigationStack(
-                                    state = homeNavState,
-                                    modifier = Modifier.fillMaxSize()
-                                ) { entry ->
-                                    RenderDestination(
-                                        entry = entry,
-                                        navState = homeNavState,
-                                        homeState = homeState,
-                                        libraryState = libraryState,
-                                        playbackState = playbackState,
-                                        backdrop = backdropState,
-                                        onSongClick = { song, queue ->
-                                            playbackController.playSong(song = song, queue = queue)
-                                        },
-                                        onPlayAll = { songs ->
-                                            playbackController.setShuffle(false)
-                                            playbackController.playQueue(songs = songs, startIndex = 0)
-                                        },
-                                        onShuffleAll = { songs ->
-                                            playbackController.setShuffle(true)
-                                            playbackController.playQueue(songs = songs, startIndex = 0)
-                                        },
-                                        libraryViewModel = libraryViewModel,
-                                        container = container,
-                                        onOpenDeveloperSettings = {
-                                            homeNavState.push(
-                                                IOSNavigationEntry(
-                                                    key = "dev_settings_${System.currentTimeMillis()}",
-                                                    route = "developer_settings"
-                                                )
-                                            )
-                                        },
-                                        onNavigateToLibrary = { currentTab = SonoraTab.Library }
-                                    )
-                                }
-                            }
+                        val targetNavState = when (targetTab) {
+                            SonoraTab.Home -> homeNavState
+                            SonoraTab.Library -> libraryNavState
+                            SonoraTab.Search -> searchNavState
+                            SonoraTab.Settings -> settingsNavState
+                        }
 
-                            SonoraTab.Library -> {
-                                IOSNavigationStack(
-                                    state = libraryNavState,
-                                    modifier = Modifier.fillMaxSize()
-                                ) { entry ->
-                                    RenderDestination(
-                                        entry = entry,
-                                        navState = libraryNavState,
-                                        homeState = homeState,
-                                        libraryState = libraryState,
-                                        playbackState = playbackState,
-                                        backdrop = backdropState,
-                                        onSongClick = { song, queue ->
-                                            playbackController.playSong(song = song, queue = queue)
-                                        },
-                                        onPlayAll = { songs ->
-                                            playbackController.setShuffle(false)
-                                            playbackController.playQueue(songs = songs, startIndex = 0)
-                                        },
-                                        onShuffleAll = { songs ->
-                                            playbackController.setShuffle(true)
-                                            playbackController.playQueue(songs = songs, startIndex = 0)
-                                        },
-                                        libraryViewModel = libraryViewModel,
-                                        container = container,
-                                        onOpenDeveloperSettings = {
-                                            libraryNavState.push(
-                                                IOSNavigationEntry(
-                                                    key = "dev_settings_${System.currentTimeMillis()}",
-                                                    route = "developer_settings"
-                                                )
-                                            )
-                                        },
-                                        onNavigateToLibrary = { currentTab = SonoraTab.Library }
+                        IOSNavigationStack(
+                            state = targetNavState,
+                            modifier = Modifier.fillMaxSize()
+                        ) { entry ->
+                            RenderDestination(
+                                entry = entry,
+                                navState = targetNavState,
+                                homeState = homeState,
+                                libraryState = libraryState,
+                                playbackState = playbackState,
+                                favoriteSongs = favoriteSongs,
+                                playlists = playlists,
+                                searchViewModel = searchViewModel,
+                                backdrop = backdropState,
+                                onSongClick = { song, queue ->
+                                    playbackController.playSong(song = song, queue = queue)
+                                },
+                                onPlayAll = { songs ->
+                                    playbackController.setShuffle(false)
+                                    playbackController.playQueue(songs = songs, startIndex = 0)
+                                },
+                                onShuffleAll = { songs ->
+                                    playbackController.setShuffle(true)
+                                    playbackController.playQueue(songs = songs, startIndex = 0)
+                                },
+                                onSongOptionsClick = { song, context ->
+                                    activeSongActions = song
+                                    activeSongActionContext = context
+                                },
+                                onOpenFavorites = {
+                                    targetNavState.push(
+                                        IOSNavigationEntry(
+                                            key = "favorites_${System.currentTimeMillis()}",
+                                            route = "favorites"
+                                        )
                                     )
-                                }
-                            }
-
-                            SonoraTab.Search -> {
-                                IOSNavigationStack(
-                                    state = searchNavState,
-                                    modifier = Modifier.fillMaxSize()
-                                ) { entry ->
-                                    RenderDestination(
-                                        entry = entry,
-                                        navState = searchNavState,
-                                        homeState = homeState,
-                                        libraryState = libraryState,
-                                        playbackState = playbackState,
-                                        backdrop = backdropState,
-                                        onSongClick = { song, queue ->
-                                            playbackController.playSong(song = song, queue = queue)
-                                        },
-                                        onPlayAll = { songs ->
-                                            playbackController.setShuffle(false)
-                                            playbackController.playQueue(songs = songs, startIndex = 0)
-                                        },
-                                        onShuffleAll = { songs ->
-                                            playbackController.setShuffle(true)
-                                            playbackController.playQueue(songs = songs, startIndex = 0)
-                                        },
-                                        libraryViewModel = libraryViewModel,
-                                        container = container,
-                                        onOpenDeveloperSettings = {
-                                            searchNavState.push(
-                                                IOSNavigationEntry(
-                                                    key = "dev_settings_${System.currentTimeMillis()}",
-                                                    route = "developer_settings"
-                                                )
-                                            )
-                                        },
-                                        onNavigateToLibrary = { currentTab = SonoraTab.Library }
+                                },
+                                onOpenPlaylists = {
+                                    targetNavState.push(
+                                        IOSNavigationEntry(
+                                            key = "playlists_${System.currentTimeMillis()}",
+                                            route = "playlists"
+                                        )
                                     )
-                                }
-                            }
-
-                            SonoraTab.Settings -> {
-                                IOSNavigationStack(
-                                    state = settingsNavState,
-                                    modifier = Modifier.fillMaxSize()
-                                ) { entry ->
-                                    RenderDestination(
-                                        entry = entry,
-                                        navState = settingsNavState,
-                                        homeState = homeState,
-                                        libraryState = libraryState,
-                                        playbackState = playbackState,
-                                        backdrop = backdropState,
-                                        onSongClick = { song, queue ->
-                                            playbackController.playSong(song = song, queue = queue)
-                                        },
-                                        onPlayAll = { songs ->
-                                            playbackController.setShuffle(false)
-                                            playbackController.playQueue(songs = songs, startIndex = 0)
-                                        },
-                                        onShuffleAll = { songs ->
-                                            playbackController.setShuffle(true)
-                                            playbackController.playQueue(songs = songs, startIndex = 0)
-                                        },
-                                        libraryViewModel = libraryViewModel,
-                                        container = container,
-                                        onOpenDeveloperSettings = {
-                                            settingsNavState.push(
-                                                IOSNavigationEntry(
-                                                    key = "dev_settings_${System.currentTimeMillis()}",
-                                                    route = "developer_settings"
-                                                )
-                                            )
-                                        },
-                                        onNavigateToLibrary = { currentTab = SonoraTab.Library }
+                                },
+                                onOpenPlaylist = { playlist ->
+                                    targetNavState.push(
+                                        IOSNavigationEntry(
+                                            key = "playlist_${playlist.id}_${System.currentTimeMillis()}",
+                                            route = "playlist/${playlist.id}"
+                                        )
                                     )
-                                }
-                            }
+                                },
+                                onCreatePlaylist = {
+                                    isCreatePlaylistSheetVisible = true
+                                },
+                                onRenamePlaylist = { playlist ->
+                                    activeRenamePlaylist = playlist
+                                },
+                                onAddSongsToPlaylist = { playlist ->
+                                    activeAddSongsPlaylist = playlist
+                                },
+                                onDeletePlaylist = { playlist ->
+                                    scope.launch {
+                                        container.playlistRepository.delete(playlist.id)
+                                    }
+                                },
+                                libraryViewModel = libraryViewModel,
+                                container = container,
+                                onOpenDeveloperSettings = {
+                                    targetNavState.push(
+                                        IOSNavigationEntry(
+                                            key = "dev_settings_${System.currentTimeMillis()}",
+                                            route = "developer_settings"
+                                        )
+                                    )
+                                },
+                                onNavigateToLibrary = { currentTab = SonoraTab.Library }
+                            )
                         }
                     }
                 }
@@ -394,15 +382,14 @@ fun SonoraNavigationShell(
                                 selected = currentTab,
                                 onSelected = { tab ->
                                     if (currentTab == tab) {
-                                        // Reselect tab: pop to root if navigated deep
-                                        val activeNav = when (tab) {
+                                        val active = when (tab) {
                                             SonoraTab.Home -> homeNavState
                                             SonoraTab.Library -> libraryNavState
                                             SonoraTab.Search -> searchNavState
                                             SonoraTab.Settings -> settingsNavState
                                         }
-                                        while (activeNav.canGoBack) {
-                                            activeNav.pop()
+                                        while (active.canGoBack) {
+                                            active.pop()
                                         }
                                     } else {
                                         currentTab = tab
@@ -417,9 +404,20 @@ fun SonoraNavigationShell(
 
                     // Global Floating Player Surface
                     if (playbackState.hasActiveMedia) {
+                        val currentSongId = playbackState.currentSong?.id
+                        val isFav = currentSongId != null && favoriteIds.contains(currentSongId)
+
                         PlayerSurface(
                             playbackState = playbackState,
                             expansionState = playerExpansionState,
+                            isFavorite = isFav,
+                            onToggleFavorite = {
+                                playbackState.currentSong?.let { song ->
+                                    scope.launch {
+                                        container.favoritesRepository.toggleFavorite(song.id)
+                                    }
+                                }
+                            },
                             onPlayPause = { playbackController.togglePlayPause() },
                             onNext = { playbackController.seekToNext() },
                             onPrevious = { playbackController.seekToPrevious() },
@@ -435,13 +433,208 @@ fun SonoraNavigationShell(
                                 }
                                 playbackController.setRepeatMode(nextRepeat)
                             },
+                            onOptionsClick = {
+                                playbackState.currentSong?.let { song ->
+                                    activeSongActions = song
+                                    activeSongActionContext = SongActionContext()
+                                }
+                            },
                             backdrop = backdropState,
                             modifier = Modifier.fillMaxSize()
                         )
                     }
+
+                    // Universal Song Actions Sheet
+                    activeSongActions?.let { song ->
+                        val isFav = favoriteIds.contains(song.id)
+                        SonoraModalOverlay(onDismiss = { activeSongActions = null }) {
+                            SongActionsSheet(
+                                song = song,
+                                isFavorite = isFav,
+                                onToggleFavorite = {
+                                    scope.launch {
+                                        container.favoritesRepository.toggleFavorite(song.id)
+                                    }
+                                },
+                                onPlayNext = {
+                                    playbackController.playNext(song)
+                                    activeSongActions = null
+                                },
+                                onAddToQueue = {
+                                    playbackController.addToQueue(song)
+                                    activeSongActions = null
+                                },
+                                onAddToPlaylist = {
+                                    val target = song
+                                    activeSongActions = null
+                                    activeAddToPlaylistSong = target
+                                },
+                                onGoToAlbum = if (song.albumId != null) {
+                                    {
+                                        val albumId = song.albumId
+                                        activeSongActions = null
+                                        activeNav().push(
+                                            IOSNavigationEntry(
+                                                key = "album_${albumId}_${System.currentTimeMillis()}",
+                                                route = "album/$albumId"
+                                            )
+                                        )
+                                    }
+                                } else null,
+                                onGoToArtist = if (song.artistId != null) {
+                                    {
+                                        val artistId = song.artistId
+                                        activeSongActions = null
+                                        activeNav().push(
+                                            IOSNavigationEntry(
+                                                key = "artist_${artistId}_${System.currentTimeMillis()}",
+                                                route = "artist/$artistId"
+                                            )
+                                        )
+                                    }
+                                } else null,
+                                onSongInfo = {
+                                    val target = song
+                                    activeSongActions = null
+                                    activeSongInfo = target
+                                },
+                                onRemoveFromPlaylist = if (activeSongActionContext.playlistId != null) {
+                                    {
+                                        val pid = activeSongActionContext.playlistId!!
+                                        scope.launch {
+                                            container.playlistRepository.removeSong(pid, song.id)
+                                        }
+                                        activeSongActions = null
+                                    }
+                                } else null,
+                                context = activeSongActionContext
+                            )
+                        }
+                    }
+
+                    // Song Info Sheet
+                    activeSongInfo?.let { song ->
+                        SonoraModalOverlay(onDismiss = { activeSongInfo = null }) {
+                            SongInfoSheet(
+                                song = song,
+                                onClose = { activeSongInfo = null }
+                            )
+                        }
+                    }
+
+                    // Add To Playlist Sheet
+                    activeAddToPlaylistSong?.let { song ->
+                        SonoraModalOverlay(onDismiss = { activeAddToPlaylistSong = null }) {
+                            AddToPlaylistSheet(
+                                song = song,
+                                playlists = playlists,
+                                onSelectPlaylist = { playlist ->
+                                    scope.launch {
+                                        container.playlistRepository.addSongs(playlist.id, listOf(song.id))
+                                    }
+                                    activeAddToPlaylistSong = null
+                                },
+                                onCreateNewPlaylist = {
+                                    activeAddToPlaylistSong = null
+                                    isCreatePlaylistSheetVisible = true
+                                },
+                                onClose = { activeAddToPlaylistSong = null }
+                            )
+                        }
+                    }
+
+                    // Create Playlist Sheet
+                    if (isCreatePlaylistSheetVisible) {
+                        SonoraModalOverlay(onDismiss = { isCreatePlaylistSheetVisible = false }) {
+                            CreatePlaylistSheet(
+                                title = "New Playlist",
+                                confirmButtonText = "Create",
+                                onDismiss = { isCreatePlaylistSheetVisible = false },
+                                onConfirm = { name ->
+                                    scope.launch {
+                                        val newId = container.playlistRepository.create(name)
+                                        activeAddToPlaylistSong?.let { song ->
+                                            container.playlistRepository.addSongs(newId, listOf(song.id))
+                                            activeAddToPlaylistSong = null
+                                        }
+                                    }
+                                    isCreatePlaylistSheetVisible = false
+                                }
+                            )
+                        }
+                    }
+
+                    // Rename Playlist Sheet
+                    activeRenamePlaylist?.let { playlist ->
+                        SonoraModalOverlay(onDismiss = { activeRenamePlaylist = null }) {
+                            CreatePlaylistSheet(
+                                initialName = playlist.name,
+                                title = "Rename Playlist",
+                                confirmButtonText = "Save",
+                                onDismiss = { activeRenamePlaylist = null },
+                                onConfirm = { newName ->
+                                    scope.launch {
+                                        container.playlistRepository.rename(playlist.id, newName)
+                                    }
+                                    activeRenamePlaylist = null
+                                }
+                            )
+                        }
+                    }
+
+                    // Add Songs to Playlist Sheet
+                    activeAddSongsPlaylist?.let { playlist ->
+                        val existingIds = remember(playlist) { playlist.songs.map { it.id }.toSet() }
+                        SonoraModalOverlay(onDismiss = { activeAddSongsPlaylist = null }) {
+                            AddSongsToPlaylistSheet(
+                                allSongs = libraryState.library.songs,
+                                existingSongIds = existingIds,
+                                onAddSongs = { songIds ->
+                                    scope.launch {
+                                        container.playlistRepository.addSongs(playlist.id, songIds)
+                                    }
+                                    activeAddSongsPlaylist = null
+                                },
+                                onCancel = { activeAddSongsPlaylist = null }
+                            )
+                        }
+                    }
                 }
             }
         )
+    }
+}
+
+@Composable
+private fun SonoraModalOverlay(
+    onDismiss: () -> Unit,
+    content: @Composable () -> Unit
+) {
+    val colors = LocalSonoraColors.current
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.Black.copy(alpha = 0.5f))
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+                onClick = onDismiss
+            ),
+        contentAlignment = Alignment.BottomCenter
+    ) {
+        Box(
+            modifier = Modifier
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null,
+                    onClick = {}
+                )
+                .clip(RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp))
+                .background(colors.surfaceElevated)
+                .navigationBarsPadding()
+        ) {
+            content()
+        }
     }
 }
 
@@ -452,10 +645,21 @@ private fun RenderDestination(
     homeState: dev.iosfeel.sonora.feature.home.HomeUiState,
     libraryState: dev.iosfeel.sonora.feature.library.LibraryUiState,
     playbackState: dev.iosfeel.sonora.core.model.PlaybackState,
+    favoriteSongs: List<Song>,
+    playlists: List<Playlist>,
+    searchViewModel: SearchViewModel,
     backdrop: IOSBackdropState?,
-    onSongClick: (dev.iosfeel.sonora.core.model.Song, List<dev.iosfeel.sonora.core.model.Song>) -> Unit,
-    onPlayAll: (List<dev.iosfeel.sonora.core.model.Song>) -> Unit,
-    onShuffleAll: (List<dev.iosfeel.sonora.core.model.Song>) -> Unit,
+    onSongClick: (Song, List<Song>) -> Unit,
+    onPlayAll: (List<Song>) -> Unit,
+    onShuffleAll: (List<Song>) -> Unit,
+    onSongOptionsClick: (Song, SongActionContext) -> Unit,
+    onOpenFavorites: () -> Unit,
+    onOpenPlaylists: () -> Unit,
+    onOpenPlaylist: (Playlist) -> Unit,
+    onCreatePlaylist: () -> Unit,
+    onRenamePlaylist: (Playlist) -> Unit,
+    onAddSongsToPlaylist: (Playlist) -> Unit,
+    onDeletePlaylist: (Playlist) -> Unit,
     libraryViewModel: LibraryViewModel,
     container: SonoraContainer,
     onOpenDeveloperSettings: () -> Unit,
@@ -484,6 +688,10 @@ private fun RenderDestination(
                     )
                 },
                 onSongClick = onSongClick,
+                onPlaylistClick = onOpenPlaylist,
+                onFavoritesClick = onOpenFavorites,
+                onPlaylistsClick = onOpenPlaylists,
+                onSongOptionsClick = { song -> onSongOptionsClick(song, SongActionContext()) },
                 onNavigateToLibrary = onNavigateToLibrary
             )
         }
@@ -514,8 +722,58 @@ private fun RenderDestination(
                         )
                     )
                 },
+                onFavoritesClick = onOpenFavorites,
+                onPlaylistsClick = onOpenPlaylists,
+                onSongOptionsClick = { song -> onSongOptionsClick(song, SongActionContext()) },
                 onPlayAlbum = onPlayAll,
                 onShuffleAlbum = onShuffleAll
+            )
+        }
+
+        route == "favorites" -> {
+            FavoritesScreen(
+                favoriteSongs = favoriteSongs,
+                onBack = { navState.pop() },
+                onSongClick = onSongClick,
+                onPlayAll = onPlayAll,
+                onShuffleAll = onShuffleAll,
+                onSongOptionsClick = { song -> onSongOptionsClick(song, SongActionContext()) }
+            )
+        }
+
+        route == "playlists" -> {
+            PlaylistsScreen(
+                playlists = playlists,
+                onBack = { navState.pop() },
+                onPlaylistClick = onOpenPlaylist,
+                onCreatePlaylist = onCreatePlaylist
+            )
+        }
+
+        route.startsWith("playlist/") -> {
+            val playlistId = route.substringAfter("playlist/").toLongOrNull() ?: -1L
+            val playlist = playlists.find { it.id == playlistId }
+
+            PlaylistDetailScreen(
+                playlist = playlist,
+                onBack = { navState.pop() },
+                onSongClick = onSongClick,
+                onPlayAll = onPlayAll,
+                onShuffleAll = onShuffleAll,
+                onAddSongs = { playlist?.let { onAddSongsToPlaylist(it) } },
+                onRenamePlaylist = { playlist?.let { onRenamePlaylist(it) } },
+                onDeletePlaylist = {
+                    playlist?.let {
+                        onDeletePlaylist(it)
+                        navState.pop()
+                    }
+                },
+                onSongOptionsClick = { song ->
+                    onSongOptionsClick(
+                        song,
+                        SongActionContext(playlistId = playlistId, allowRemoveFromPlaylist = true)
+                    )
+                }
             )
         }
 
@@ -564,7 +822,28 @@ private fun RenderDestination(
         }
 
         route == "search" -> {
-            SearchScreen()
+            SearchScreen(
+                viewModel = searchViewModel,
+                onSongClick = onSongClick,
+                onAlbumClick = { album ->
+                    navState.push(
+                        IOSNavigationEntry(
+                            key = "album_${album.id}_${System.currentTimeMillis()}",
+                            route = "album/${album.id}"
+                        )
+                    )
+                },
+                onArtistClick = { artist ->
+                    navState.push(
+                        IOSNavigationEntry(
+                            key = "artist_${artist.id}_${System.currentTimeMillis()}",
+                            route = "artist/${artist.id}"
+                        )
+                    )
+                },
+                onPlaylistClick = onOpenPlaylist,
+                onSongOptionsClick = { song -> onSongOptionsClick(song, SongActionContext()) }
+            )
         }
 
         route == "settings" -> {

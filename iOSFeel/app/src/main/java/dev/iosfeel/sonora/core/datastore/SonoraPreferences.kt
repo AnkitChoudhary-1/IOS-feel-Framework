@@ -62,6 +62,13 @@ class SonoraPreferences(
         val DEV_PLAYER_DAMPING = floatPreferencesKey("dev_player_damping")
         val DEV_COMPLETION_THRESHOLD = floatPreferencesKey("dev_completion_threshold")
         val DEV_VELOCITY_THRESHOLD = floatPreferencesKey("dev_velocity_threshold")
+        val RECENT_SEARCHES = stringPreferencesKey("recent_searches")
+    }
+
+    val recentSearches: Flow<List<String>> = context.sonoraDataStore.data.map { prefs ->
+        val raw = prefs[Keys.RECENT_SEARCHES] ?: ""
+        if (raw.isBlank()) emptyList()
+        else raw.split("\n").filter { it.isNotBlank() }
     }
 
     val themeMode: Flow<ThemeMode> = context.sonoraDataStore.data.map { prefs ->
@@ -130,6 +137,34 @@ class SonoraPreferences(
             prefs[Keys.DEV_PLAYER_DAMPING] = settings.playerDamping
             prefs[Keys.DEV_COMPLETION_THRESHOLD] = settings.completionThreshold
             prefs[Keys.DEV_VELOCITY_THRESHOLD] = settings.velocityThreshold
+        }
+    }
+
+    suspend fun addRecentSearch(query: String) {
+        val trimmed = query.trim()
+        if (trimmed.isBlank()) return
+        context.sonoraDataStore.edit { prefs ->
+            val current = (prefs[Keys.RECENT_SEARCHES] ?: "")
+                .split("\n")
+                .filter { it.isNotBlank() && !it.equals(trimmed, ignoreCase = true) }
+            val updated = (listOf(trimmed) + current).take(10)
+            prefs[Keys.RECENT_SEARCHES] = updated.joinToString("\n")
+        }
+    }
+
+    suspend fun removeRecentSearch(query: String) {
+        val trimmed = query.trim()
+        context.sonoraDataStore.edit { prefs ->
+            val current = (prefs[Keys.RECENT_SEARCHES] ?: "")
+                .split("\n")
+                .filter { it.isNotBlank() && !it.equals(trimmed, ignoreCase = true) }
+            prefs[Keys.RECENT_SEARCHES] = current.joinToString("\n")
+        }
+    }
+
+    suspend fun clearRecentSearches() {
+        context.sonoraDataStore.edit { prefs ->
+            prefs.remove(Keys.RECENT_SEARCHES)
         }
     }
 

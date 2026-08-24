@@ -6,9 +6,11 @@ import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -16,7 +18,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -53,12 +57,17 @@ import dev.iosfeel.sonora.feature.library.artists.ArtistDetailScreen
 import dev.iosfeel.sonora.feature.library.artists.ArtistList
 import dev.iosfeel.sonora.feature.library.songs.SongList
 
+import androidx.compose.ui.graphics.Color
+
 @Composable
 fun LibraryRoute(
     viewModel: LibraryViewModel,
     onSongClick: (Song) -> Unit = {},
     onAlbumClick: (Album) -> Unit = {},
     onArtistClick: (Artist) -> Unit = {},
+    onFavoritesClick: () -> Unit = {},
+    onPlaylistsClick: () -> Unit = {},
+    onSongOptionsClick: (Song) -> Unit = {},
     onPlayAlbum: (List<Song>) -> Unit = {},
     onShuffleAlbum: (List<Song>) -> Unit = {}
 ) {
@@ -108,6 +117,9 @@ fun LibraryRoute(
         onCloseArtist = viewModel::closeArtist,
         onRefresh = viewModel::refresh,
         onSongClick = onSongClick,
+        onFavoritesClick = onFavoritesClick,
+        onPlaylistsClick = onPlaylistsClick,
+        onSongOptionsClick = onSongOptionsClick,
         onPlayAlbum = onPlayAlbum,
         onShuffleAlbum = onShuffleAlbum
     )
@@ -126,6 +138,9 @@ fun LibraryScreen(
     onCloseArtist: () -> Unit,
     onRefresh: () -> Unit,
     onSongClick: (Song) -> Unit,
+    onFavoritesClick: () -> Unit = {},
+    onPlaylistsClick: () -> Unit = {},
+    onSongOptionsClick: (Song) -> Unit = {},
     onPlayAlbum: (List<Song>) -> Unit = {},
     onShuffleAlbum: (List<Song>) -> Unit = {}
 ) {
@@ -159,7 +174,61 @@ fun LibraryScreen(
             )
 
             if (state.permissionGranted && state.library.songs.isNotEmpty()) {
-                Spacer(modifier = Modifier.height(14.dp))
+                Spacer(modifier = Modifier.height(10.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(colors.surfaceElevated)
+                            .clickable(onClick = onFavoritesClick)
+                            .padding(horizontal = 14.dp, vertical = 12.dp)
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = SonoraIcons.HeartFilled,
+                                contentDescription = null,
+                                tint = Color(0xFFFF2D55),
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(modifier = Modifier.width(10.dp))
+                            Text(
+                                text = "Favorites",
+                                style = typography.headline.copy(fontWeight = FontWeight.SemiBold),
+                                color = colors.textPrimary
+                            )
+                        }
+                    }
+
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(colors.surfaceElevated)
+                            .clickable(onClick = onPlaylistsClick)
+                            .padding(horizontal = 14.dp, vertical = 12.dp)
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = SonoraIcons.Playlist,
+                                contentDescription = null,
+                                tint = colors.accent,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(modifier = Modifier.width(10.dp))
+                            Text(
+                                text = "Playlists",
+                                style = typography.headline.copy(fontWeight = FontWeight.SemiBold),
+                                color = colors.textPrimary
+                            )
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
                 IOSSegmentedControl(
                     items = segmentItems,
                     selectedValue = state.section,
@@ -214,6 +283,7 @@ fun LibraryScreen(
                             sortDirection = state.sortDirection,
                             onSortSelected = onSortSelected,
                             onSongClick = onSongClick,
+                            onSongOptionsClick = onSongOptionsClick,
                             modifier = Modifier.fillMaxSize()
                         )
                     }

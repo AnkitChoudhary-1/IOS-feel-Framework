@@ -40,12 +40,20 @@ import androidx.compose.ui.graphics.Color
 import dev.iosfeel.material.IOSBackdropLayout
 import dev.iosfeel.material.rememberIOSBackdropState
 
+import dev.iosfeel.sonora.core.model.Playlist
+import dev.iosfeel.sonora.feature.home.sections.HomeFavoritesSection
+import dev.iosfeel.sonora.feature.home.sections.HomePlaylistsSection
+
 @Composable
 fun HomeScreen(
     uiState: HomeUiState,
     onAlbumClick: (Album) -> Unit,
     onArtistClick: (Artist) -> Unit = {},
     onSongClick: (Song, List<Song>) -> Unit,
+    onPlaylistClick: (Playlist) -> Unit = {},
+    onFavoritesClick: () -> Unit = {},
+    onPlaylistsClick: () -> Unit = {},
+    onSongOptionsClick: (Song) -> Unit = {},
     onNavigateToLibrary: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
@@ -105,6 +113,28 @@ fun HomeScreen(
                             RecentlyAddedSection(
                                 albums = uiState.recentlyAdded,
                                 onAlbumClick = onAlbumClick
+                            )
+                            Spacer(modifier = Modifier.height(28.dp))
+                        }
+                    }
+
+                    if (uiState.favorites.isNotEmpty()) {
+                        item {
+                            HomeFavoritesSection(
+                                songs = uiState.favorites,
+                                onSongClick = onSongClick,
+                                onSeeAll = onFavoritesClick
+                            )
+                            Spacer(modifier = Modifier.height(28.dp))
+                        }
+                    }
+
+                    if (uiState.playlists.isNotEmpty()) {
+                        item {
+                            HomePlaylistsSection(
+                                playlists = uiState.playlists,
+                                onPlaylistClick = onPlaylistClick,
+                                onSeeAll = onPlaylistsClick
                             )
                             Spacer(modifier = Modifier.height(28.dp))
                         }

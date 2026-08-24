@@ -43,12 +43,15 @@ import kotlin.math.abs
 fun PlayerSurface(
     playbackState: PlaybackState,
     expansionState: IOSExpandableSurfaceState,
+    isFavorite: Boolean = false,
+    onToggleFavorite: () -> Unit = {},
     onPlayPause: () -> Unit,
     onNext: () -> Unit,
     onPrevious: () -> Unit,
     onSeek: (Long) -> Unit,
     onToggleShuffle: () -> Unit = {},
     onCycleRepeat: () -> Unit = {},
+    onOptionsClick: () -> Unit = {},
     backdrop: IOSBackdropState? = null,
     modifier: Modifier = Modifier
 ) {
@@ -181,6 +184,8 @@ fun PlayerSurface(
                 NowPlayingContent(
                     state = playbackState,
                     progress = progress,
+                    isFavorite = isFavorite,
+                    onToggleFavorite = onToggleFavorite,
                     onCollapse = {
                         scope.launch {
                             expansionState.collapse()
@@ -192,6 +197,7 @@ fun PlayerSurface(
                     onSeek = onSeek,
                     onToggleShuffle = onToggleShuffle,
                     onCycleRepeat = onCycleRepeat,
+                    onOptionsClick = onOptionsClick,
                     modifier = Modifier.fillMaxSize()
                 )
             }
