@@ -35,15 +35,6 @@ fun RecentlyPlayedSection(
     val typography = LocalSonoraTypography.current
 
     Column(modifier = modifier.fillMaxWidth()) {
-        Text(
-            text = "Recently Played",
-            style = typography.title2.copy(fontWeight = FontWeight.Bold),
-            color = colors.textPrimary,
-            modifier = Modifier.padding(horizontal = 16.dp)
-        )
-
-        Spacer(modifier = Modifier.height(12.dp))
-
         IOSScrollableLazyRow(
             contentPadding = PaddingValues(horizontal = 16.dp),
             horizontalArrangement = Arrangement.spacedBy(14.dp),

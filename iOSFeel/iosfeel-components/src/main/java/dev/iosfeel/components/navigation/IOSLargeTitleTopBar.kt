@@ -123,17 +123,33 @@ fun IOSLargeTitleTopBar(
     ) {
         // Frosted Glass Layer (fades in as user scrolls up)
         if (animatedProgress > 0.005f) {
-            val frostedColor = if (isDark) {
-                Color(0xFF1C1C1E).copy(alpha = 0.92f * animatedProgress)
+            if (backdrop != null) {
+                IOSMaterialSurface(
+                    backdrop = backdrop,
+                    config = IOSMaterialConfig(
+                        style = IOSMaterialStyle.Regular,
+                        cornerRadius = 0.dp
+                    ),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .matchParentSize()
+                        .alpha(animatedProgress)
+                ) {
+                    Box(modifier = Modifier.fillMaxWidth())
+                }
             } else {
-                Color(0xFFF9F9F9).copy(alpha = 0.92f * animatedProgress)
+                val frostedColor = if (isDark) {
+                    Color(0xFF1C1C1E).copy(alpha = 0.88f * animatedProgress)
+                } else {
+                    Color(0xFFF9F9F9).copy(alpha = 0.88f * animatedProgress)
+                }
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .matchParentSize()
+                        .background(frostedColor)
+                )
             }
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .matchParentSize()
-                    .background(frostedColor)
-            )
         }
 
         // Bottom Divider line (fades in when scrolled)

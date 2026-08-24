@@ -171,6 +171,7 @@ fun PlayerSurface(
                     progress = progress,
                     onPlayPause = onPlayPause,
                     onNext = onNext,
+                    onPrevious = onPrevious,
                     modifier = Modifier.align(Alignment.TopCenter)
                 )
             }

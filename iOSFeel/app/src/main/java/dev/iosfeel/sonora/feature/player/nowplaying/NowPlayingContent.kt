@@ -87,9 +87,12 @@ fun NowPlayingContent(
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        // Big artwork
+        // Big artwork with dynamic spring scaling and swipe-to-skip
         NowPlayingArtwork(
             song = song,
+            isPlaying = state.isPlaying,
+            onNext = onNext,
+            onPrevious = onPrevious,
             modifier = Modifier.weight(1f, fill = false)
         )
 

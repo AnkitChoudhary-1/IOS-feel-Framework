@@ -43,6 +43,8 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import dev.iosfeel.components.navigation.IOSLargeTitleTopBar
 import dev.iosfeel.scroll.IOSScrollableLazyColumn
 import kotlinx.coroutines.launch
+import dev.iosfeel.material.IOSBackdropLayout
+import dev.iosfeel.material.rememberIOSBackdropState
 
 @Composable
 fun SettingsScreen(
@@ -55,6 +57,7 @@ fun SettingsScreen(
     val scope = rememberCoroutineScope()
     val haptics = rememberIOSHaptics()
     val listState = rememberLazyListState()
+    val screenBackdrop = rememberIOSBackdropState()
 
     val currentTheme by preferences.themeMode.collectAsState(initial = ThemeMode.System)
     val isDevModeEnabled by preferences.isDeveloperModeEnabled.collectAsState(initial = false)
@@ -70,220 +73,260 @@ fun SettingsScreen(
         )
     }
 
-    Box(
-        modifier = modifier
-            .fillMaxSize()
-            .background(colors.background)
-    ) {
-        IOSScrollableLazyColumn(
-            state = listState,
-            topFadeHeight = 24.dp,
-            bottomFadeHeight = 92.dp,
-            contentPadding = PaddingValues(top = 96.dp, bottom = 24.dp, start = 20.dp, end = 20.dp),
-            modifier = Modifier.fillMaxSize()
-        ) {
-            item {
-                Spacer(modifier = Modifier.statusBarsPadding())
-                Spacer(modifier = Modifier.height(10.dp))
-            }
-
-            // Appearance Section
-            item {
-            Text(
-                text = "APPEARANCE",
-                style = typography.caption1.copy(
-                    color = colors.textTertiary,
-                    fontWeight = FontWeight.SemiBold,
-                    fontSize = 11.sp
-                )
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            IOSSegmentedControl(
-                items = themeOptions,
-                selectedValue = currentTheme,
-                onSelected = { mode ->
-                    scope.launch { preferences.setThemeMode(mode) }
-                },
-                containerColor = colors.surfaceSecondary,
-                selectedPillColor = colors.surface,
-                selectedTextColor = colors.textPrimary,
-                unselectedTextColor = colors.textSecondary,
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            Spacer(modifier = Modifier.height(24.dp))
-        }
-
-        // Feedback Section
-        item {
-            Text(
-                text = "INTERACTIONS & HAPTICS",
-                style = typography.caption1.copy(
-                    color = colors.textTertiary,
-                    fontWeight = FontWeight.SemiBold,
-                    fontSize = 11.sp
-                )
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
+    IOSBackdropLayout(
+        state = screenBackdrop,
+        modifier = modifier.fillMaxSize(),
+        backdrop = {
             Box(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(colors.surface)
-                    .padding(horizontal = 16.dp, vertical = 12.dp)
+                    .fillMaxSize()
+                    .background(colors.background)
             ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                IOSScrollableLazyColumn(
+                    state = listState,
+                    topFadeHeight = 24.dp,
+                    bottomFadeHeight = 92.dp,
+                    contentPadding = PaddingValues(top = 96.dp, bottom = 24.dp, start = 20.dp, end = 20.dp),
+                    modifier = Modifier.fillMaxSize()
                 ) {
-                    Text(
-                        text = "Tactile Haptics",
-                        style = typography.body.copy(color = colors.textPrimary)
-                    )
-
-                    IOSToggle(
-                        checked = isHapticsEnabled,
-                        onCheckedChange = { enabled ->
-                            scope.launch { preferences.setHapticsEnabled(enabled) }
-                        }
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(24.dp))
-        }
-
-        // Developer Settings (if unlocked)
-        if (isDevModeEnabled) {
-            item {
-                Text(
-                    text = "IOSFEEL LABORATORY",
-                    style = typography.caption1.copy(
-                        color = colors.textTertiary,
-                        fontWeight = FontWeight.SemiBold,
-                        fontSize = 11.sp
-                    )
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(colors.surface)
-                        .clickable(
-                            interactionSource = remember { MutableInteractionSource() },
-                            indication = null,
-                            onClick = onOpenDeveloperSettings
-                        )
-                        .padding(horizontal = 16.dp, vertical = 14.dp)
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Column {
-                            Text(
-                                text = "Developer Settings",
-                                style = typography.body.copy(
-                                    color = colors.accent,
-                                    fontWeight = FontWeight.SemiBold
-                                )
-                            )
-                            Text(
-                                text = "Live tuning for physics, springs, and gestures",
-                                style = typography.footnote.copy(color = colors.textSecondary)
-                            )
-                        }
-
-                        Text(
-                            text = "›",
-                            style = typography.title2.copy(color = colors.textTertiary)
-                        )
+                    item {
+                        Spacer(modifier = Modifier.statusBarsPadding())
+                        Spacer(modifier = Modifier.height(10.dp))
                     }
-                }
 
-                Spacer(modifier = Modifier.height(24.dp))
-            }
-        }
+                    // Appearance Section
+                    item {
+                        SectionHeader(title = "APPEARANCE")
+                        Spacer(modifier = Modifier.height(8.dp))
 
-        // About & Version (Tap 7 times to unlock Developer Mode)
-        item {
-            Text(
-                text = "ABOUT",
-                style = typography.caption1.copy(
-                    color = colors.textTertiary,
-                    fontWeight = FontWeight.SemiBold,
-                    fontSize = 11.sp
-                )
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(colors.surface)
-                    .clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = null
-                    ) {
-                        versionTapCount++
-                        if (versionTapCount in 1..6) {
-                            haptics.impact(IOSImpact.Light)
-                        } else if (versionTapCount >= 7 && !isDevModeEnabled) {
-                            haptics.notification(IOSNotification.Success)
-                            scope.launch {
-                                preferences.setDeveloperModeEnabled(true)
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(colors.surfaceElevated)
+                                .padding(16.dp)
+                        ) {
+                            Column {
+                                Text(
+                                    text = "Theme",
+                                    style = typography.subheadline.copy(fontWeight = FontWeight.SemiBold),
+                                    color = colors.textPrimary
+                                )
+                                Spacer(modifier = Modifier.height(12.dp))
+                                IOSSegmentedControl(
+                                    items = themeOptions,
+                                    selectedValue = currentTheme,
+                                    onSelected = { mode ->
+                                        scope.launch {
+                                            preferences.setThemeMode(mode)
+                                        }
+                                    },
+                                    containerColor = colors.surfaceSecondary,
+                                    selectedPillColor = colors.surface,
+                                    selectedTextColor = colors.textPrimary,
+                                    unselectedTextColor = colors.textSecondary,
+                                    modifier = Modifier.fillMaxWidth()
+                                )
                             }
                         }
-                    }
-                    .padding(horizontal = 16.dp, vertical = 14.dp)
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "Sonora Version",
-                        style = typography.body.copy(color = colors.textPrimary)
-                    )
 
-                    Text(
-                        text = "1.0.0 (Phase 0)",
-                        style = typography.body.copy(color = colors.textSecondary)
-                    )
+                        Spacer(modifier = Modifier.height(28.dp))
+                    }
+
+                    // Feedback Section
+                    item {
+                        SectionHeader(title = "FEEDBACK & INTERACTION")
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(colors.surfaceElevated)
+                                .padding(horizontal = 16.dp, vertical = 12.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = "Haptic Feedback",
+                                        style = typography.headline,
+                                        color = colors.textPrimary
+                                    )
+                                    Spacer(modifier = Modifier.height(2.dp))
+                                    Text(
+                                        text = "Vibrate on playback controls and navigation",
+                                        style = typography.caption1,
+                                        color = colors.textSecondary
+                                    )
+                                }
+
+                                IOSToggle(
+                                    checked = isHapticsEnabled,
+                                    onCheckedChange = { enabled ->
+                                        scope.launch {
+                                            preferences.setHapticsEnabled(enabled)
+                                        }
+                                    }
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(28.dp))
+                    }
+
+                    // Developer Lab Section (if unlocked)
+                    if (isDevModeEnabled) {
+                        item {
+                            SectionHeader(title = "DEVELOPER")
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(colors.surfaceElevated)
+                                    .clickable {
+                                        haptics.impact(IOSImpact.Medium)
+                                        onOpenDeveloperSettings()
+                                    }
+                                    .padding(horizontal = 16.dp, vertical = 14.dp)
+                            ) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Column {
+                                        Text(
+                                            text = "Developer Settings & Lab",
+                                            style = typography.headline.copy(fontWeight = FontWeight.SemiBold),
+                                            color = colors.accent
+                                        )
+                                        Spacer(modifier = Modifier.height(2.dp))
+                                        Text(
+                                            text = "Tune blur, haptics, physics, and gestures live",
+                                            style = typography.caption1,
+                                            color = colors.textSecondary
+                                        )
+                                    }
+
+                                    Text(
+                                        text = "›",
+                                        style = typography.title2,
+                                        color = colors.textTertiary
+                                    )
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.height(28.dp))
+                        }
+                    }
+
+                    // About Section
+                    item {
+                        SectionHeader(title = "ABOUT")
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(colors.surfaceElevated)
+                                .padding(horizontal = 16.dp, vertical = 14.dp)
+                        ) {
+                            Column {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Text(
+                                        text = "Version",
+                                        style = typography.headline,
+                                        color = colors.textPrimary
+                                    )
+                                    Text(
+                                        text = "1.0.0 (iOSFeel)",
+                                        style = typography.subheadline,
+                                        color = colors.textSecondary,
+                                        modifier = Modifier.clickable(
+                                            interactionSource = remember { MutableInteractionSource() },
+                                            indication = null
+                                        ) {
+                                            if (!isDevModeEnabled) {
+                                                versionTapCount++
+                                                if (versionTapCount >= 7) {
+                                                    haptics.notification(IOSNotification.Success)
+                                                    scope.launch {
+                                                        preferences.setDeveloperModeEnabled(true)
+                                                    }
+                                                } else {
+                                                    haptics.impact(IOSImpact.Light)
+                                                }
+                                            }
+                                        }
+                                    )
+                                }
+
+                                Spacer(modifier = Modifier.height(10.dp))
+
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Text(
+                                        text = "Framework",
+                                        style = typography.headline,
+                                        color = colors.textPrimary
+                                    )
+                                    Text(
+                                        text = "dev.iosfeel:1.0.0",
+                                        style = typography.subheadline,
+                                        color = colors.textSecondary
+                                    )
+                                }
+                            }
+                        }
+
+                        if (!isDevModeEnabled && versionTapCount in 3..6) {
+                            Spacer(modifier = Modifier.height(6.dp))
+                            Text(
+                                text = "${7 - versionTapCount} taps away from unlocking Developer Mode",
+                                style = typography.footnote.copy(color = colors.accent)
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(140.dp))
+                    }
                 }
             }
-
-            if (!isDevModeEnabled && versionTapCount in 3..6) {
-                Spacer(modifier = Modifier.height(6.dp))
-                Text(
-                    text = "${7 - versionTapCount} taps away from unlocking Developer Mode",
-                    style = typography.footnote.copy(color = colors.accent)
-                )
-            }
-
-            Spacer(modifier = Modifier.height(140.dp))
+        },
+        overlay = {
+            IOSLargeTitleTopBar(
+                title = "Settings",
+                subtitle = "Sonora",
+                scrollState = listState,
+                backdrop = screenBackdrop,
+                titleColor = colors.textPrimary,
+                subtitleColor = colors.accent,
+                dividerColor = colors.separator
+            )
         }
-    }
-
-    IOSLargeTitleTopBar(
-        title = "Settings",
-        subtitle = "Sonora",
-        scrollState = listState,
-        titleColor = colors.textPrimary,
-        subtitleColor = colors.accent,
-        dividerColor = colors.separator
     )
 }
+
+@Composable
+fun SectionHeader(title: String) {
+    Text(
+        text = title,
+        style = SonoraTheme.typography.caption1.copy(
+            color = SonoraTheme.colors.textTertiary,
+            fontWeight = FontWeight.SemiBold,
+            fontSize = 11.sp
+        ),
+        modifier = Modifier.padding(horizontal = 4.dp)
+    )
 }

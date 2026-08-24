@@ -36,6 +36,10 @@ import dev.iosfeel.sonora.feature.home.sections.RecentlyAddedSection
 import androidx.compose.foundation.layout.PaddingValues
 import dev.iosfeel.components.navigation.IOSLargeTitleTopBar
 
+import androidx.compose.ui.graphics.Color
+import dev.iosfeel.material.IOSBackdropLayout
+import dev.iosfeel.material.rememberIOSBackdropState
+
 @Composable
 fun HomeScreen(
     uiState: HomeUiState,
@@ -48,6 +52,7 @@ fun HomeScreen(
     val colors = LocalSonoraColors.current
     val typography = LocalSonoraTypography.current
     val listState = rememberLazyListState()
+    val screenBackdrop = rememberIOSBackdropState()
 
     if (uiState.loading) {
         Box(
@@ -65,125 +70,133 @@ fun HomeScreen(
         return
     }
 
-    Box(
-        modifier = modifier
-            .fillMaxSize()
-            .background(colors.background)
-    ) {
-        IOSScrollableLazyColumn(
-            state = listState,
-            topFadeHeight = 24.dp,
-            bottomFadeHeight = 92.dp,
-            contentPadding = PaddingValues(top = 96.dp, bottom = 24.dp),
-            modifier = Modifier.fillMaxSize()
-        ) {
-            item {
-                Spacer(modifier = Modifier.statusBarsPadding())
-            }
-
-            if (uiState.recentlyPlayed.isNotEmpty()) {
-            item {
-                RecentlyPlayedSection(
-                    songs = uiState.recentlyPlayed,
-                    onSongClick = onSongClick
-                )
-                Spacer(modifier = Modifier.height(28.dp))
-            }
-        }
-
-        if (uiState.recentlyAdded.isNotEmpty()) {
-            item {
-                RecentlyAddedSection(
-                    albums = uiState.recentlyAdded,
-                    onAlbumClick = onAlbumClick
-                )
-                Spacer(modifier = Modifier.height(28.dp))
-            }
-        }
-
-        if (uiState.quickPicks.isNotEmpty()) {
-            item {
-                QuickPicksSection(
-                    songs = uiState.quickPicks,
-                    onSongClick = onSongClick
-                )
-                Spacer(modifier = Modifier.height(28.dp))
-            }
-        }
-
-        if (uiState.mostPlayed.isNotEmpty()) {
-            item {
-                MostPlayedSection(
-                    songs = uiState.mostPlayed,
-                    onSongClick = onSongClick
-                )
-                Spacer(modifier = Modifier.height(28.dp))
-            }
-        }
-
-        if (uiState.recentArtists.isNotEmpty()) {
-            item {
-                HomeArtistsSection(
-                    artists = uiState.recentArtists,
-                    onArtistClick = onArtistClick
-                )
-                Spacer(modifier = Modifier.height(28.dp))
-            }
-        }
-
-        if (uiState.isEmpty) {
-            item {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 24.dp, vertical = 48.dp),
-                    contentAlignment = Alignment.Center
+    IOSBackdropLayout(
+        state = screenBackdrop,
+        modifier = modifier.fillMaxSize(),
+        backdrop = {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(colors.background)
+            ) {
+                IOSScrollableLazyColumn(
+                    state = listState,
+                    topFadeHeight = 24.dp,
+                    bottomFadeHeight = 92.dp,
+                    contentPadding = PaddingValues(top = 96.dp, bottom = 24.dp),
+                    modifier = Modifier.fillMaxSize()
                 ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(
-                            text = "No Music Found Yet",
-                            style = typography.title2.copy(fontWeight = FontWeight.Bold),
-                            color = colors.textPrimary,
-                            textAlign = TextAlign.Center
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = "Grant audio permissions in Library or add audio files to your device storage to start listening.",
-                            style = typography.body,
-                            color = colors.textSecondary,
-                            textAlign = TextAlign.Center
-                        )
-                        Spacer(modifier = Modifier.height(20.dp))
-                        Button(
-                            onClick = onNavigateToLibrary,
-                            colors = ButtonDefaults.buttonColors(containerColor = colors.accent),
-                            shape = RoundedCornerShape(20.dp)
-                        ) {
-                            Text(
-                                text = "Go to Library",
-                                style = typography.headline.copy(
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = androidx.compose.ui.graphics.Color.White
-                                )
+                    item {
+                        Spacer(modifier = Modifier.statusBarsPadding())
+                    }
+
+                    if (uiState.recentlyPlayed.isNotEmpty()) {
+                        item {
+                            RecentlyPlayedSection(
+                                songs = uiState.recentlyPlayed,
+                                onSongClick = onSongClick
                             )
+                            Spacer(modifier = Modifier.height(28.dp))
                         }
+                    }
+
+                    if (uiState.recentlyAdded.isNotEmpty()) {
+                        item {
+                            RecentlyAddedSection(
+                                albums = uiState.recentlyAdded,
+                                onAlbumClick = onAlbumClick
+                            )
+                            Spacer(modifier = Modifier.height(28.dp))
+                        }
+                    }
+
+                    if (uiState.quickPicks.isNotEmpty()) {
+                        item {
+                            QuickPicksSection(
+                                songs = uiState.quickPicks,
+                                onSongClick = onSongClick
+                            )
+                            Spacer(modifier = Modifier.height(28.dp))
+                        }
+                    }
+
+                    if (uiState.mostPlayed.isNotEmpty()) {
+                        item {
+                            MostPlayedSection(
+                                songs = uiState.mostPlayed,
+                                onSongClick = onSongClick
+                            )
+                            Spacer(modifier = Modifier.height(28.dp))
+                        }
+                    }
+
+                    if (uiState.recentArtists.isNotEmpty()) {
+                        item {
+                            HomeArtistsSection(
+                                artists = uiState.recentArtists,
+                                onArtistClick = onArtistClick
+                            )
+                            Spacer(modifier = Modifier.height(28.dp))
+                        }
+                    }
+
+                    if (uiState.isEmpty) {
+                        item {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 24.dp, vertical = 48.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                    Text(
+                                        text = "No Music Found Yet",
+                                        style = typography.title2.copy(fontWeight = FontWeight.Bold),
+                                        color = colors.textPrimary,
+                                        textAlign = TextAlign.Center
+                                    )
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Text(
+                                        text = "Grant audio permissions in Library or add audio files to your device storage to start listening.",
+                                        style = typography.body,
+                                        color = colors.textSecondary,
+                                        textAlign = TextAlign.Center
+                                    )
+                                    Spacer(modifier = Modifier.height(20.dp))
+                                    Button(
+                                        onClick = onNavigateToLibrary,
+                                        colors = ButtonDefaults.buttonColors(containerColor = colors.accent),
+                                        shape = RoundedCornerShape(20.dp)
+                                    ) {
+                                        Text(
+                                            text = "Go to Library",
+                                            style = typography.headline.copy(
+                                                fontWeight = FontWeight.SemiBold,
+                                                color = Color.White
+                                            )
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    item {
+                        Spacer(modifier = Modifier.height(160.dp))
                     }
                 }
             }
+        },
+        overlay = {
+            IOSLargeTitleTopBar(
+                title = "Listen Now",
+                subtitle = "Sonora",
+                scrollState = listState,
+                backdrop = screenBackdrop,
+                titleColor = colors.textPrimary,
+                subtitleColor = colors.accent,
+                dividerColor = colors.separator
+            )
         }
-
-        item {
-            Spacer(modifier = Modifier.height(160.dp))
-        }
-    }
-
-    IOSLargeTitleTopBar(
-        title = "Listen Now",
-        subtitle = "Sonora",
-        scrollState = listState,
-        titleColor = colors.textPrimary,
-        subtitleColor = colors.accent,
-        dividerColor = colors.separator
     )
-}
 }
