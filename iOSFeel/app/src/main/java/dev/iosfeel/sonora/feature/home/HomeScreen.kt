@@ -35,7 +35,6 @@ import dev.iosfeel.sonora.feature.home.sections.RecentlyPlayedSection
 import dev.iosfeel.sonora.feature.home.sections.RecentlyAddedSection
 import androidx.compose.foundation.layout.PaddingValues
 import dev.iosfeel.components.navigation.IOSLargeTitleTopBar
-import dev.iosfeel.material.IOSBackdropState
 
 @Composable
 fun HomeScreen(
@@ -44,7 +43,6 @@ fun HomeScreen(
     onArtistClick: (Artist) -> Unit = {},
     onSongClick: (Song, List<Song>) -> Unit,
     onNavigateToLibrary: () -> Unit = {},
-    backdrop: IOSBackdropState? = null,
     modifier: Modifier = Modifier
 ) {
     val colors = LocalSonoraColors.current
@@ -183,7 +181,6 @@ fun HomeScreen(
         title = "Listen Now",
         subtitle = "Sonora",
         scrollState = listState,
-        backdrop = backdrop,
         titleColor = colors.textPrimary,
         subtitleColor = colors.accent,
         dividerColor = colors.separator

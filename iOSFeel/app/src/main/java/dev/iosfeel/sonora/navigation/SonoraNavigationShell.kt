@@ -484,8 +484,7 @@ private fun RenderDestination(
                     )
                 },
                 onSongClick = onSongClick,
-                onNavigateToLibrary = onNavigateToLibrary,
-                backdrop = backdrop
+                onNavigateToLibrary = onNavigateToLibrary
             )
         }
 
@@ -538,8 +537,7 @@ private fun RenderDestination(
                 },
                 onSongClick = onSongClick,
                 onPlayAll = onPlayAll,
-                onShuffleAll = onShuffleAll,
-                backdrop = backdrop
+                onShuffleAll = onShuffleAll
             )
         }
 
@@ -561,22 +559,18 @@ private fun RenderDestination(
                 },
                 onSongClick = onSongClick,
                 onPlayAll = onPlayAll,
-                onShuffleAll = onShuffleAll,
-                backdrop = backdrop
+                onShuffleAll = onShuffleAll
             )
         }
 
         route == "search" -> {
-            SearchScreen(
-                backdrop = backdrop
-            )
+            SearchScreen()
         }
 
         route == "settings" -> {
             SettingsScreen(
                 preferences = container.preferences,
-                onOpenDeveloperSettings = onOpenDeveloperSettings,
-                backdrop = backdrop
+                onOpenDeveloperSettings = onOpenDeveloperSettings
             )
         }
 

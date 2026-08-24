@@ -25,12 +25,10 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.rememberLazyListState
 import dev.iosfeel.components.navigation.IOSLargeTitleTopBar
-import dev.iosfeel.material.IOSBackdropState
 import dev.iosfeel.scroll.IOSScrollableLazyColumn
 
 @Composable
 fun SearchScreen(
-    backdrop: IOSBackdropState? = null,
     modifier: Modifier = Modifier
 ) {
     val colors = SonoraTheme.colors
@@ -87,7 +85,6 @@ fun SearchScreen(
             title = "Search",
             subtitle = "Sonora",
             scrollState = listState,
-            backdrop = backdrop,
             titleColor = colors.textPrimary,
             subtitleColor = colors.accent,
             dividerColor = colors.separator

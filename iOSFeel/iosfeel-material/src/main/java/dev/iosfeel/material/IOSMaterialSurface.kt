@@ -103,10 +103,14 @@ fun IOSMaterialSurface(
                     .matchParentSize()
                     .then(blurMod)
                     .drawWithContent {
-                        drawContext.canvas.save()
-                        drawContext.transform.translate(-positionInRoot.x, -positionInRoot.y)
-                        drawLayer(backdrop.layer)
-                        drawContext.canvas.restore()
+                        try {
+                            drawContext.canvas.save()
+                            drawContext.transform.translate(-positionInRoot.x, -positionInRoot.y)
+                            drawLayer(backdrop.layer)
+                            drawContext.canvas.restore()
+                        } catch (_: Throwable) {
+                            // Defensive guard against recursive backdrop recording passes
+                        }
                     }
             )
             // 1b. Crisp Scrim Tint Overlay (Maintains high-contrast text legibility without spreading/bleeding)

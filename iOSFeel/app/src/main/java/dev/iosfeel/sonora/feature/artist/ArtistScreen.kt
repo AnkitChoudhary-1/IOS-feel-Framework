@@ -1,5 +1,7 @@
 package dev.iosfeel.sonora.feature.artist
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -20,7 +22,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import dev.iosfeel.components.floatingbar.IOSFloatingIconButton
 import dev.iosfeel.components.floatingbar.IOSFloatingTopBar
-import dev.iosfeel.material.IOSBackdropState
 import dev.iosfeel.scroll.IOSScrollableLazyColumn
 import dev.iosfeel.sonora.core.design.LocalSonoraColors
 import dev.iosfeel.sonora.core.design.LocalSonoraTypography
@@ -38,7 +39,6 @@ fun ArtistScreen(
     onSongClick: (Song, List<Song>) -> Unit,
     onPlayAll: (List<Song>) -> Unit,
     onShuffleAll: (List<Song>) -> Unit,
-    backdrop: IOSBackdropState? = null,
     modifier: Modifier = Modifier
 ) {
     val colors = LocalSonoraColors.current
@@ -61,8 +61,7 @@ fun ArtistScreen(
                 )
                 Spacer(modifier = Modifier.height(16.dp))
                 IOSFloatingIconButton(
-                    onClick = onBack,
-                    backdrop = backdrop
+                    onClick = onBack
                 ) {
                     Icon(
                         imageVector = SonoraIcons.ChevronLeft,
@@ -80,14 +79,15 @@ fun ArtistScreen(
         artist.albums.flatMap { it.songs }
     }
 
-    // Normalized progress for compact nav bar title fade-in
-    val navTitleAlpha by remember {
-        derivedStateOf {
-            val firstIndex = listState.firstVisibleItemIndex
-            val scrollOffset = listState.firstVisibleItemScrollOffset
-            if (firstIndex > 0) 1f else (scrollOffset / 300f).coerceIn(0f, 1f)
-        }
+    val isScrolled by remember {
+        derivedStateOf { listState.firstVisibleItemScrollOffset > 40 || listState.firstVisibleItemIndex > 0 }
     }
+
+    val navTitleAlpha by animateFloatAsState(
+        targetValue = if (isScrolled) 1f else 0f,
+        animationSpec = spring(stiffness = 500f, dampingRatio = 0.85f),
+        label = "nav_title_alpha"
+    )
 
     Box(
         modifier = modifier
@@ -101,8 +101,6 @@ fun ArtistScreen(
             modifier = Modifier.fillMaxSize()
         ) {
             item {
-                Spacer(modifier = Modifier.statusBarsPadding())
-                Spacer(modifier = Modifier.height(56.dp))
                 ArtistHeader(
                     artist = artist,
                     onPlayAll = { onPlayAll(allSongs) },
@@ -112,16 +110,17 @@ fun ArtistScreen(
 
             if (artist.albums.isNotEmpty()) {
                 item {
+                    Spacer(modifier = Modifier.height(24.dp))
                     ArtistAlbums(
                         albums = artist.albums,
                         onAlbumClick = onAlbumClick
                     )
-                    Spacer(modifier = Modifier.height(28.dp))
                 }
             }
 
             if (allSongs.isNotEmpty()) {
                 item {
+                    Spacer(modifier = Modifier.height(28.dp))
                     ArtistSongs(
                         songs = allSongs,
                         currentPlayingSongId = currentPlayingSongId,
@@ -140,11 +139,9 @@ fun ArtistScreen(
             title = artist.name,
             titleAlpha = navTitleAlpha,
             titleColor = colors.textPrimary,
-            backdrop = backdrop,
             navigation = {
                 IOSFloatingIconButton(
-                    onClick = onBack,
-                    backdrop = backdrop
+                    onClick = onBack
                 ) {
                     Icon(
                         imageVector = SonoraIcons.ChevronLeft,

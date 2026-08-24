@@ -22,6 +22,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.semantics.Role
@@ -122,19 +123,17 @@ fun IOSLargeTitleTopBar(
     ) {
         // Frosted Glass Layer (fades in as user scrolls up)
         if (animatedProgress > 0.005f) {
-            IOSMaterialSurface(
-                backdrop = backdrop,
-                config = IOSMaterialConfig(
-                    style = IOSMaterialStyle.Regular,
-                    cornerRadius = 0.dp
-                ),
+            val frostedColor = if (isDark) {
+                Color(0xFF1C1C1E).copy(alpha = 0.92f * animatedProgress)
+            } else {
+                Color(0xFFF9F9F9).copy(alpha = 0.92f * animatedProgress)
+            }
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .matchParentSize()
-                    .alpha(animatedProgress)
-            ) {
-                Box(modifier = Modifier.fillMaxWidth())
-            }
+                    .background(frostedColor)
+            )
         }
 
         // Bottom Divider line (fades in when scrolled)
@@ -248,6 +247,7 @@ fun IOSLargeTitleTopBar(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(expandedExtraHeight * (1f - animatedProgress))
+                        .clipToBounds()
                         .padding(horizontal = 16.dp)
                         .graphicsLayer {
                             alpha = (1f - animatedProgress * 1.3f).coerceIn(0f, 1f)

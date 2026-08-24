@@ -38,7 +38,6 @@ fun AlbumScreen(
     onSongClick: (Song, List<Song>) -> Unit,
     onPlayAll: (List<Song>) -> Unit,
     onShuffleAll: (List<Song>) -> Unit,
-    backdrop: IOSBackdropState? = null,
     modifier: Modifier = Modifier
 ) {
     val colors = LocalSonoraColors.current
@@ -61,8 +60,7 @@ fun AlbumScreen(
                 )
                 Spacer(modifier = Modifier.height(16.dp))
                 IOSFloatingIconButton(
-                    onClick = onBack,
-                    backdrop = backdrop
+                    onClick = onBack
                 ) {
                     Icon(
                         imageVector = SonoraIcons.ChevronLeft,
@@ -128,11 +126,9 @@ fun AlbumScreen(
             title = album.title,
             titleAlpha = navTitleAlpha,
             titleColor = colors.textPrimary,
-            backdrop = backdrop,
             navigation = {
                 IOSFloatingIconButton(
-                    onClick = onBack,
-                    backdrop = backdrop
+                    onClick = onBack
                 ) {
                     Icon(
                         imageVector = SonoraIcons.ChevronLeft,

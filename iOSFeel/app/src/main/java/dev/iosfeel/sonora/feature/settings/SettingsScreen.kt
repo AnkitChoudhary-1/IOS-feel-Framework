@@ -41,7 +41,6 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.rememberLazyListState
 import dev.iosfeel.components.navigation.IOSLargeTitleTopBar
-import dev.iosfeel.material.IOSBackdropState
 import dev.iosfeel.scroll.IOSScrollableLazyColumn
 import kotlinx.coroutines.launch
 
@@ -49,7 +48,6 @@ import kotlinx.coroutines.launch
 fun SettingsScreen(
     preferences: SonoraPreferences,
     onOpenDeveloperSettings: () -> Unit,
-    backdrop: IOSBackdropState? = null,
     modifier: Modifier = Modifier
 ) {
     val colors = SonoraTheme.colors
@@ -283,7 +281,6 @@ fun SettingsScreen(
         title = "Settings",
         subtitle = "Sonora",
         scrollState = listState,
-        backdrop = backdrop,
         titleColor = colors.textPrimary,
         subtitleColor = colors.accent,
         dividerColor = colors.separator
