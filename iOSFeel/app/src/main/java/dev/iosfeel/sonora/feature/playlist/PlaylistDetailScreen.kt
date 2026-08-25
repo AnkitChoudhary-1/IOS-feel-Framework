@@ -41,6 +41,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import dev.iosfeel.components.floatingbar.IOSFloatingIconButton
+import dev.iosfeel.components.floatingbar.IOSScrollPillTopBar
 import dev.iosfeel.components.interaction.iosPressSurface
 import dev.iosfeel.components.interaction.rememberIOSPressSurfaceState
 import dev.iosfeel.haptics.IOSImpact
@@ -274,20 +275,19 @@ fun PlaylistDetailScreen(
             }
         }
 
-        // Modern iOS Blurred Floating Top Bar with Animated Title Pill
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .statusBarsPadding()
-                .padding(horizontal = 16.dp, vertical = 8.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
-                modifier = Modifier.weight(1f, fill = false)
-            ) {
+        // Modern iOS Floating Top Bar with Animated Title Pill
+        IOSScrollPillTopBar(
+            title = playlist.name,
+            scrollState = listState,
+            icon = {
+                Icon(
+                    imageVector = SonoraIcons.Playlist,
+                    contentDescription = null,
+                    tint = colors.accent,
+                    modifier = Modifier.size(16.dp)
+                )
+            },
+            navigation = {
                 IOSFloatingIconButton(
                     onClick = onBack,
                     size = 40.dp
@@ -299,72 +299,22 @@ fun PlaylistDetailScreen(
                         modifier = Modifier.size(24.dp)
                     )
                 }
-
-                if (titleAlpha > 0.01f) {
-                    Box(
-                        modifier = Modifier
-                            .height(40.dp)
-                            .graphicsLayer {
-                                alpha = titleAlpha
-                                scaleX = 0.9f + (0.1f * titleAlpha)
-                                scaleY = 0.9f + (0.1f * titleAlpha)
-                            }
-                            .shadow(
-                                elevation = 4.dp,
-                                shape = CircleShape,
-                                spotColor = Color.Black.copy(alpha = 0.18f)
-                            )
-                            .clip(CircleShape)
-                            .border(
-                                width = 0.5.dp,
-                                color = Color.White.copy(alpha = 0.15f),
-                                shape = CircleShape
-                            )
-                    ) {
-                        IOSMaterialSurface(
-                            config = IOSMaterialConfig(
-                                style = IOSMaterialStyle.Regular,
-                                cornerRadius = 20.dp
-                            )
-                        ) {
-                            Row(
-                                modifier = Modifier
-                                    .height(40.dp)
-                                    .padding(horizontal = 16.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(6.dp)
-                            ) {
-                                Icon(
-                                    imageVector = SonoraIcons.Playlist,
-                                    contentDescription = null,
-                                    tint = colors.accent,
-                                    modifier = Modifier.size(16.dp)
-                                )
-                                Text(
-                                    text = playlist.name,
-                                    style = typography.headline.copy(fontWeight = FontWeight.SemiBold),
-                                    color = colors.textPrimary,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
-                                )
-                            }
-                        }
-                    }
+            },
+            actions = {
+                IOSFloatingIconButton(
+                    onClick = { optionsSheetVisible = true },
+                    size = 40.dp
+                ) {
+                    Icon(
+                        imageVector = SonoraIcons.MoreHorizontal,
+                        contentDescription = "Options",
+                        tint = colors.textPrimary,
+                        modifier = Modifier.size(22.dp)
+                    )
                 }
-            }
-
-            IOSFloatingIconButton(
-                onClick = { optionsSheetVisible = true },
-                size = 40.dp
-            ) {
-                Icon(
-                    imageVector = SonoraIcons.MoreHorizontal,
-                    contentDescription = "Options",
-                    tint = colors.textPrimary,
-                    modifier = Modifier.size(22.dp)
-                )
-            }
-        }
+            },
+            textColor = colors.textPrimary
+        )
 
         // iOSFeel Action Sheet for Playlist Options
         SonoraActionSheet(

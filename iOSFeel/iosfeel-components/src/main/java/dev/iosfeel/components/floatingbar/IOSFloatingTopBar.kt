@@ -84,53 +84,14 @@ fun IOSFloatingTopBar(
             ) {
                 navigation?.invoke()
 
-                if (showTitleAsPill && title != null && titleAlpha > 0.01f) {
-                    Box(
-                        modifier = Modifier
-                            .height(40.dp)
-                            .graphicsLayer {
-                                alpha = titleAlpha
-                                scaleX = 0.9f + (0.1f * titleAlpha)
-                                scaleY = 0.9f + (0.1f * titleAlpha)
-                            }
-                            .shadow(
-                                elevation = 4.dp,
-                                shape = CircleShape,
-                                spotColor = Color.Black.copy(alpha = 0.18f)
-                            )
-                            .clip(CircleShape)
-                            .border(
-                                width = 0.5.dp,
-                                color = Color.White.copy(alpha = 0.15f),
-                                shape = CircleShape
-                            )
-                    ) {
-                        IOSMaterialSurface(
-                            backdrop = backdrop,
-                            config = IOSMaterialConfig(
-                                style = IOSMaterialStyle.Regular,
-                                cornerRadius = 20.dp
-                            )
-                        ) {
-                            Row(
-                                modifier = Modifier
-                                    .height(40.dp)
-                                    .padding(horizontal = 16.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(6.dp)
-                            ) {
-                                titleIcon?.invoke()
-                                Text(
-                                    text = title,
-                                    fontSize = 15.sp,
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = if (titleColor != Color.Unspecified) titleColor else Color.White,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
-                                )
-                            }
-                        }
-                    }
+                if (showTitleAsPill && title != null) {
+                    IOSAnimatedTitlePill(
+                        title = title,
+                        visible = titleAlpha > 0.01f,
+                        icon = titleIcon,
+                        backdrop = backdrop,
+                        textColor = if (titleColor != Color.Unspecified) titleColor else Color.White
+                    )
                 }
             }
 

@@ -38,6 +38,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import dev.iosfeel.components.floatingbar.IOSAnimatedTitlePill
 import dev.iosfeel.components.interaction.IOSPressConfig
 import dev.iosfeel.components.interaction.iosPressEffect
 import dev.iosfeel.haptics.IOSImpact
@@ -233,74 +234,34 @@ fun IOSLargeTitleTopBar(
                 }
 
                 // Compact Centered Title (fades in as user scrolls up)
-                if (animatedProgress > 0.02f) {
-                    val pillAlpha = (animatedProgress * 1.3f - 0.3f).coerceIn(0f, 1f)
-                    if (usePillTitle) {
-                        Box(
-                            modifier = Modifier
-                                .height(36.dp)
-                                .graphicsLayer {
-                                    alpha = pillAlpha
-                                    scaleX = 0.88f + (0.12f * pillAlpha)
-                                    scaleY = 0.88f + (0.12f * pillAlpha)
-                                    translationY = (1f - pillAlpha) * 6f
-                                }
-                                .shadow(
-                                    elevation = 4.dp,
-                                    shape = CircleShape,
-                                    spotColor = Color.Black.copy(alpha = 0.18f)
-                                )
-                                .clip(CircleShape)
-                                .border(
-                                    width = 0.5.dp,
-                                    color = Color.White.copy(alpha = 0.15f),
-                                    shape = CircleShape
-                                )
-                        ) {
-                            IOSMaterialSurface(
-                                backdrop = backdrop,
-                                config = IOSMaterialConfig(
-                                    style = IOSMaterialStyle.Regular,
-                                    cornerRadius = 18.dp
-                                )
-                            ) {
-                                Row(
-                                    modifier = Modifier
-                                        .height(36.dp)
-                                        .padding(horizontal = 14.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                                ) {
-                                    titleIcon?.invoke()
-                                    Text(
-                                        text = title,
-                                        fontSize = 15.sp,
-                                        fontWeight = FontWeight.SemiBold,
-                                        color = resolvedTitleColor,
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis
-                                    )
-                                }
+                if (usePillTitle) {
+                    val pillVisible = animatedProgress > 0.15f
+                    IOSAnimatedTitlePill(
+                        title = title,
+                        visible = pillVisible,
+                        icon = titleIcon,
+                        height = 36.dp,
+                        cornerRadius = 18.dp,
+                        backdrop = backdrop,
+                        textColor = resolvedTitleColor
+                    )
+                } else if (animatedProgress > 0.02f) {
+                    Text(
+                        text = title,
+                        fontSize = 17.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = resolvedTitleColor,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 72.dp)
+                            .graphicsLayer {
+                                alpha = (animatedProgress * 1.4f - 0.4f).coerceIn(0f, 1f)
+                                translationY = (1f - animatedProgress) * 12f
                             }
-                        }
-                    } else {
-                        Text(
-                            text = title,
-                            fontSize = 17.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = resolvedTitleColor,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 72.dp)
-                                .graphicsLayer {
-                                    alpha = (animatedProgress * 1.4f - 0.4f).coerceIn(0f, 1f)
-                                    translationY = (1f - animatedProgress) * 12f
-                                }
-                        )
-                    }
+                    )
                 }
 
                 // Trailing Actions Slot
