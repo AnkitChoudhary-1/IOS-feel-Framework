@@ -89,8 +89,9 @@ dependencies {
     // Coil (Image & Artwork Loading)
     implementation(libs.coil.compose)
 
-    // Networking
+    // Networking & Streaming Extraction
     implementation(libs.okhttp)
+    implementation(libs.newpipe.extractor)
 
     // Room Database
     implementation(libs.room.runtime)

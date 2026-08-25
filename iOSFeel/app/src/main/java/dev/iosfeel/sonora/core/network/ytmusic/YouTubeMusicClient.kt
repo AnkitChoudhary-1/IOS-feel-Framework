@@ -8,6 +8,9 @@ import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONArray
 import org.json.JSONObject
+import org.schabi.newpipe.extractor.NewPipe
+import org.schabi.newpipe.extractor.ServiceList
+import org.schabi.newpipe.extractor.stream.StreamInfo
 import java.util.concurrent.TimeUnit
 
 class YouTubeMusicClient(
@@ -23,6 +26,21 @@ class YouTubeMusicClient(
         private const val WEB_REMIX_VERSION = "1.20240101.01.00"
         private const val USER_AGENT_WEB =
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+
+        private var isNewPipeInitialized = false
+    }
+
+    init {
+        synchronized(YouTubeMusicClient::class.java) {
+            if (!isNewPipeInitialized) {
+                try {
+                    NewPipe.init(NewPipeDownloader(client))
+                    isNewPipeInitialized = true
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
+        }
     }
 
     private fun createWebContextJson(): String {
@@ -153,10 +171,9 @@ class YouTubeMusicClient(
                 }
             }
         } catch (e: Exception) {
-            // Fallback to trending search
+            // Fallback to search
         }
 
-        // Fallback to top charts search
         val searchFallback = search("Top Hits")
         return@withContext YTExploreFeed(
             trendingSongs = searchFallback.songs.take(15),
@@ -168,14 +185,30 @@ class YouTubeMusicClient(
     suspend fun resolveStreamUrl(videoId: String): String? = withContext(Dispatchers.IO) {
         if (videoId.isBlank()) return@withContext null
 
-        // 1. Direct Invidious/Piped mirrors for high-speed direct Opus/AAC streams
-        val pipedMirrors = listOf(
+        // 1. In-process direct extraction via NewPipeExtractor (decodes YouTube streams directly)
+        try {
+            val url = "https://www.youtube.com/watch?v=$videoId"
+            val streamInfo = StreamInfo.getInfo(ServiceList.YouTube, url)
+            val audioStreams = streamInfo.audioStreams
+            if (!audioStreams.isNullOrEmpty()) {
+                val bestAudio = audioStreams.maxByOrNull { it.averageBitrate } ?: audioStreams.first()
+                val streamUrl = bestAudio.content
+                if (!streamUrl.isNullOrBlank()) {
+                    return@withContext streamUrl
+                }
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+
+        // 2. High-speed mirror fallback
+        val mirrors = listOf(
             "https://pipedapi.kavin.rocks/streams/$videoId",
             "https://api.piped.privacy.com.de/streams/$videoId",
             "https://pipedapi.tokhmi.xyz/streams/$videoId"
         )
 
-        for (mirror in pipedMirrors) {
+        for (mirror in mirrors) {
             try {
                 val req = Request.Builder()
                     .url(mirror)
@@ -203,59 +236,11 @@ class YouTubeMusicClient(
                     }
                 }
             } catch (e: Exception) {
-                // Continue to next mirror
+                // Continue to next
             }
         }
 
-        // 2. Direct Web format fallback
-        val payload = """
-            {
-                "context": ${createWebContextJson()},
-                "videoId": ${JSONObject.quote(videoId)}
-            }
-        """.trimIndent()
-
-        val request = Request.Builder()
-            .url("$BASE_URL/player?prettyPrint=false")
-            .header("Content-Type", "application/json")
-            .header("User-Agent", USER_AGENT_WEB)
-            .header("Origin", "https://music.youtube.com")
-            .header("Referer", "https://music.youtube.com")
-            .header("X-YouTube-Client-Name", "67")
-            .header("X-YouTube-Client-Version", WEB_REMIX_VERSION)
-            .post(payload.toRequestBody(JSON_MEDIA_TYPE))
-            .build()
-
-        try {
-            client.newCall(request).execute().use { response ->
-                if (!response.isSuccessful) return@withContext null
-                val bodyStr = response.body?.string() ?: return@withContext null
-                val json = JSONObject(bodyStr)
-
-                val streamingData = json.optJSONObject("streamingData") ?: return@withContext null
-                val adaptiveFormats = streamingData.optJSONArray("adaptiveFormats") ?: return@withContext null
-
-                var bestUrl: String? = null
-                var highestBitrate = 0
-
-                for (i in 0 until adaptiveFormats.length()) {
-                    val format = adaptiveFormats.optJSONObject(i) ?: continue
-                    val mimeType = format.optString("mimeType", "")
-                    if (mimeType.startsWith("audio/")) {
-                        val bitrate = format.optInt("bitrate", 0)
-                        val url = format.optString("url", "")
-                        if (url.isNotBlank() && bitrate > highestBitrate) {
-                            highestBitrate = bitrate
-                            bestUrl = url
-                        }
-                    }
-                }
-
-                return@withContext bestUrl
-            }
-        } catch (e: Exception) {
-            null
-        }
+        null
     }
 
     private fun parseSearchResults(json: JSONObject): YTSearchResult {

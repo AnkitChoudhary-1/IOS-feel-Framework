@@ -59,7 +59,7 @@ class SonoraPlaybackController(
             val currentMediaId = mediaItem?.mediaId?.toLongOrNull() ?: return
             val song = currentQueue.find { it.id == currentMediaId } ?: return
 
-            if (song.isOnline && song.remoteId != null && (song.contentUri == null || song.contentUri.scheme == "ytmusic")) {
+            if (song.isOnline && song.remoteId != null && (song.contentUri == null || song.contentUri.scheme == "ytmusic" || song.contentUri.toString().startsWith("https://www.youtube.com"))) {
                 scope.launch {
                     val streamUrl = ytMusicClient?.resolveStreamUrl(song.remoteId)
                     if (streamUrl != null) {
@@ -67,6 +67,8 @@ class SonoraPlaybackController(
                         currentQueue = currentQueue.map { if (it.id == song.id) resolvedSong else it }
                         val curIdx = controller?.currentMediaItemIndex ?: return@launch
                         controller?.replaceMediaItem(curIdx, resolvedSong.toMediaItem())
+                        controller?.prepare()
+                        controller?.play()
                     }
                 }
             }
@@ -105,14 +107,21 @@ class SonoraPlaybackController(
     }
 
     override fun playSong(song: Song, queue: List<Song>) {
-        val player = controller ?: return
         val targetQueue = if (queue.isNotEmpty()) queue else listOf(song)
         val index = targetQueue.indexOfFirst { it.id == song.id }.coerceAtLeast(0)
-
         currentQueue = targetQueue
 
         scope.launch {
-            val resolvedSong = if (song.isOnline && song.remoteId != null && (song.contentUri == null || song.contentUri.scheme == "ytmusic")) {
+            if (controller == null) {
+                try {
+                    connect()
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
+            val player = controller ?: return@launch
+
+            val resolvedSong = if (song.isOnline && song.remoteId != null && (song.contentUri == null || song.contentUri.scheme == "ytmusic" || song.contentUri.toString().startsWith("https://www.youtube.com"))) {
                 val streamUrl = ytMusicClient?.resolveStreamUrl(song.remoteId)
                 if (streamUrl != null) {
                     song.copy(contentUri = android.net.Uri.parse(streamUrl))
@@ -140,15 +149,22 @@ class SonoraPlaybackController(
     }
 
     override fun playQueue(songs: List<Song>, startIndex: Int) {
-        val player = controller ?: return
         if (songs.isEmpty()) return
-
         val safeIndex = startIndex.coerceIn(songs.indices)
         currentQueue = songs
 
         scope.launch {
+            if (controller == null) {
+                try {
+                    connect()
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
+            val player = controller ?: return@launch
+
             val targetSong = songs[safeIndex]
-            val resolvedSong = if (targetSong.isOnline && targetSong.remoteId != null && (targetSong.contentUri == null || targetSong.contentUri.scheme == "ytmusic")) {
+            val resolvedSong = if (targetSong.isOnline && targetSong.remoteId != null && (targetSong.contentUri == null || targetSong.contentUri.scheme == "ytmusic" || targetSong.contentUri.toString().startsWith("https://www.youtube.com"))) {
                 val streamUrl = ytMusicClient?.resolveStreamUrl(targetSong.remoteId)
                 if (streamUrl != null) {
                     targetSong.copy(contentUri = android.net.Uri.parse(streamUrl))

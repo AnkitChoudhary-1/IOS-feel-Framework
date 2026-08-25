@@ -24,10 +24,14 @@ fun Song.toMediaItem(): MediaItem {
         .setIsBrowsable(false)
         .build()
 
-    val uri = contentUri ?: ContentUris.withAppendedId(
-        MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
-        id
-    )
+    val uri = contentUri ?: if (isOnline && remoteId != null) {
+        android.net.Uri.parse("https://www.youtube.com/watch?v=$remoteId")
+    } else {
+        ContentUris.withAppendedId(
+            MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
+            id
+        )
+    }
 
     return MediaItem.Builder()
         .setMediaId(id.toString())
