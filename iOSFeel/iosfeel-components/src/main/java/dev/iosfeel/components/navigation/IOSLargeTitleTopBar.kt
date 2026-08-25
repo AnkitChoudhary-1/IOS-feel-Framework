@@ -74,7 +74,8 @@ fun IOSLargeTitleTopBar(
     subtitleColor: Color = Color.Unspecified,
     dividerColor: Color = Color.Unspecified,
     usePillTitle: Boolean = false,
-    titleIcon: (@Composable () -> Unit)? = null
+    titleIcon: (@Composable () -> Unit)? = null,
+    showBackground: Boolean = !usePillTitle
 ) {
     val isDark = LocalIOSDarkTheme.current
     val haptics = rememberIOSHaptics()
@@ -128,8 +129,8 @@ fun IOSLargeTitleTopBar(
         modifier = modifier
             .fillMaxWidth()
     ) {
-        // Frosted Glass Layer (fades in as user scrolls up)
-        if (animatedProgress > 0.005f) {
+        // Frosted Glass Layer (fades in as user scrolls up only when full background enabled)
+        if (showBackground && animatedProgress > 0.005f) {
             if (backdrop != null) {
                 IOSMaterialSurface(
                     backdrop = backdrop,
@@ -159,8 +160,8 @@ fun IOSLargeTitleTopBar(
             }
         }
 
-        // Bottom Divider line (fades in when scrolled)
-        if (animatedProgress > 0.05f) {
+        // Bottom Divider line (fades in when scrolled only when full background enabled)
+        if (showBackground && animatedProgress > 0.05f) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
