@@ -252,7 +252,7 @@ fun SettingsScreen(
                                         color = colors.textPrimary
                                     )
                                     Text(
-                                        text = "1.0.0 (iOSFeel)",
+                                        text = "2.0.0 (Sonora)",
                                         style = typography.subheadline,
                                         color = colors.textSecondary,
                                         modifier = Modifier.clickable(
@@ -286,9 +286,9 @@ fun SettingsScreen(
                                         color = colors.textPrimary
                                     )
                                     Text(
-                                        text = "dev.iosfeel:1.0.0",
+                                        text = "iOSFeel Framework v2",
                                         style = typography.subheadline,
-                                        color = colors.textSecondary
+                                        color = colors.accent
                                     )
                                 }
                             }
