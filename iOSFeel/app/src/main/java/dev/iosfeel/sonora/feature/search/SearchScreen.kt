@@ -313,7 +313,16 @@ fun SearchScreen(
                 backdrop = screenBackdrop,
                 titleColor = colors.textPrimary,
                 subtitleColor = colors.accent,
-                dividerColor = colors.separator
+                dividerColor = colors.separator,
+                usePillTitle = true,
+                titleIcon = {
+                    Icon(
+                        imageVector = SonoraIcons.Search,
+                        contentDescription = null,
+                        tint = colors.accent,
+                        modifier = Modifier.size(15.dp)
+                    )
+                }
             )
         }
     )

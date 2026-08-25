@@ -15,6 +15,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -25,6 +26,7 @@ import androidx.compose.ui.unit.dp
 import dev.iosfeel.scroll.IOSScrollableLazyColumn
 import dev.iosfeel.sonora.core.design.LocalSonoraColors
 import dev.iosfeel.sonora.core.design.LocalSonoraTypography
+import dev.iosfeel.sonora.core.design.SonoraIcons
 import dev.iosfeel.sonora.core.model.Album
 import dev.iosfeel.sonora.core.model.Artist
 import dev.iosfeel.sonora.core.model.Song
@@ -226,7 +228,16 @@ fun HomeScreen(
                 backdrop = screenBackdrop,
                 titleColor = colors.textPrimary,
                 subtitleColor = colors.accent,
-                dividerColor = colors.separator
+                dividerColor = colors.separator,
+                usePillTitle = true,
+                titleIcon = {
+                    Icon(
+                        imageVector = SonoraIcons.Play,
+                        contentDescription = null,
+                        tint = colors.accent,
+                        modifier = Modifier.size(15.dp)
+                    )
+                }
             )
         }
     )

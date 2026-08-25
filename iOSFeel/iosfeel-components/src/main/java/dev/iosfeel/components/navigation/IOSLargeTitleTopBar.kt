@@ -3,8 +3,10 @@ package dev.iosfeel.components.navigation
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -14,6 +16,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
@@ -22,7 +25,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.semantics.Role
@@ -67,7 +72,9 @@ fun IOSLargeTitleTopBar(
     backdrop: IOSBackdropState? = null,
     titleColor: Color = Color.Unspecified,
     subtitleColor: Color = Color.Unspecified,
-    dividerColor: Color = Color.Unspecified
+    dividerColor: Color = Color.Unspecified,
+    usePillTitle: Boolean = false,
+    titleIcon: (@Composable () -> Unit)? = null
 ) {
     val isDark = LocalIOSDarkTheme.current
     val haptics = rememberIOSHaptics()
@@ -226,22 +233,73 @@ fun IOSLargeTitleTopBar(
 
                 // Compact Centered Title (fades in as user scrolls up)
                 if (animatedProgress > 0.02f) {
-                    Text(
-                        text = title,
-                        fontSize = 17.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = resolvedTitleColor,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 72.dp)
-                            .graphicsLayer {
-                                alpha = (animatedProgress * 1.4f - 0.4f).coerceIn(0f, 1f)
-                                translationY = (1f - animatedProgress) * 12f
+                    val pillAlpha = (animatedProgress * 1.3f - 0.3f).coerceIn(0f, 1f)
+                    if (usePillTitle) {
+                        Box(
+                            modifier = Modifier
+                                .height(36.dp)
+                                .graphicsLayer {
+                                    alpha = pillAlpha
+                                    scaleX = 0.88f + (0.12f * pillAlpha)
+                                    scaleY = 0.88f + (0.12f * pillAlpha)
+                                    translationY = (1f - pillAlpha) * 6f
+                                }
+                                .shadow(
+                                    elevation = 4.dp,
+                                    shape = CircleShape,
+                                    spotColor = Color.Black.copy(alpha = 0.18f)
+                                )
+                                .clip(CircleShape)
+                                .border(
+                                    width = 0.5.dp,
+                                    color = Color.White.copy(alpha = 0.15f),
+                                    shape = CircleShape
+                                )
+                        ) {
+                            IOSMaterialSurface(
+                                backdrop = backdrop,
+                                config = IOSMaterialConfig(
+                                    style = IOSMaterialStyle.Regular,
+                                    cornerRadius = 18.dp
+                                )
+                            ) {
+                                Row(
+                                    modifier = Modifier
+                                        .height(36.dp)
+                                        .padding(horizontal = 14.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                ) {
+                                    titleIcon?.invoke()
+                                    Text(
+                                        text = title,
+                                        fontSize = 15.sp,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = resolvedTitleColor,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                }
                             }
-                    )
+                        }
+                    } else {
+                        Text(
+                            text = title,
+                            fontSize = 17.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = resolvedTitleColor,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 72.dp)
+                                .graphicsLayer {
+                                    alpha = (animatedProgress * 1.4f - 0.4f).coerceIn(0f, 1f)
+                                    translationY = (1f - animatedProgress) * 12f
+                                }
+                        )
+                    }
                 }
 
                 // Trailing Actions Slot

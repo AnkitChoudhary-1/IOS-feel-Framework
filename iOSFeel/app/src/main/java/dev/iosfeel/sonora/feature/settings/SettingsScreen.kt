@@ -12,8 +12,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -36,6 +38,7 @@ import dev.iosfeel.haptics.IOSNotification
 import dev.iosfeel.haptics.rememberIOSHaptics
 import dev.iosfeel.sonora.core.datastore.SonoraPreferences
 import dev.iosfeel.sonora.core.datastore.ThemeMode
+import dev.iosfeel.sonora.core.design.SonoraIcons
 import dev.iosfeel.sonora.core.design.SonoraTheme
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -312,7 +315,16 @@ fun SettingsScreen(
                 backdrop = screenBackdrop,
                 titleColor = colors.textPrimary,
                 subtitleColor = colors.accent,
-                dividerColor = colors.separator
+                dividerColor = colors.separator,
+                usePillTitle = true,
+                titleIcon = {
+                    Icon(
+                        imageVector = SonoraIcons.Settings,
+                        contentDescription = null,
+                        tint = colors.accent,
+                        modifier = Modifier.size(15.dp)
+                    )
+                }
             )
         }
     )
