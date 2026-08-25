@@ -29,7 +29,8 @@ import kotlinx.coroutines.launch
 class SonoraPlaybackController(
     private val connection: MediaControllerConnection,
     private val historyDao: HistoryDao? = null,
-    private val historyTracker: PlaybackHistoryTracker? = null
+    private val historyTracker: PlaybackHistoryTracker? = null,
+    private val ytMusicClient: dev.iosfeel.sonora.core.network.ytmusic.YouTubeMusicClient? = null
 ) : PlaybackController {
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
@@ -51,6 +52,23 @@ class SonoraPlaybackController(
                 startPositionUpdates()
             } else {
                 stopPositionUpdates()
+            }
+        }
+
+        override fun onMediaItemTransition(mediaItem: androidx.media3.common.MediaItem?, reason: Int) {
+            val currentMediaId = mediaItem?.mediaId?.toLongOrNull() ?: return
+            val song = currentQueue.find { it.id == currentMediaId } ?: return
+
+            if (song.isOnline && song.remoteId != null && (song.contentUri == null || song.contentUri.scheme == "ytmusic")) {
+                scope.launch {
+                    val streamUrl = ytMusicClient?.resolveStreamUrl(song.remoteId)
+                    if (streamUrl != null) {
+                        val resolvedSong = song.copy(contentUri = android.net.Uri.parse(streamUrl))
+                        currentQueue = currentQueue.map { if (it.id == song.id) resolvedSong else it }
+                        val curIdx = controller?.currentMediaItemIndex ?: return@launch
+                        controller?.replaceMediaItem(curIdx, resolvedSong.toMediaItem())
+                    }
+                }
             }
         }
 
@@ -92,16 +110,32 @@ class SonoraPlaybackController(
         val index = targetQueue.indexOfFirst { it.id == song.id }.coerceAtLeast(0)
 
         currentQueue = targetQueue
-        val mediaItems = targetQueue.map { it.toMediaItem() }
 
-        player.setMediaItems(mediaItems, index, 0L)
-        player.prepare()
-        player.play()
-
-        activeSongId = song.id
-        recordHistory(song.id)
         scope.launch {
-            historyTracker?.onSongStarted(song)
+            val resolvedSong = if (song.isOnline && song.remoteId != null && (song.contentUri == null || song.contentUri.scheme == "ytmusic")) {
+                val streamUrl = ytMusicClient?.resolveStreamUrl(song.remoteId)
+                if (streamUrl != null) {
+                    song.copy(contentUri = android.net.Uri.parse(streamUrl))
+                } else {
+                    song
+                }
+            } else {
+                song
+            }
+
+            val resolvedQueue = targetQueue.map { item ->
+                if (item.id == song.id) resolvedSong else item
+            }
+            currentQueue = resolvedQueue
+
+            val mediaItems = resolvedQueue.map { it.toMediaItem() }
+            player.setMediaItems(mediaItems, index, 0L)
+            player.prepare()
+            player.play()
+
+            activeSongId = resolvedSong.id
+            recordHistory(resolvedSong.id)
+            historyTracker?.onSongStarted(resolvedSong)
         }
     }
 
@@ -111,19 +145,33 @@ class SonoraPlaybackController(
 
         val safeIndex = startIndex.coerceIn(songs.indices)
         currentQueue = songs
-        val mediaItems = songs.map { it.toMediaItem() }
 
-        player.setMediaItems(mediaItems, safeIndex, 0L)
-        player.prepare()
-        player.play()
-
-        val startingSong = songs.getOrNull(safeIndex)
-        activeSongId = startingSong?.id
-        startingSong?.let { song ->
-            recordHistory(song.id)
-            scope.launch {
-                historyTracker?.onSongStarted(song)
+        scope.launch {
+            val targetSong = songs[safeIndex]
+            val resolvedSong = if (targetSong.isOnline && targetSong.remoteId != null && (targetSong.contentUri == null || targetSong.contentUri.scheme == "ytmusic")) {
+                val streamUrl = ytMusicClient?.resolveStreamUrl(targetSong.remoteId)
+                if (streamUrl != null) {
+                    targetSong.copy(contentUri = android.net.Uri.parse(streamUrl))
+                } else {
+                    targetSong
+                }
+            } else {
+                targetSong
             }
+
+            val resolvedQueue = songs.map { item ->
+                if (item.id == targetSong.id) resolvedSong else item
+            }
+            currentQueue = resolvedQueue
+
+            val mediaItems = resolvedQueue.map { it.toMediaItem() }
+            player.setMediaItems(mediaItems, safeIndex, 0L)
+            player.prepare()
+            player.play()
+
+            activeSongId = resolvedSong.id
+            recordHistory(resolvedSong.id)
+            historyTracker?.onSongStarted(resolvedSong)
         }
     }
 

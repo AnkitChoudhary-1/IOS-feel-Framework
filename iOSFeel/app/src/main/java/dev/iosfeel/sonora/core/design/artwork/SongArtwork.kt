@@ -22,13 +22,13 @@ fun SongArtwork(
     cornerRadius: Dp = 8.dp
 ) {
     val context = LocalContext.current
-    val artworkUri = song.albumId?.let {
+    val artworkModel: Any? = song.artworkUrl ?: song.albumId?.let {
         ContentUris.withAppendedId(MediaStore.Audio.Albums.EXTERNAL_CONTENT_URI, it)
     } ?: song.contentUri
 
     SubcomposeAsyncImage(
         model = ImageRequest.Builder(context)
-            .data(artworkUri)
+            .data(artworkModel)
             .size(256, 256)
             .crossfade(false)
             .build(),

@@ -111,6 +111,16 @@ fun HomeScreen(
                         }
                     }
 
+                    if (uiState.trendingOnline.isNotEmpty()) {
+                        item {
+                            dev.iosfeel.sonora.feature.home.sections.TrendingOnlineSection(
+                                songs = uiState.trendingOnline,
+                                onSongClick = onSongClick
+                            )
+                            Spacer(modifier = Modifier.height(28.dp))
+                        }
+                    }
+
                     if (uiState.recentlyAdded.isNotEmpty()) {
                         item {
                             RecentlyAddedSection(

@@ -16,19 +16,38 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 
+data class OnlineExploreData(
+    val trending: List<dev.iosfeel.sonora.core.model.Song> = emptyList(),
+    val newReleases: List<dev.iosfeel.sonora.core.model.Album> = emptyList()
+)
+
 class HomeViewModel(
     private val musicRepository: MusicLibraryRepository,
     private val historyRepository: PlaybackHistoryRepository,
     private val favoritesRepository: FavoritesRepository,
-    private val playlistRepository: PlaylistRepository
+    private val playlistRepository: PlaylistRepository,
+    private val ytMusicClient: dev.iosfeel.sonora.core.network.ytmusic.YouTubeMusicClient = dev.iosfeel.sonora.core.network.ytmusic.YouTubeMusicClient()
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(HomeUiState(loading = true))
     val state: StateFlow<HomeUiState> = _state.asStateFlow()
 
+    private val _onlineExplore = MutableStateFlow(OnlineExploreData())
+
     init {
         viewModelScope.launch {
-            combine(
+            try {
+                val explore = ytMusicClient.getExplore()
+                val trending = explore.trendingSongs.map { it.toDomainSong() }
+                val newReleases = explore.newReleases.map { it.toDomainAlbum() }
+                _onlineExplore.value = OnlineExploreData(trending, newReleases)
+            } catch (e: Exception) {
+                // Keep empty on network error
+            }
+        }
+
+        viewModelScope.launch {
+            val localFlow = combine(
                 musicRepository.observeLibrary(),
                 historyRepository.observeRecentlyPlayedIds(20),
                 historyRepository.observeMostPlayedIds(20),
@@ -55,6 +74,13 @@ class HomeViewModel(
                     featuredAlbums = featuredAlbums,
                     recentArtists = library.artists.take(10),
                     libraryStats = library.stats()
+                )
+            }
+
+            combine(localFlow, _onlineExplore) { localState, online ->
+                localState.copy(
+                    trendingOnline = online.trending,
+                    newReleasesOnline = online.newReleases
                 )
             }.collect { uiState ->
                 _state.value = uiState

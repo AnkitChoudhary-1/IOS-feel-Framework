@@ -89,7 +89,7 @@ fun SearchScreen(
                             IOSSearchField(
                                 value = state.query,
                                 onValueChange = { viewModel.onQueryChange(it) },
-                                placeholder = "Artists, Songs, Lyrics, and More",
+                                placeholder = "Search YouTube Music & Library",
                                 containerColor = colors.surfaceSecondary,
                                 textColor = colors.textPrimary,
                                 placeholderColor = colors.textTertiary,
@@ -97,7 +97,20 @@ fun SearchScreen(
                                 modifier = Modifier.fillMaxWidth()
                             )
                         }
-                        Spacer(modifier = Modifier.height(20.dp))
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Box(modifier = Modifier.padding(horizontal = 16.dp)) {
+                            dev.iosfeel.components.segmented.IOSSegmentedControl(
+                                items = listOf(
+                                    dev.iosfeel.components.segmented.IOSSegmentedItem(SearchSourceScope.ALL, "All"),
+                                    dev.iosfeel.components.segmented.IOSSegmentedItem(SearchSourceScope.YOUTUBE_MUSIC, "YouTube Music"),
+                                    dev.iosfeel.components.segmented.IOSSegmentedItem(SearchSourceScope.LOCAL, "Library")
+                                ),
+                                selectedValue = state.searchScope,
+                                onSelected = { viewModel.onScopeChange(it) },
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(16.dp))
                     }
 
                     if (state.isQueryEmpty) {
@@ -231,10 +244,32 @@ fun SearchScreen(
                                 }
                             }
                         } else {
-                            // 1. Songs Section
+                            // YouTube Music Songs
+                            if (state.onlineSongs.isNotEmpty()) {
+                                item {
+                                    SearchSectionHeader(title = "YOUTUBE MUSIC")
+                                }
+                                items(state.onlineSongs, key = { it.id }) { song ->
+                                    SongRow(
+                                        song = song,
+                                        onClick = {
+                                            viewModel.onCommitSearch(state.query)
+                                            onSongClick(song, state.onlineSongs)
+                                        },
+                                        onOptionsClick = {
+                                            onSongOptionsClick(song)
+                                        }
+                                    )
+                                }
+                            }
+
+                            // 1. Local Songs Section
                             if (state.songs.isNotEmpty()) {
                                 item {
-                                    SearchSectionHeader(title = "SONGS")
+                                    if (state.onlineSongs.isNotEmpty()) {
+                                        Spacer(modifier = Modifier.height(18.dp))
+                                    }
+                                    SearchSectionHeader(title = "LIBRARY SONGS")
                                 }
                                 items(state.songs.take(15), key = { it.id }) { song ->
                                     SongRow(

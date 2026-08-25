@@ -15,7 +15,10 @@ data class Song(
     val trackNumber: Int? = null,
     val year: Int? = null,
     val dateAddedSeconds: Long = 0,
-    val contentUri: Uri? = null
+    val contentUri: Uri? = null,
+    val remoteId: String? = null,
+    val artworkUrl: String? = null,
+    val isOnline: Boolean = false
 ) {
     val durationFormatted: String
         get() = durationMs.formatDuration()

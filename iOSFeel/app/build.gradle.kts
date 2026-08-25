@@ -89,6 +89,9 @@ dependencies {
     // Coil (Image & Artwork Loading)
     implementation(libs.coil.compose)
 
+    // Networking
+    implementation(libs.okhttp)
+
     // Room Database
     implementation(libs.room.runtime)
     implementation(libs.room.ktx)

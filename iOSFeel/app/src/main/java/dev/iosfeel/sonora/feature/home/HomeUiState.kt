@@ -18,8 +18,11 @@ data class HomeUiState(
     val quickPicks: List<Song> = emptyList(),
     val featuredAlbums: List<Album> = emptyList(),
     val recentArtists: List<Artist> = emptyList(),
+    val trendingOnline: List<Song> = emptyList(),
+    val newReleasesOnline: List<Album> = emptyList(),
+    val chartsOnline: List<Song> = emptyList(),
     val libraryStats: LibraryStats? = null
 ) {
     val isEmpty: Boolean
-        get() = !loading && recentlyPlayed.isEmpty() && recentlyAdded.isEmpty() && quickPicks.isEmpty() && featuredAlbums.isEmpty() && favorites.isEmpty() && playlists.isEmpty()
+        get() = !loading && recentlyPlayed.isEmpty() && recentlyAdded.isEmpty() && quickPicks.isEmpty() && featuredAlbums.isEmpty() && favorites.isEmpty() && playlists.isEmpty() && trendingOnline.isEmpty()
 }

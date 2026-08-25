@@ -29,6 +29,10 @@ class SonoraContainer private constructor(
         SonoraPreferences(context)
     }
 
+    val ytMusicClient: dev.iosfeel.sonora.core.network.ytmusic.YouTubeMusicClient by lazy {
+        dev.iosfeel.sonora.core.network.ytmusic.YouTubeMusicClient()
+    }
+
     val librarySource: MusicLibrarySource by lazy {
         AndroidMediaStoreMusicLibrary(context)
     }
@@ -73,7 +77,8 @@ class SonoraContainer private constructor(
         SonoraPlaybackController(
             connection = controllerConnection,
             historyDao = database.historyDao(),
-            historyTracker = historyTracker
+            historyTracker = historyTracker,
+            ytMusicClient = ytMusicClient
         )
     }
 
