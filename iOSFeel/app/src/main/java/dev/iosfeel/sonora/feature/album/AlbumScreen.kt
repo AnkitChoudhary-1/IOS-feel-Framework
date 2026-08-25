@@ -127,11 +127,20 @@ fun AlbumScreen(
             }
         }
 
-        // Modern iOS-Inspired Floating Top Bar
+        // Modern iOS-Inspired Floating Top Bar with Pill Title
         IOSFloatingTopBar(
             title = album.title,
             titleAlpha = navTitleAlpha,
             titleColor = colors.textPrimary,
+            showTitleAsPill = true,
+            titleIcon = {
+                Icon(
+                    imageVector = SonoraIcons.MusicNote,
+                    contentDescription = null,
+                    tint = colors.accent,
+                    modifier = Modifier.size(16.dp)
+                )
+            },
             navigation = {
                 IOSFloatingIconButton(
                     onClick = onBack
@@ -139,7 +148,7 @@ fun AlbumScreen(
                     Icon(
                         imageVector = SonoraIcons.ChevronLeft,
                         contentDescription = "Back",
-                        tint = colors.accent,
+                        tint = colors.textPrimary,
                         modifier = Modifier.size(24.dp)
                     )
                 }
@@ -151,7 +160,7 @@ fun AlbumScreen(
                     Icon(
                         imageVector = SonoraIcons.MoreHorizontal,
                         contentDescription = "Options",
-                        tint = colors.accent,
+                        tint = colors.textPrimary,
                         modifier = Modifier.size(22.dp)
                     )
                 }

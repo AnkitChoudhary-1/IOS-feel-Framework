@@ -42,6 +42,9 @@ import dev.iosfeel.physics.ExperimentalIOSFeelV2Api
 import dev.iosfeel.sonora.core.design.LocalSonoraColors
 import dev.iosfeel.sonora.core.design.LocalSonoraTypography
 
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
+
 data class SonoraActionItem(
     val title: String,
     val icon: ImageVector? = null,
@@ -60,53 +63,58 @@ fun SonoraActionSheet(
     cancelText: String = "Cancel",
     modifier: Modifier = Modifier
 ) {
+    if (!visible) return
+
     val colors = LocalSonoraColors.current
     val typography = LocalSonoraTypography.current
     val haptics = rememberIOSHaptics()
 
-    if (visible) {
-        BackHandler(onBack = onDismiss)
-    }
-
-    AnimatedVisibility(
-        visible = visible,
-        enter = fadeIn(spring(stiffness = 500f, dampingRatio = 0.9f)),
-        exit = fadeOut(spring(stiffness = 500f, dampingRatio = 0.9f)),
-        modifier = modifier.fillMaxSize()
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(
+            usePlatformDefaultWidth = false,
+            decorFitsSystemWindows = false
+        )
     ) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(Color.Black.copy(alpha = 0.45f))
-                .clickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = null,
-                    onClick = onDismiss
-                ),
-            contentAlignment = Alignment.BottomCenter
+        AnimatedVisibility(
+            visible = true,
+            enter = fadeIn(spring(stiffness = 500f, dampingRatio = 0.9f)),
+            exit = fadeOut(spring(stiffness = 500f, dampingRatio = 0.9f)),
+            modifier = modifier.fillMaxSize()
         ) {
-            Column(
+            Box(
                 modifier = Modifier
-                    .fillMaxWidth()
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.45f))
                     .clickable(
                         interactionSource = remember { MutableInteractionSource() },
                         indication = null,
-                        onClick = {}
-                    )
-                    .navigationBarsPadding()
-                    .padding(horizontal = 16.dp, vertical = 12.dp)
-                    .animateEnterExit(
-                        enter = slideInVertically(
-                            initialOffsetY = { it },
-                            animationSpec = spring(stiffness = 450f, dampingRatio = 0.86f)
-                        ),
-                        exit = slideOutVertically(
-                            targetOffsetY = { it },
-                            animationSpec = spring(stiffness = 450f, dampingRatio = 0.86f)
-                        )
+                        onClick = onDismiss
                     ),
-                horizontalAlignment = Alignment.CenterHorizontally
+                contentAlignment = Alignment.BottomCenter
             ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null,
+                            onClick = {}
+                        )
+                        .navigationBarsPadding()
+                        .padding(horizontal = 16.dp, vertical = 12.dp)
+                        .animateEnterExit(
+                            enter = slideInVertically(
+                                initialOffsetY = { it },
+                                animationSpec = spring(stiffness = 450f, dampingRatio = 0.86f)
+                            ),
+                            exit = slideOutVertically(
+                                targetOffsetY = { it },
+                                animationSpec = spring(stiffness = 450f, dampingRatio = 0.86f)
+                            )
+                        ),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
                 // Actions container card
                 Box(
                     modifier = Modifier
@@ -236,4 +244,5 @@ fun SonoraActionSheet(
             }
         }
     }
+}
 }

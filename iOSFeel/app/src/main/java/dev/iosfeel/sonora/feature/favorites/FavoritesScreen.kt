@@ -43,11 +43,23 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import dev.iosfeel.components.iconbutton.IOSIconButton
 import dev.iosfeel.components.interaction.iosPressSurface
 import dev.iosfeel.components.interaction.rememberIOSPressSurfaceState
 import dev.iosfeel.sonora.core.design.sheet.SonoraActionItem
 import dev.iosfeel.sonora.core.design.sheet.SonoraActionSheet
+
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.foundation.border
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.text.style.TextOverflow
+import dev.iosfeel.components.floatingbar.IOSFloatingIconButton
+import dev.iosfeel.material.IOSMaterialConfig
+import dev.iosfeel.material.IOSMaterialStyle
+import dev.iosfeel.material.IOSMaterialSurface
 
 @Composable
 fun FavoritesScreen(
@@ -76,6 +88,18 @@ fun FavoritesScreen(
         val remMin = min % 60
         if (hr > 0) "$hr hr $remMin min" else "$min min"
     }
+
+    val isScrolled by remember {
+        derivedStateOf {
+            listState.firstVisibleItemIndex > 0 || listState.firstVisibleItemScrollOffset > 40
+        }
+    }
+
+    val titleAlpha by animateFloatAsState(
+        targetValue = if (isScrolled) 1f else 0f,
+        animationSpec = spring(stiffness = 500f, dampingRatio = 0.85f),
+        label = "title_pill_alpha"
+    )
 
     Box(
         modifier = modifier
@@ -141,7 +165,7 @@ fun FavoritesScreen(
                                     .weight(1f)
                                     .height(48.dp)
                                     .clip(RoundedCornerShape(12.dp))
-                                    .background(colors.surfaceElevated)
+                                    .background(colors.accent)
                                     .iosPressSurface(
                                         state = playPressState,
                                         pressedScale = 0.95f,
@@ -156,14 +180,14 @@ fun FavoritesScreen(
                                     Icon(
                                         imageVector = SonoraIcons.Play,
                                         contentDescription = null,
-                                        tint = colors.accent,
+                                        tint = Color.White,
                                         modifier = Modifier.size(18.dp)
                                     )
                                     Spacer(modifier = Modifier.width(8.dp))
                                     Text(
                                         text = "Play",
                                         style = typography.headline.copy(fontWeight = FontWeight.SemiBold),
-                                        color = colors.accent
+                                        color = Color.White
                                     )
                                 }
                             }
@@ -252,7 +276,7 @@ fun FavoritesScreen(
             }
         }
 
-        // Floating Top Bar with Back Button and 3-dots Menu
+        // Modern iOS Blurred Floating Top Bar with Animated Title Pill
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -261,34 +285,84 @@ fun FavoritesScreen(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            IOSIconButton(
-                onClick = onBack,
-                size = 40.dp,
-                contentDescription = "Back",
-                modifier = Modifier
-                    .clip(RoundedCornerShape(20.dp))
-                    .background(colors.surfaceElevated.copy(alpha = 0.9f))
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                modifier = Modifier.weight(1f, fill = false)
             ) {
-                Icon(
-                    imageVector = SonoraIcons.ChevronLeft,
-                    contentDescription = null,
-                    tint = colors.textPrimary,
-                    modifier = Modifier.size(24.dp)
-                )
+                IOSFloatingIconButton(
+                    onClick = onBack,
+                    size = 40.dp
+                ) {
+                    Icon(
+                        imageVector = SonoraIcons.ChevronLeft,
+                        contentDescription = "Back",
+                        tint = colors.textPrimary,
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
+
+                if (titleAlpha > 0.01f) {
+                    Box(
+                        modifier = Modifier
+                            .height(40.dp)
+                            .graphicsLayer {
+                                alpha = titleAlpha
+                                scaleX = 0.9f + (0.1f * titleAlpha)
+                                scaleY = 0.9f + (0.1f * titleAlpha)
+                            }
+                            .shadow(
+                                elevation = 4.dp,
+                                shape = CircleShape,
+                                spotColor = Color.Black.copy(alpha = 0.18f)
+                            )
+                            .clip(CircleShape)
+                            .border(
+                                width = 0.5.dp,
+                                color = Color.White.copy(alpha = 0.15f),
+                                shape = CircleShape
+                            )
+                    ) {
+                        IOSMaterialSurface(
+                            config = IOSMaterialConfig(
+                                style = IOSMaterialStyle.Regular,
+                                cornerRadius = 20.dp
+                            )
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .height(40.dp)
+                                    .padding(horizontal = 16.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                Icon(
+                                    imageVector = SonoraIcons.HeartFilled,
+                                    contentDescription = null,
+                                    tint = Color(0xFFFF2D55),
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Text(
+                                    text = "Favorites",
+                                    style = typography.headline.copy(fontWeight = FontWeight.SemiBold),
+                                    color = colors.textPrimary,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            }
+                        }
+                    }
+                }
             }
 
             if (favoriteSongs.isNotEmpty()) {
-                IOSIconButton(
+                IOSFloatingIconButton(
                     onClick = { optionsSheetVisible = true },
-                    size = 40.dp,
-                    contentDescription = "Options",
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(20.dp))
-                        .background(colors.surfaceElevated.copy(alpha = 0.9f))
+                    size = 40.dp
                 ) {
                     Icon(
                         imageVector = SonoraIcons.MoreHorizontal,
-                        contentDescription = null,
+                        contentDescription = "Options",
                         tint = colors.textPrimary,
                         modifier = Modifier.size(22.dp)
                     )

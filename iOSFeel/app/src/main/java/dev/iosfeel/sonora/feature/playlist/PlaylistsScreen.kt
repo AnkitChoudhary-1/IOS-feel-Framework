@@ -25,9 +25,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -47,6 +48,19 @@ import dev.iosfeel.components.iconbutton.IOSIconButton
 import dev.iosfeel.components.interaction.iosPressSurface
 import dev.iosfeel.components.interaction.rememberIOSPressSurfaceState
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.foundation.border
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.graphicsLayer
+import dev.iosfeel.components.floatingbar.IOSFloatingIconButton
+import dev.iosfeel.material.IOSMaterialConfig
+import dev.iosfeel.material.IOSMaterialStyle
+import dev.iosfeel.material.IOSMaterialSurface
+import dev.iosfeel.scroll.IOSScrollableLazyVerticalGrid
+
 @Composable
 fun PlaylistsScreen(
     playlists: List<Playlist>,
@@ -61,14 +75,28 @@ fun PlaylistsScreen(
     val haptics = rememberIOSHaptics()
     val newPlaylistPressState = rememberIOSPressSurfaceState()
 
+    val isScrolled by remember {
+        derivedStateOf {
+            gridState.firstVisibleItemIndex > 0 || gridState.firstVisibleItemScrollOffset > 40
+        }
+    }
+
+    val titleAlpha by animateFloatAsState(
+        targetValue = if (isScrolled) 1f else 0f,
+        animationSpec = spring(stiffness = 500f, dampingRatio = 0.85f),
+        label = "playlists_title_pill_alpha"
+    )
+
     Box(
         modifier = modifier
             .fillMaxSize()
             .background(colors.background)
     ) {
-        LazyVerticalGrid(
+        IOSScrollableLazyVerticalGrid(
             columns = GridCells.Fixed(2),
             state = gridState,
+            topFadeHeight = 24.dp,
+            bottomFadeHeight = 140.dp,
             contentPadding = PaddingValues(top = 80.dp, bottom = 140.dp, start = 16.dp, end = 16.dp),
             horizontalArrangement = Arrangement.spacedBy(16.dp),
             verticalArrangement = Arrangement.spacedBy(20.dp),
@@ -170,27 +198,94 @@ fun PlaylistsScreen(
             }
         }
 
-        // Floating Top Bar with Back Button
+        // Modern iOS Blurred Floating Top Bar with Animated Title Pill
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .statusBarsPadding()
                 .padding(horizontal = 16.dp, vertical = 8.dp),
-            horizontalArrangement = Arrangement.Start
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            IOSIconButton(
-                onClick = onBack,
-                size = 40.dp,
-                contentDescription = "Back",
-                modifier = Modifier
-                    .clip(RoundedCornerShape(20.dp))
-                    .background(colors.surfaceElevated.copy(alpha = 0.9f))
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                modifier = Modifier.weight(1f, fill = false)
+            ) {
+                IOSFloatingIconButton(
+                    onClick = onBack,
+                    size = 40.dp
+                ) {
+                    Icon(
+                        imageVector = SonoraIcons.ChevronLeft,
+                        contentDescription = "Back",
+                        tint = colors.textPrimary,
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
+
+                if (titleAlpha > 0.01f) {
+                    Box(
+                        modifier = Modifier
+                            .height(40.dp)
+                            .graphicsLayer {
+                                alpha = titleAlpha
+                                scaleX = 0.9f + (0.1f * titleAlpha)
+                                scaleY = 0.9f + (0.1f * titleAlpha)
+                            }
+                            .shadow(
+                                elevation = 4.dp,
+                                shape = CircleShape,
+                                spotColor = Color.Black.copy(alpha = 0.18f)
+                            )
+                            .clip(CircleShape)
+                            .border(
+                                width = 0.5.dp,
+                                color = Color.White.copy(alpha = 0.15f),
+                                shape = CircleShape
+                            )
+                    ) {
+                        IOSMaterialSurface(
+                            config = IOSMaterialConfig(
+                                style = IOSMaterialStyle.Regular,
+                                cornerRadius = 20.dp
+                            )
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .height(40.dp)
+                                    .padding(horizontal = 16.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                Icon(
+                                    imageVector = SonoraIcons.Playlist,
+                                    contentDescription = null,
+                                    tint = colors.accent,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Text(
+                                    text = "Playlists",
+                                    style = typography.headline.copy(fontWeight = FontWeight.SemiBold),
+                                    color = colors.textPrimary,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
+            IOSFloatingIconButton(
+                onClick = onCreatePlaylist,
+                size = 40.dp
             ) {
                 Icon(
-                    imageVector = SonoraIcons.ChevronLeft,
-                    contentDescription = null,
-                    tint = colors.textPrimary,
-                    modifier = Modifier.size(24.dp)
+                    imageVector = SonoraIcons.Plus,
+                    contentDescription = "New Playlist",
+                    tint = colors.accent,
+                    modifier = Modifier.size(22.dp)
                 )
             }
         }
